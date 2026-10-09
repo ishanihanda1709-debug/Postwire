@@ -3,10 +3,10 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
-import { loadStore, loadPortfolio, savePortfolio } from './lib/store.js';
-import { CATEGORY_LABELS } from './lib/classify.js';
-import { aiEnabled, analyse, writePosts } from './lib/ai.js';
-import { scaffoldDrafts } from './lib/drafts.js';
+import { loadStore } from './lib/store.js';
+import { aiEnabled, writePost } from './lib/ai.js';
+import { scaffoldPost } from './lib/drafts.js';
+import { fetchImage } from './lib/image.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, 'public');
@@ -34,9 +34,10 @@ const publicItem = (i) => ({
   publishedAt: i.publishedAt, firstSeenAt: i.firstSeenAt, summary: i.summary, image: i.image, video: i.video, also: i.also || [],
 });
 
-function scoreFeatured(i) {
-  const age = (Date.now() - Date.parse(i.publishedAt || i.firstSeenAt)) / 86_400_000;
-  return (i.image ? 3 : 0) + (i.kind === 'campaign' ? 2 : i.kind === 'casestudy' ? 1.5 : 0) + (i.video ? 1 : 0) + (i.also?.length || 0) * 1.5 - age * 0.4;
+// Trending = covered by several outlets, recent, has a picture, is a campaign. No fabricated social metrics.
+function scoreTrending(i) {
+  const age = Math.max(0, (Date.now() - Date.parse(i.publishedAt || i.firstSeenAt)) / 86_400_000);
+  return (i.also?.length || 0) * 3 + (i.image ? 2 : 0) + (i.kind === 'campaign' ? 1.5 : 0) + (i.video ? 0.5 : 0) - age * 0.8;
 }
 
 async function route(req, res, url) {
@@ -61,36 +62,32 @@ async function route(req, res, url) {
       list = list.filter((i) => { const h = `${i.title} ${i.summary} ${i.source}`.toLowerCase(); return words.every((w) => h.includes(w)); });
     }
     const date = (i) => Date.parse(i.publishedAt || i.firstSeenAt) || 0;
-    list.sort((a, b) => date(b) - date(a));
+    if (q.get('sort') === 'trending') list.sort((a, b) => scoreTrending(b) - scoreTrending(a));
+    else list.sort((a, b) => date(b) - date(a));
     const limit = Math.min(Number(q.get('limit') || 24), 60), offset = Number(q.get('offset') || 0);
     return json(res, 200, { total: list.length, items: list.slice(offset, offset + limit).map(publicItem) });
   }
 
-  if (p === '/api/featured' && req.method === 'GET') {
-    const store = await loadStore();
-    const region = q.get('region');
-    const pool = Object.values(store.items).filter((i) => i.image && (!region || region === 'all' || i.region === region));
-    pool.sort((a, b) => scoreFeatured(b) - scoreFeatured(a));
-    return json(res, 200, { items: pool.slice(0, 4).map(publicItem) });
-  }
-
-  const m = p.match(/^\/api\/items\/([a-f0-9]+)(?:\/(analysis|posts))?$/);
+  const m = p.match(/^\/api\/items\/([a-f0-9]+)\/(post|image)$/);
   if (m) {
     const store = await loadStore();
     const item = store.items[m[1]];
     if (!item) return json(res, 404, { error: 'Not found' });
-    if (!m[2] && req.method === 'GET') return json(res, 200, publicItem(item));
-    if (m[2] === 'analysis' && req.method === 'POST') {
-      if (!aiEnabled()) return json(res, 501, { error: 'ANTHROPIC_API_KEY is not set, so AI analysis is disabled.' });
-      const body = await readBody(req);
-      try { return json(res, 200, await analyse(item, !!body.force)); }
-      catch (e) { return json(res, 502, { error: String(e.message) }); }
+    if (m[2] === 'image' && req.method === 'GET') {
+      if (!item.image) return json(res, 404, { error: 'No image for this story' });
+      try {
+        const img = await fetchImage(item.image.url);
+        const ext = img.type.split('/')[1]?.replace('jpeg', 'jpg').replace(/[^a-z0-9]/g, '') || 'jpg';
+        res.writeHead(200, { 'content-type': img.type, 'cache-control': 'private, max-age=86400',
+          ...(q.get('download') ? { 'content-disposition': `attachment; filename="${item.source.replace(/[^\w]+/g, '-')}-${item.id.slice(0, 6)}.${ext}"` } : {}) });
+        return res.end(img.data);
+      } catch (e) { return json(res, 502, { error: 'Could not fetch the image: ' + e.message }); }
     }
-    if (m[2] === 'posts' && req.method === 'POST') {
+    if (m[2] === 'post' && req.method === 'POST') {
       const body = await readBody(req);
-      if (!aiEnabled()) return json(res, 200, { posts: scaffoldDrafts(item), scaffold: true });
-      try { return json(res, 200, await writePosts(item, !!body.force)); }
-      catch (e) { return json(res, 502, { error: String(e.message), posts: scaffoldDrafts(item), scaffold: true }); }
+      if (!aiEnabled()) return json(res, 200, { post: scaffoldPost(item), card: null, scaffold: true });
+      try { return json(res, 200, await writePost(item, !!body.force)); }
+      catch (e) { return json(res, 502, { error: String(e.message), post: scaffoldPost(item), card: null, scaffold: true }); }
     }
   }
 
@@ -101,7 +98,7 @@ async function route(req, res, url) {
     for (const i of Object.values(store.items)) counts[i.kind] = (counts[i.kind] || 0) + 1;
     return json(res, 200, {
       updatedAt: store.updatedAt, lastRun: store.lastRun || null, refreshing: isRefreshing(), aiEnabled: aiEnabled(),
-      refreshMinutes: REFRESH_MINUTES, counts, categories: CATEGORY_LABELS,
+      refreshMinutes: REFRESH_MINUTES, counts, author: process.env.AUTHOR_NAME || '',
       sources: sources.map((s) => ({ id: s.id, name: s.name, region: s.region, ...(store.sources[s.id] || { ok: null }) })),
     });
   }
@@ -110,47 +107,6 @@ async function route(req, res, url) {
     if (isRefreshing()) return json(res, 202, { status: 'already running' });
     refreshAll().catch((e) => console.error('refresh failed', e));
     return json(res, 202, { status: 'started' });
-  }
-
-  if (p === '/api/portfolio' && req.method === 'GET') {
-    const pf = await loadPortfolio();
-    return json(res, 200, { entries: Object.values(pf.entries).sort((a, b) => b.savedAt.localeCompare(a.savedAt)) });
-  }
-
-  if (p === '/api/portfolio/export.md' && req.method === 'GET') {
-    const pf = await loadPortfolio();
-    const md = ['# My Marketing Portfolio', ''];
-    for (const e of Object.values(pf.entries).sort((a, b) => b.savedAt.localeCompare(a.savedAt))) {
-      md.push(`## ${e.item.title}`, `*${e.item.source}${e.item.publishedAt ? ', ' + e.item.publishedAt.slice(0, 10) : ''}* · [Original](${e.item.url})`, '');
-      const b = e.breakdown || {};
-      for (const [k, label] of [['idea', 'Idea'], ['audience', 'Audience'], ['strategy', 'Strategy'], ['execution', 'Execution'], ['why', 'Why it worked']]) if (b[k]) md.push(`**${label}:** ${b[k]}`, '');
-      if (e.notes) md.push(`**My notes:** ${e.notes}`, '');
-      if (e.post) md.push('**LinkedIn draft:**', '', ...e.post.split('\n').map((l) => '> ' + l), '');
-    }
-    res.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8', 'content-disposition': 'attachment; filename="portfolio.md"' });
-    return res.end(md.join('\n'));
-  }
-
-  const pm = p.match(/^\/api\/portfolio\/([a-f0-9]+)$/);
-  if (pm) {
-    const pf = await loadPortfolio();
-    if (req.method === 'PUT') {
-      const store = await loadStore();
-      const existing = pf.entries[pm[1]];
-      const item = existing?.item || (store.items[pm[1]] && publicItem(store.items[pm[1]]));
-      if (!item) return json(res, 404, { error: 'Not found' });
-      const body = await readBody(req);
-      const clip = (s, n) => String(s ?? '').slice(0, n);
-      const b = body.breakdown || {};
-      pf.entries[pm[1]] = {
-        id: pm[1], item, savedAt: existing?.savedAt || new Date().toISOString(), updatedAt: new Date().toISOString(),
-        notes: clip(body.notes, 5000), post: clip(body.post, 5000),
-        breakdown: { idea: clip(b.idea, 1500), audience: clip(b.audience, 1500), strategy: clip(b.strategy, 1500), execution: clip(b.execution, 1500), why: clip(b.why, 1500) },
-      };
-      await savePortfolio(pf);
-      return json(res, 200, pf.entries[pm[1]]);
-    }
-    if (req.method === 'DELETE') { delete pf.entries[pm[1]]; await savePortfolio(pf); return json(res, 200, { ok: true }); }
   }
 
   if (p.startsWith('/api/')) return json(res, 404, { error: 'Not found' });
