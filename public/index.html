@@ -16,7 +16,7 @@
   <h1 class="logo">The Marketing <em>Brief</em></h1>
   <div class="right">
     <span class="status"><i id="dot" class="dot"></i><span id="status-text">Loading…</span></span>
-    <button class="btn ghost" id="refresh">↻ Refresh</button>
+    <button class="btn ghost" id="refresh" title="Check the publications for new stories">↻ Fetch new stories</button>
   </div>
 </div></header>
 
@@ -30,10 +30,12 @@
     <div class="seg" id="region" role="group" aria-label="Region">
       <button data-r="all" class="on">All</button><button data-r="india">India</button><button data-r="global">Global</button>
     </div>
+    <button class="btn" id="shuffle" type="button" title="Swap these for a different set">⟳ Show me different ones</button>
     <label class="search"><span class="sr">Search</span><input id="q" type="search" placeholder="Search" autocomplete="off"></label>
   </div>
   <div id="grid" class="grid"></div>
   <div class="more"><button class="btn" id="more" hidden>Show more</button></div>
+  <p class="reset"><button class="linkbtn" id="reset" type="button" hidden></button></p>
 </main>
 
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="m-title">

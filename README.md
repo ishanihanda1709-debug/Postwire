@@ -13,6 +13,9 @@ npm test
 ## What you see
 
 - **Trending**: stories covered by several outlets, recent, with a picture, campaigns first. Tabs for **Campaigns** and **News**, an India / Global switch, and search.
+- **Show me different ones**: swaps the current picks for a fresh set from the best matches, never repeating what you've already seen. When fresh ones run low it mixes earlier stories back in.
+- **Not for me (✕ on a card)**: hides that story for good, with Undo. Hidden stories are remembered in your browser only, and a link at the bottom brings them back.
+- **Fetch new stories** (top right): checks the publications for anything new.
 - **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
   - a **text card** (your own graphic, 1080x1350) with the takeaway,
   - a **photo card** using the publisher's image,

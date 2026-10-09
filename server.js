@@ -40,6 +40,13 @@ function scoreTrending(i) {
   return (i.also?.length || 0) * 3 + (i.image ? 2 : 0) + (i.kind === 'campaign' ? 1.5 : 0) + (i.video ? 0.5 : 0) - age * 0.8;
 }
 
+function seededShuffle(arr, seed) {
+  let t = seed >>> 0;
+  const rnd = () => { t += 0x6d2b79f5; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; };
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
+}
+
 async function route(req, res, url) {
   const p = url.pathname;
   const q = url.searchParams;
@@ -62,7 +69,14 @@ async function route(req, res, url) {
       list = list.filter((i) => { const h = `${i.title} ${i.summary} ${i.source}`.toLowerCase(); return words.every((w) => h.includes(w)); });
     }
     const date = (i) => Date.parse(i.publishedAt || i.firstSeenAt) || 0;
-    if (q.get('sort') === 'trending') list.sort((a, b) => scoreTrending(b) - scoreTrending(a));
+    const exclude = new Set((q.get('exclude') || '').split(',').filter(Boolean).slice(0, 600));
+    if (exclude.size) list = list.filter((i) => !exclude.has(i.id));
+    const seed = Number(q.get('shuffle'));
+    if (seed) {
+      // "Show me different ones": take the best 60 matching stories, then shuffle them with the caller's seed.
+      list.sort((a, b) => scoreTrending(b) - scoreTrending(a));
+      list = seededShuffle(list.slice(0, 60), seed);
+    } else if (q.get('sort') === 'trending') list.sort((a, b) => scoreTrending(b) - scoreTrending(a));
     else list.sort((a, b) => date(b) - date(a));
     const limit = Math.min(Number(q.get('limit') || 24), 60), offset = Number(q.get('offset') || 0);
     return json(res, 200, { total: list.length, items: list.slice(offset, offset + limit).map(publicItem) });

@@ -95,6 +95,15 @@ test('refresh → dedupe → trending → post → image', async () => {
   const trending = await get('/api/items?sort=trending');
   assert.equal(trending.items[0].id, camp.id);
 
+  // Shuffle: same seed gives same order, exclude removes stories, different seed can reorder
+  const sh1 = await get('/api/items?shuffle=7');
+  const sh2 = await get('/api/items?shuffle=7');
+  assert.deepEqual(sh1.items.map((i) => i.id), sh2.items.map((i) => i.id));
+  const ex = await get(`/api/items?shuffle=7&exclude=${sh1.items[0].id}`);
+  assert.equal(ex.total, sh1.total - 1);
+  assert.ok(!ex.items.some((i) => i.id === sh1.items[0].id));
+  assert.equal((await get(`/api/items?exclude=${all.items.map((i) => i.id).join(',')}`)).total, 0);
+
   // Image route: private hosts blocked by default, allowed (for this test) when opted in
   const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
   assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');

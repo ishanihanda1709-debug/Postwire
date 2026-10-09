@@ -1,5 +1,9 @@
 const $ = (s, r = document) => r.querySelector(s);
-const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null };
+const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null, seed: 0, seen: new Set(), shown: [] };
+// Stories the user hid with "Not for me". Stored in this browser only.
+let dismissed = new Set();
+try { dismissed = new Set(JSON.parse(localStorage.getItem('mb-hidden') || '[]')); } catch { /* storage unavailable */ }
+const saveHidden = () => { try { localStorage.setItem('mb-hidden', JSON.stringify([...dismissed].slice(-600))); } catch { /* ignore */ } };
 const PAGE = 18;
 const phClass = (s) => 'ph c' + ([...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 4);
 const phBox = (item) => h('div', { class: phClass(item.source), text: item.source });
@@ -32,7 +36,11 @@ async function api(path, opts = {}) {
   return data;
 }
 
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600); }
+function toast(msg, action) {
+  const t = $('#toast'); t.replaceChildren(msg);
+  if (action) t.append(' ', h('button', { class: 'linkbtn inv', type: 'button', text: action.label, onclick: () => { action.run(); t.hidden = true; } }));
+  t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), action ? 6000 : 2600);
+}
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date not given';
 function ago(iso) {
   if (!iso) return 'never';
@@ -49,9 +57,25 @@ function card(item, hot) {
     media.append(img);
   } else media.append(phBox(item));
   if (hot) media.append(h('span', { class: 'hot', text: `Covered by ${item.also.length + 1} outlets` }));
-  return h('button', { class: 'card', type: 'button', onclick: () => openItem(item) }, media,
+  const main = h('button', { class: 'card', type: 'button', onclick: () => openItem(item) }, media,
     h('div', { class: 'body' }, h('h3', { text: item.title }),
       h('div', { class: 'meta' }, h('b', { text: item.source }), ' · ', fmtDate(item.publishedAt), item.region === 'india' ? ' · India' : '')));
+  const wrap = h('div', { class: 'cardw' }, main,
+    h('button', { class: 'skip', type: 'button', title: 'Not for me: hide this story', 'aria-label': `Hide: ${item.title}`, text: '✕', onclick: () => hideItem(item, wrap) }));
+  return wrap;
+}
+
+function hideItem(item, el) {
+  dismissed.add(item.id); saveHidden(); el.remove();
+  state.offset = Math.max(0, state.offset - 1);
+  updateReset();
+  toast('Hidden. It won\'t show again.', { label: 'Undo', run: () => { dismissed.delete(item.id); saveHidden(); updateReset(); reload(); } });
+  if (!$('#grid').children.length) reload();
+}
+
+function updateReset() {
+  const b = $('#reset'); b.hidden = dismissed.size === 0;
+  b.textContent = `Show ${dismissed.size} hidden ${dismissed.size === 1 ? 'story' : 'stories'} again`;
 }
 
 function query() {
@@ -59,6 +83,9 @@ function query() {
   if (state.view === 'trending') p.set('sort', 'trending'); else p.set('kind', state.view);
   if (state.region !== 'all') p.set('region', state.region);
   if (state.q) p.set('q', state.q);
+  if (state.seed) p.set('shuffle', state.seed);
+  const ex = [...dismissed, ...(state.seed ? state.seen : [])].slice(-500);
+  if (ex.length) p.set('exclude', ex.join(','));
   return p;
 }
 
@@ -69,12 +96,28 @@ async function loadStatus() {
   return s;
 }
 
-async function reload() { state.offset = 0; $('#grid').replaceChildren(); await loadPage(); }
+async function reload() { state.offset = 0; state.shown = []; $('#grid').replaceChildren(); await loadPage(); }
+
+// "Show me different ones": new random set from the best matches, never repeating what was already shown or hidden.
+async function shuffle() {
+  const prev = [...state.shown];
+  state.shown.forEach((id) => state.seen.add(id));
+  state.seed = Math.floor(Math.random() * 2 ** 31) + 1;
+  await reload();
+  const count = () => document.querySelectorAll('#grid .cardw').length;
+  if (count() < PAGE / 2 && state.seen.size) {
+    // Fresh stories are running low: keep what is on screen out, and mix earlier ones back in.
+    state.seen = new Set([...prev, ...state.shown]);
+    state.seed = Math.floor(Math.random() * 2 ** 31) + 1;
+    await reload();
+    toast('Fresh ones are running low, mixing in earlier stories.');
+  }
+}
 
 async function loadPage() {
   const { items, total } = await api('/api/items?' + query());
   const grid = $('#grid');
-  items.forEach((i) => grid.append(card(i, state.view === 'trending' && i.also?.length)));
+  items.forEach((i) => { state.shown.push(i.id); grid.append(card(i, state.view === 'trending' && i.also?.length)); });
   state.offset += items.length;
   $('#more').hidden = state.offset >= total;
   if (!grid.children.length) grid.append(emptyState());
@@ -199,9 +242,12 @@ function wrap(x, text, left, top, max, lh) {
 function closeModal() { $('#modal').hidden = true; document.body.style.overflow = ''; state.cur = null; }
 
 // ---------- wiring ----------
-$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
-$('#region').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.region = b.dataset.r; document.querySelectorAll('#region button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
-let debounce; $('#q').addEventListener('input', (e) => { clearTimeout(debounce); debounce = setTimeout(() => { state.q = e.target.value.trim(); reload(); }, 250); });
+$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; resetShuffle(); document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
+$('#region').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.region = b.dataset.r; resetShuffle(); document.querySelectorAll('#region button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
+let debounce; $('#q').addEventListener('input', (e) => { clearTimeout(debounce); debounce = setTimeout(() => { state.q = e.target.value.trim(); resetShuffle(); reload(); }, 250); });
+const resetShuffle = () => { state.seed = 0; state.seen = new Set(); };
+$('#shuffle').addEventListener('click', shuffle);
+$('#reset').addEventListener('click', () => { dismissed = new Set(); saveHidden(); updateReset(); reload(); });
 $('#more').addEventListener('click', loadPage);
 $('#close').addEventListener('click', closeModal);
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
@@ -210,7 +256,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#mod
 async function pollRefresh() {
   for (let i = 0; i < 60; i++) {
     const s = await loadStatus();
-    if (!s.refreshing) { await reload(); return; }
+    if (!s.refreshing) { resetShuffle(); await reload(); return; }
     await new Promise((r) => setTimeout(r, 3000));
   }
 }
@@ -218,6 +264,7 @@ $('#refresh').addEventListener('click', async () => { await api('/api/refresh', 
 
 (async function init() {
   const s = await loadStatus();
+  updateReset();
   await reload();
   if (s.refreshing || !s.updatedAt) pollRefresh();
   setInterval(async () => {
