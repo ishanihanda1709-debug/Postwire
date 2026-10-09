@@ -1,6 +1,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null, seed: 0, seen: new Set(), shown: [] };
 // Stories the user hid with "Not for me". Stored in this browser only.
+let saved = new Map();
 let dismissed = new Set();
 try { dismissed = new Set(JSON.parse(localStorage.getItem('mb-hidden') || '[]')); } catch { /* storage unavailable */ }
 const saveHidden = () => { try { localStorage.setItem('mb-hidden', JSON.stringify([...dismissed].slice(-600))); } catch { /* ignore */ } };
@@ -93,6 +94,8 @@ async function loadStatus() {
   const s = await api('/api/status'); state.status = s;
   $('#dot').className = 'dot ' + (s.refreshing ? 'busy' : s.updatedAt ? 'ok' : '');
   $('#status-text').textContent = s.refreshing ? 'Refreshing…' : s.updatedAt ? `Updated ${ago(s.updatedAt)}` : 'Not refreshed yet';
+  const ai = $('#ai'); ai.textContent = s.aiEnabled ? '✦ AI connected' : 'AI not connected'; ai.className = 'ai' + (s.aiEnabled ? '' : ' off');
+  ai.title = s.aiEnabled ? 'Posts are written by the AI' : 'Add ANTHROPIC_API_KEY to a .env file and restart to get finished posts';
   return s;
 }
 
@@ -155,7 +158,7 @@ function render(cur, { loading }) {
   const { item } = cur, posts = cur.posts || [], active = cur.active || 0, ai = state.status?.aiEnabled;
   const ta = h('textarea', { id: 'post', 'aria-label': 'LinkedIn post', placeholder: loading ? 'Writing your post options…' : '' });
   ta.value = posts[active]?.text || '';
-  ta.addEventListener('input', () => { posts[active].text = ta.value; $('#cc').textContent = `${ta.value.length} characters`; });
+  ta.addEventListener('input', () => { posts[active].text = ta.value; $('#cc').textContent = `${ta.value.length} characters`; if (isSaved(cur)) { clearTimeout(cur.t); cur.t = setTimeout(() => putSaved(cur), 600); } });
   $('#sheet-body').replaceChildren(
     h('h2', { id: 'm-title', text: item.title }),
     h('p', { class: 'facts' }, h('b', { text: item.source }), ` · ${fmtDate(item.publishedAt)} · `, h('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', text: 'Read the original ↗' })),
@@ -169,6 +172,7 @@ function render(cur, { loading }) {
         h('div', { class: 'row' },
           h('button', { class: 'btn', disabled: !posts.length, onclick: async () => { try { await navigator.clipboard.writeText(ta.value); toast('Copied. Paste it into LinkedIn.'); } catch { ta.select(); toast('Press Ctrl/Cmd+C to copy'); } }, text: 'Copy this post' }),
           ai ? h('button', { class: 'btn ghost', disabled: !!loading, onclick: () => loadPost(cur, true), text: '↻ More options' }) : null,
+          h('button', { class: 'heart' + (isSaved(cur) ? ' on' : ''), type: 'button', id: 'heart', disabled: !posts.length, 'aria-pressed': String(isSaved(cur)), onclick: () => toggleSave(cur, ta), text: isSaved(cur) ? '♥ Saved' : '♡ Save this post' }),
           h('span', { class: 'muted grow', id: 'cc', text: `${ta.value.length} characters` }))),
       h('div', {}, h('h4', { text: 'Pictures for your post' }), h('div', { class: 'pics', id: 'pics' }))));
   if (!loading) renderPics(cur);
@@ -239,12 +243,61 @@ function wrap(x, text, left, top, max, lh) {
   x.fillText(line, left, y); return y + lh;
 }
 
+// ---------- saved posts ----------
+const savedKey = (cur) => `${cur.item.id}|${cur.posts?.[cur.active || 0]?.angle}`;
+const isSaved = (cur) => saved.has(savedKey(cur));
+async function putSaved(cur) {
+  const p = cur.posts[cur.active || 0];
+  const e = await api('/api/saved', { method: 'PUT', body: { itemId: cur.item.id, angle: p.angle, text: p.text } });
+  saved.set(savedKey(cur), e); updateSavedCount();
+}
+async function toggleSave(cur, ta) {
+  const p = cur.posts[cur.active || 0];
+  if (isSaved(cur)) {
+    await api('/api/saved/' + saved.get(savedKey(cur)).id, { method: 'DELETE' });
+    saved.delete(savedKey(cur)); toast('Removed from saved');
+  } else { p.text = ta.value; await putSaved(cur); toast('Saved. Find it under ♥ Saved.'); }
+  updateSavedCount(); render(cur, {});
+}
+async function loadSaved() {
+  const { entries } = await api('/api/saved');
+  saved = new Map(entries.map((e) => [`${e.itemId}|${e.angle}`, e])); updateSavedCount(); return entries;
+}
+const updateSavedCount = () => { $('#saved-n').textContent = saved.size || ''; };
+async function renderSaved() {
+  const entries = await loadSaved();
+  const box = $('#saved');
+  const linkedin = (t) => 'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(t);
+  box.replaceChildren(
+    h('div', { class: 'saved-head' }, h('h2', { text: 'Saved posts' }), h('span', { class: 'muted grow', text: `${entries.length} saved` }),
+      entries.length ? h('a', { class: 'btn ghost', href: '/api/saved/export.md', download: 'saved-posts.md', text: 'Export all (.md)' }) : null),
+    entries.length ? h('div', { class: 'saved-list' }, entries.map((e) => h('article', { class: 'sv' },
+      h('span', { class: 'tag', text: e.angle }),
+      h('h3', { text: e.item.title }),
+      h('div', { class: 'meta' }, h('b', { text: e.item.source }), ' · ', fmtDate(e.item.publishedAt), ' · ', h('a', { href: e.item.url, target: '_blank', rel: 'noopener noreferrer', text: 'original ↗' })),
+      h('pre', { text: e.text }),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn ghost', type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(e.text); toast('Copied'); } catch { toast('Copy failed. Select the text instead.'); } }, text: 'Copy' }),
+        h('a', { class: 'btn ghost', href: linkedin(e.text), target: '_blank', rel: 'noopener noreferrer', title: "Opens LinkedIn's post box with this text. You review and post it yourself.", text: 'Open in LinkedIn ↗' }),
+        h('button', { class: 'btn ghost', type: 'button', onclick: async () => { await api('/api/saved/' + e.id, { method: 'DELETE' }); renderSaved(); }, text: 'Delete' }))))
+    ) : h('div', { class: 'empty' }, h('h3', { text: 'Nothing saved yet' }), 'Open a story and press ♡ Save this post. Saved posts live here so you can copy or share them later.'));
+}
+
 function closeModal() { $('#modal').hidden = true; document.body.style.overflow = ''; state.cur = null; }
 
 // ---------- wiring ----------
-$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; resetShuffle(); document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
+$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; resetShuffle(); document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); showView(); });
 $('#region').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.region = b.dataset.r; resetShuffle(); document.querySelectorAll('#region button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
 let debounce; $('#q').addEventListener('input', (e) => { clearTimeout(debounce); debounce = setTimeout(() => { state.q = e.target.value.trim(); resetShuffle(); reload(); }, 250); });
+function showView() {
+  const s = state.view === 'saved';
+  // 'more' and 'reset' visibility is managed by loadPage/updateReset, so only force them hidden here.
+  for (const id of ['grid', 'shuffle', 'region']) $('#' + id).hidden = s;
+  $('#q').closest('.search').hidden = s;
+  if (s) { $('#more').hidden = true; $('#reset').hidden = true; }
+  $('#saved').hidden = !s;
+  if (s) renderSaved(); else { updateReset(); reload(); }
+}
 const resetShuffle = () => { state.seed = 0; state.seen = new Set(); };
 $('#shuffle').addEventListener('click', shuffle);
 $('#reset').addEventListener('click', () => { dismissed = new Set(); saveHidden(); updateReset(); reload(); });
@@ -265,6 +318,7 @@ $('#refresh').addEventListener('click', async () => { await api('/api/refresh', 
 (async function init() {
   const s = await loadStatus();
   updateReset();
+  await loadSaved();
   await reload();
   if (s.refreshing || !s.updatedAt) pollRefresh();
   setInterval(async () => {

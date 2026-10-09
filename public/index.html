@@ -16,6 +16,7 @@
   <h1 class="logo">The Marketing <em>Brief</em></h1>
   <div class="right">
     <span class="status"><i id="dot" class="dot"></i><span id="status-text">Loading…</span></span>
+    <span class="ai" id="ai" title=""></span>
     <button class="btn ghost" id="refresh" title="Check the publications for new stories">↻ Fetch new stories</button>
   </div>
 </div></header>
@@ -26,6 +27,7 @@
       <button data-v="trending" class="on">Trending</button>
       <button data-v="campaign">Campaigns</button>
       <button data-v="news">News</button>
+      <button data-v="saved" id="tab-saved">♥ Saved <span class="count" id="saved-n"></span></button>
     </nav>
     <div class="seg" id="region" role="group" aria-label="Region">
       <button data-r="all" class="on">All</button><button data-r="india">India</button><button data-r="global">Global</button>
@@ -34,6 +36,7 @@
     <label class="search"><span class="sr">Search</span><input id="q" type="search" placeholder="Search" autocomplete="off"></label>
   </div>
   <div id="grid" class="grid"></div>
+  <section id="saved" hidden></section>
   <div class="more"><button class="btn" id="more" hidden>Show more</button></div>
   <p class="reset"><button class="linkbtn" id="reset" type="button" hidden></button></p>
 </main>

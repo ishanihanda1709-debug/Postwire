@@ -15,6 +15,7 @@ npm test
 - **Trending**: stories covered by several outlets, recent, with a picture, campaigns first. Tabs for **Campaigns** and **News**, an India / Global switch, and search.
 - **Show me different ones**: swaps the current picks for a fresh set from the best matches, never repeating what you've already seen. When fresh ones run low it mixes earlier stories back in.
 - **Not for me (✕ on a card)**: hides that story for good, with Undo. Hidden stories are remembered in your browser only, and a link at the bottom brings them back.
+- **♡ Save this post**: in a story, saves the post you are looking at (and keeps your edits). Everything saved is under **♥ Saved**, where you can copy a post, open it in LinkedIn's post box (you review and post it yourself), delete it, or **Export all** as Markdown. Saved posts are stored in `data/saved.json`.
 - **Fetch new stories** (top right): checks the publications for anything new.
 - **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
   - a **text card** (your own graphic, 1080x1350) with the takeaway,
@@ -23,11 +24,14 @@ npm test
 
 ## Posts in your voice
 
-Writing a finished post needs an Anthropic API key:
+Writing a finished post needs an Anthropic API key. Copy `.env.example` to `.env`, fill in your key, and start the app:
 
 ```bash
-ANTHROPIC_API_KEY=your-key AUTHOR_NAME="Your Name" npm start
+cp .env.example .env     # then edit .env: ANTHROPIC_API_KEY=... and AUTHOR_NAME=Your Name
+npm start
 ```
+
+`.env` is git-ignored, so the key stays on your machine. The header shows **AI connected** when it is picked up, or **AI not connected** if not. Never paste your key into a chat, an issue or a commit.
 
 The post format is: a curiosity hook, one idea per line, a turn, the real lesson, a short contrast line ("Everyone talks about X. Very few notice Y."), then a source line. It is 110 to 170 words.
 

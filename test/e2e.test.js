@@ -104,6 +104,18 @@ test('refresh → dedupe → trending → post → image', async () => {
   assert.ok(!ex.items.some((i) => i.id === sh1.items[0].id));
   assert.equal((await get(`/api/items?exclude=${all.items.map((i) => i.id).join(',')}`)).total, 0);
 
+  // Saved posts: save, update (same id), list, export, delete
+  const sv1 = await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: camp.id, angle: 'Story-led', text: 'My saved post' }) }).then((x) => x.json());
+  const sv2 = await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: camp.id, angle: 'Story-led', text: 'Edited' }) }).then((x) => x.json());
+  assert.equal(sv1.id, sv2.id);
+  assert.equal((await get('/api/saved')).entries.length, 1);
+  assert.equal((await get('/api/saved')).entries[0].text, 'Edited');
+  assert.match(await fetch(`${api}/api/saved/export.md`).then((x) => x.text()), /> Edited/);
+  assert.equal((await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: 'deadbeef', angle: 'x', text: 'y' }) })).status, 404);
+  assert.equal((await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: camp.id, angle: 'x', text: '  ' }) })).status, 400);
+  await fetch(`${api}/api/saved/${sv1.id}`, { method: 'DELETE' });
+  assert.equal((await get('/api/saved')).entries.length, 0);
+
   // Image route: private hosts blocked by default, allowed (for this test) when opted in
   const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
   assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');

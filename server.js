@@ -3,12 +3,22 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
-import { loadStore } from './lib/store.js';
+import { loadStore, loadSaved, saveSaved } from './lib/store.js';
+import { sha } from './lib/util.js';
 import { aiEnabled, writePost } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
 import { fetchImage } from './lib/image.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Minimal .env loader (no dependency). Real environment variables win over the file.
+try {
+  for (const line of (await fs.readFile(path.join(__dirname, '.env'), 'utf8')).split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/i);
+    if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch { /* no .env file */ }
+
 const PUBLIC = path.join(__dirname, 'public');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -121,6 +131,44 @@ async function route(req, res, url) {
     if (isRefreshing()) return json(res, 202, { status: 'already running' });
     refreshAll().catch((e) => console.error('refresh failed', e));
     return json(res, 202, { status: 'started' });
+  }
+
+  if (p === '/api/saved' && req.method === 'GET') {
+    const sv = await loadSaved();
+    return json(res, 200, { entries: Object.values(sv.entries).sort((a, b) => b.savedAt.localeCompare(a.savedAt)) });
+  }
+
+  if (p === '/api/saved/export.md' && req.method === 'GET') {
+    const sv = await loadSaved();
+    const md = ['# My saved LinkedIn posts', ''];
+    for (const e of Object.values(sv.entries).sort((a, b) => b.savedAt.localeCompare(a.savedAt))) {
+      md.push(`## ${e.item.title}`, `*${e.angle} · ${e.item.source}${e.item.publishedAt ? ', ' + e.item.publishedAt.slice(0, 10) : ''}* · [Original](${e.item.url})`, '', ...e.text.split('\n').map((l) => '> ' + l), '');
+    }
+    res.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8', 'content-disposition': 'attachment; filename="saved-posts.md"' });
+    return res.end(md.join('\n'));
+  }
+
+  if (p === '/api/saved' && req.method === 'PUT') {
+    const body = await readBody(req);
+    const store = await loadStore();
+    const sv = await loadSaved();
+    const id = sha(`${body.itemId}|${body.angle}`);
+    const item = sv.entries[id]?.item || (store.items[body.itemId] && publicItem(store.items[body.itemId]));
+    if (!item) return json(res, 404, { error: 'Story not found' });
+    const text = String(body.text ?? '').slice(0, 5000);
+    if (!text.trim()) return json(res, 400, { error: 'Nothing to save' });
+    sv.entries[id] = { id, itemId: body.itemId, angle: String(body.angle || 'Post').slice(0, 60), text, item,
+      savedAt: sv.entries[id]?.savedAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
+    await saveSaved(sv);
+    return json(res, 200, sv.entries[id]);
+  }
+
+  const sm = p.match(/^\/api\/saved\/([a-f0-9]+)$/);
+  if (sm && req.method === 'DELETE') {
+    const sv = await loadSaved();
+    delete sv.entries[sm[1]];
+    await saveSaved(sv);
+    return json(res, 200, { ok: true });
   }
 
   if (p.startsWith('/api/')) return json(res, 404, { error: 'Not found' });
