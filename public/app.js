@@ -1,6 +1,8 @@
 const $ = (s, r = document) => r.querySelector(s);
 const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null };
 const PAGE = 18;
+const phClass = (s) => 'ph c' + ([...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 4);
+const phBox = (item) => h('div', { class: phClass(item.source), text: item.source });
 
 // Text is always set via textContent, never innerHTML.
 function h(tag, props = {}, ...kids) {
@@ -43,9 +45,9 @@ function card(item, hot) {
   const media = h('div', { class: 'media' });
   if (item.image) {
     const img = h('img', { src: item.image.url, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
-    img.addEventListener('error', () => img.replaceWith(h('div', { class: 'ph', text: item.source })));
+    img.addEventListener('error', () => img.replaceWith(phBox(item)));
     media.append(img);
-  } else media.append(h('div', { class: 'ph', text: item.source }));
+  } else media.append(phBox(item));
   if (hot) media.append(h('span', { class: 'hot', text: `Covered by ${item.also.length + 1} outlets` }));
   return h('button', { class: 'card', type: 'button', onclick: () => openItem(item) }, media,
     h('div', { class: 'body' }, h('h3', { text: item.title }),
@@ -130,7 +132,12 @@ function render(cur, { loading }) {
 }
 
 function renderPics(cur) {
+  Promise.race([document.fonts.load('800 80px "Bricolage Grotesque"'), new Promise((r) => setTimeout(r, 1500))]).catch(() => {}).then(() => { if (state.cur === cur) drawPics(cur); });
+}
+
+function drawPics(cur) {
   const { item } = cur, box = $('#pics');
+  box.replaceChildren();
   const card = cur.posts?.[cur.active || 0]?.card;
   const headline = card?.headline || item.title;
   const subline = card?.subline || '';
@@ -161,22 +168,23 @@ function renderPics(cur) {
 function drawCard({ headline, subline, source, author, photo }) {
   const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
-  const serif = '"Fraunces", Georgia, serif', sans = 'Inter, system-ui, sans-serif';
-  x.fillStyle = '#14110f'; x.fillRect(0, 0, W, H);
+  const disp = '"Bricolage Grotesque", "Arial Black", sans-serif', sans = '"DM Sans", system-ui, sans-serif';
+  x.fillStyle = '#3b4bff'; x.fillRect(0, 0, W, H);
   if (photo) {
-    const r = Math.max(W / photo.width, (H * 0.55) / photo.height), pw = photo.width * r, ph = photo.height * r;
-    x.save(); x.beginPath(); x.rect(0, 0, W, H * 0.55); x.clip(); x.drawImage(photo, (W - pw) / 2, (H * 0.55 - ph) / 2, pw, ph); x.restore();
-    const g = x.createLinearGradient(0, H * 0.35, 0, H * 0.58); g.addColorStop(0, 'rgba(20,17,15,0)'); g.addColorStop(1, '#14110f'); x.fillStyle = g; x.fillRect(0, H * 0.35, W, H * 0.23);
+    const r = Math.max(W / photo.width, (H * 0.5) / photo.height), pw = photo.width * r, ph = photo.height * r;
+    x.save(); x.beginPath(); x.rect(0, 0, W, H * 0.5); x.clip(); x.drawImage(photo, (W - pw) / 2, (H * 0.5 - ph) / 2, pw, ph); x.restore();
+    x.fillStyle = '#0b0b1e'; x.fillRect(0, H * 0.5 - 6, W, 12);
   }
-  x.fillStyle = '#e5381f'; x.fillRect(80, photo ? 760 : 150, 90, 10);
-  x.fillStyle = '#f1ece3'; x.textBaseline = 'top';
-  const top = photo ? 800 : 190, size = headline.length > 70 ? 66 : headline.length > 45 ? 78 : 92;
-  x.font = `900 ${size}px ${serif}`;
-  let y = wrap(x, headline, 80, top, W - 160, size * 1.08);
-  if (subline) { x.fillStyle = '#a39a8c'; x.font = `400 36px ${sans}`; wrap(x, subline, 80, y + 28, W - 160, 50); }
-  x.fillStyle = '#a39a8c'; x.font = `600 28px ${sans}`;
-  x.fillText(`Source: ${source}`.toUpperCase().slice(0, 48), 80, H - 120);
-  if (author) { x.textAlign = 'right'; x.fillStyle = '#f1ece3'; x.fillText(author, W - 80, H - 120); x.textAlign = 'left'; }
+  x.textBaseline = 'top';
+  const top = photo ? 760 : 170, size = headline.length > 70 ? 64 : headline.length > 45 ? 78 : 94;
+  if (!photo) { x.fillStyle = '#ffd43b'; x.fillRect(80, 110, 120, 16); }
+  x.fillStyle = '#ffffff'; x.font = `800 ${size}px ${disp}`;
+  const y = wrap(x, headline, 80, top, W - 160, size * 1.05);
+  if (subline) { x.fillStyle = '#dfe2ff'; x.font = `500 38px ${sans}`; wrap(x, subline, 80, y + 26, W - 160, 52); }
+  x.fillStyle = '#ffd43b'; x.fillRect(0, H - 150, W, 150);
+  x.fillStyle = '#0b0b1e'; x.font = `700 28px ${sans}`; x.textBaseline = 'middle';
+  x.fillText(`SOURCE: ${source}`.toUpperCase().slice(0, 40), 80, H - 75);
+  if (author) { x.textAlign = 'right'; x.fillText(author, W - 80, H - 75); x.textAlign = 'left'; }
   return c;
 }
 function wrap(x, text, left, top, max, lh) {

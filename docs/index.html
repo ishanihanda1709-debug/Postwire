@@ -9,14 +9,14 @@
 <meta property="og:description" content="Trending campaigns and marketing news. Click one, get a LinkedIn post and pictures.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23e5381f'/%3E%3Ctext x='16' y='24' font-size='22' text-anchor='middle' fill='white' font-family='Georgia' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%233b4bff'/%3E%3Ctext x='16' y='24' font-size='22' text-anchor='middle' fill='white' font-family='Georgia' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f6f3ec;--paper:#fffdf8;--ink:#14110f;--mute:#6b645b;--line:#dcd5c8;--accent:#e5381f;--accent-ink:#fff;--gen:#2f4bd6;--genbg:#e9edff;--ok:#1f8a4c;--code:#14110f;--code-ink:#f1ece3;--serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif}
-:root[data-theme=dark]{--bg:#121110;--paper:#1b1917;--ink:#f1ece3;--mute:#a39a8c;--line:#34302b;--accent:#ff5b3f;--accent-ink:#140a07;--gen:#9fb0ff;--genbg:#1e2440;--code:#0b0a09}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121110;--paper:#1b1917;--ink:#f1ece3;--mute:#a39a8c;--line:#34302b;--accent:#ff5b3f;--accent-ink:#140a07;--gen:#9fb0ff;--genbg:#1e2440;--code:#0b0a09}}
+:root{--bg:#eceeff;--paper:#ffffff;--ink:#0b0b1e;--mute:#53537a;--line:#0b0b1e;--edge:#0b0b1e;--accent:#3b4bff;--accent-ink:#ffffff;--pink:#ff5c9d;--sun:#ffd43b;--mint:#2ee6a6;--gen:#3b4bff;--genbg:#e3e6ff;--ok:#0f9d6b;--code:#0b0b1e;--code-ink:#f3f2ff;--display:'Bricolage Grotesque','Arial Black',system-ui,sans-serif;--serif:var(--display);--sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+:root[data-theme=dark]{--bg:#0b0b1e;--paper:#16163a;--ink:#f3f2ff;--mute:#a7a7d6;--line:#f3f2ff;--edge:#f3f2ff;--accent:#8f9bff;--accent-ink:#0b0b1e;--genbg:#22225a;--code:#05050f;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b0b1e;--paper:#16163a;--ink:#f3f2ff;--mute:#a7a7d6;--line:#f3f2ff;--edge:#f3f2ff;--accent:#8f9bff;--accent-ink:#0b0b1e;--genbg:#22225a;--code:#05050f;color-scheme:dark}}
 *{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--sans)}
 a{color:inherit}
@@ -88,6 +88,38 @@ footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 [hidden]{display:none!important}
 @media (max-width:760px){.dcols{grid-template-columns:1fr}}
+
+/* poster theme */
+.nav{border-bottom:3px solid var(--edge)}
+.nav .brand{font:800 22px var(--display);letter-spacing:-.03em}.brand em{font-style:normal;background:var(--sun);color:#0b0b1e;padding:0 .2em;border-radius:5px}
+h1{font:800 clamp(46px,9vw,108px)/.95 var(--display);letter-spacing:-.04em}
+h1 em{font-style:normal;color:#0b0b1e;background:var(--pink);padding:0 .12em;border-radius:12px;display:inline-block;transform:rotate(-1.5deg)}
+h2{font:800 clamp(30px,5vw,48px)/1.03 var(--display);letter-spacing:-.03em}
+.eyebrow{display:inline-block;background:var(--sun);color:#0b0b1e;border:2px solid var(--edge);border-radius:99px;padding:3px 12px;font:700 12px var(--sans);letter-spacing:.1em}
+section{border-top:3px solid var(--edge)}
+.btn{background:var(--sun);color:#0b0b1e;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge);font-weight:700;transition:transform .1s,box-shadow .1s}
+.btn:hover{background:var(--sun);color:#0b0b1e;border-color:var(--edge);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--edge)}
+.btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--edge)}.btn.ghost:hover{background:var(--paper);color:var(--ink);border-color:var(--edge)}
+.card{border:2px solid var(--edge);border-radius:14px;box-shadow:6px 6px 0 var(--edge)}
+.grid .card:nth-child(3n+1){background:var(--paper)}
+.num{font:800 44px var(--display);color:var(--accent)}
+.mock{border:3px solid var(--edge);border-radius:16px;box-shadow:10px 10px 0 var(--edge)}
+.mock .bar{border-bottom:3px solid var(--edge);background:var(--accent)}.bar i{background:#fff;border:2px solid #0b0b1e}.bar-t{color:#fff!important;font-weight:600}
+.dtabs button{border:2px solid var(--edge);background:var(--paper);color:var(--ink);font-weight:700}
+.dtabs button[aria-selected=true]{background:var(--pink);color:#0b0b1e;box-shadow:3px 3px 0 var(--edge)}
+.dcard-btn{border:2px solid var(--edge);border-radius:12px;box-shadow:4px 4px 0 var(--edge)}
+.dcard-btn:hover,.dcard-btn[aria-expanded=true]{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--edge);border-color:var(--edge)}
+.dcard-btn .ph{background:var(--sun);color:#0b0b1e;border-radius:0;border-bottom:2px solid var(--edge);font-family:var(--display);font-weight:800}
+.dgrid>:nth-child(4n+2) .ph{background:var(--pink)}.dgrid>:nth-child(4n+3) .ph{background:var(--mint)}.dgrid>:nth-child(4n+4) .ph{background:var(--accent);color:#fff}
+.dpanel{border:3px solid var(--edge);border-radius:14px;box-shadow:6px 6px 0 var(--edge)}
+.dopts button{border:2px solid var(--edge);font-weight:600}.dopts button[aria-selected=true]{background:var(--pink);border-color:var(--edge);color:#0b0b1e}
+.dpost{border:2px solid var(--edge);border-radius:10px}
+.dclose{border:2px solid var(--edge);border-radius:50%;width:34px;height:34px;background:var(--sun);color:#0b0b1e;font-size:20px}
+.dcard{background:#3b4bff;border:2px solid var(--edge);border-radius:8px}.dcard b{font-family:var(--display);font-weight:800;color:#fff}.bar-a{background:var(--sun)!important;height:8px!important}.dcard small{color:#0b0b1e!important;background:var(--sun);left:0!important;right:0;bottom:0!important;padding:10px 22px;font-weight:700}
+.chips span{border:2px solid var(--edge);background:var(--paper);font-weight:600}
+details{border-bottom:2px solid var(--edge)}summary{font:700 19px var(--display)}
+footer{border-top:3px solid var(--edge)}
+.pill.src,.pill.gen{border-color:var(--edge)}
 @media (max-width:760px){.steps{grid-template-columns:1fr}.mgrid,.two{grid-template-columns:1fr}.hero{padding-top:40px}.nav .l{display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
@@ -98,7 +130,7 @@ footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
     <a class="brand" href="#">The Marketing <em>Brief</em></a>
     <span class="sp"></span>
     <a class="l" href="#features">Features</a>
-    <a class="l" href="#trust">Sourced vs AI</a>
+    <a class="l" href="#trust">Accuracy</a>
     <a class="l" href="#start">Quick start</a>
     <a class="btn ghost" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">GitHub ↗</a>
   </nav>
