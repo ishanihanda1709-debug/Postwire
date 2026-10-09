@@ -1,0 +1,14 @@
+{
+  "name": "the-marketing-brief",
+  "version": "1.0.0",
+  "description": "Personal marketing intelligence and portfolio platform: auto-refreshing campaigns, news, case-study breakdowns and LinkedIn post drafts.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "refresh": "node scripts/refresh.js",
+    "test": "node --test test/unit.test.js test/e2e.test.js"
+  },
+  "license": "MIT"
+}
