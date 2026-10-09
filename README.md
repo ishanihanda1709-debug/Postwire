@@ -45,3 +45,7 @@ No content is bundled with the repo. If a feed has no image the card shows a typ
 5. Persist to `data/store.json`. Portfolio lives in `data/portfolio.json` and can be exported as Markdown.
 
 Deploying: any Node host with a persistent disk works. Without a persistent disk the store and portfolio reset on redeploy.
+
+## Landing page
+
+`docs/index.html` is a static landing page for the project. `.github/workflows/pages.yml` publishes it with GitHub Pages when `main` changes. One-time setup: in the repo go to **Settings → Pages → Build and deployment → Source: GitHub Actions**. The page describes the app; the app itself is a Node server you run yourself and is not hosted by Pages.

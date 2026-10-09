@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Marketing Brief</title>
+<meta name="description" content="A self-hosted marketing intelligence and portfolio site. Fresh campaigns and news from India and global sources, case-study breakdowns, and LinkedIn post drafts, with sourced facts kept separate from AI analysis.">
+<meta property="og:title" content="The Marketing Brief">
+<meta property="og:description" content="Fresh campaigns, news and case studies from India and the world. Sourced, dated, ready to turn into LinkedIn posts.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23e5381f'/%3E%3Ctext x='16' y='24' font-size='22' text-anchor='middle' fill='white' font-family='Georgia' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f3ec;--paper:#fffdf8;--ink:#14110f;--mute:#6b645b;--line:#dcd5c8;--accent:#e5381f;--accent-ink:#fff;--gen:#2f4bd6;--genbg:#e9edff;--ok:#1f8a4c;--code:#14110f;--code-ink:#f1ece3;--serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif}
+:root[data-theme=dark]{--bg:#121110;--paper:#1b1917;--ink:#f1ece3;--mute:#a39a8c;--line:#34302b;--accent:#ff5b3f;--accent-ink:#140a07;--gen:#9fb0ff;--genbg:#1e2440;--code:#0b0a09}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121110;--paper:#1b1917;--ink:#f1ece3;--mute:#a39a8c;--line:#34302b;--accent:#ff5b3f;--accent-ink:#140a07;--gen:#9fb0ff;--genbg:#1e2440;--code:#0b0a09}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--sans)}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.nav{display:flex;align-items:center;gap:18px;padding:16px 0;border-bottom:1px solid var(--line);font-size:14px}
+.nav .brand{font:900 20px var(--serif);text-decoration:none;letter-spacing:-.01em}.brand em{color:var(--accent)}
+.nav .sp{flex:1}.nav a.l{color:var(--mute);text-decoration:none}.nav a.l:hover{color:var(--ink)}
+.btn{display:inline-block;font:600 14px var(--sans);background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:99px;padding:11px 22px;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}.btn.ghost:hover{background:none;color:var(--ink);border-color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.hero{padding:72px 0 48px;text-align:left}
+.eyebrow{font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font:900 clamp(46px,9vw,112px)/.93 var(--serif);letter-spacing:-.035em;margin:14px 0 22px}
+h1 em{color:var(--accent);font-weight:700}
+.lede{max-width:640px;font-size:20px;color:var(--mute);margin:0 0 30px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+section{padding:56px 0;border-top:1px solid var(--line)}
+h2{font:900 clamp(30px,5vw,48px)/1.05 var(--serif);letter-spacing:-.02em;margin:10px 0 14px;max-width:18ch}
+.sub{color:var(--mute);max-width:60ch;margin:0 0 32px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:22px}
+.card h3{font:700 21px/1.15 var(--serif);margin:0 0 8px}.card p{margin:0;color:var(--mute);font-size:15px}
+.steps{grid-template-columns:repeat(4,1fr)}
+.num{font:900 40px var(--serif);color:var(--accent);line-height:1}
+.pill{display:inline-block;font:600 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
+.pill.src{border-color:var(--ok);color:var(--ok)}.pill.gen{border-color:var(--gen);color:var(--gen);background:var(--genbg)}
+/* illustrative mockup: placeholder text only, no real brands or campaigns */
+.mock{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.12)}
+.mock .bar{display:flex;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line)}.bar i{width:11px;height:11px;border-radius:50%;background:var(--line)}
+.mock .inner{padding:24px}
+.mock .tabs{display:flex;gap:18px;font:600 13px var(--sans);color:var(--mute);border-bottom:1px solid var(--line);margin-bottom:18px;overflow:hidden;white-space:nowrap}
+.mock .tabs b{color:var(--ink);border-bottom:3px solid var(--accent);padding-bottom:10px}
+.mgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+.ph{aspect-ratio:16/9;border-radius:4px;background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(127,127,127,.12) 10px 11px),var(--line);display:flex;align-items:flex-end;padding:12px;font:900 18px var(--serif);color:var(--mute)}
+.mock h4{font:900 26px/1.05 var(--serif);margin:12px 0 6px;letter-spacing:-.02em}
+.mock .meta{font-size:12px;color:var(--mute)}
+.line{height:10px;border-radius:5px;background:var(--line);margin:8px 0}.line.s{width:60%}
+.post{background:var(--bg);border-radius:6px;padding:14px;font-size:13px;color:var(--mute)}
+.cap{font-size:13px;color:var(--mute);margin-top:12px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.two .card ul{margin:10px 0 0;padding-left:18px;color:var(--mute);font-size:15px}
+pre{background:var(--code);color:var(--code-ink);border-radius:8px;padding:20px;overflow-x:auto;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0}
+.copy{margin-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chips span{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:6px 14px;font-size:14px}
+details{border-bottom:1px solid var(--line);padding:16px 0}summary{font:700 19px var(--serif);cursor:pointer}details p{color:var(--mute);margin:10px 0 0;max-width:70ch}
+footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+@media (max-width:980px){.steps{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){.steps{grid-template-columns:1fr}.mgrid,.two{grid-template-columns:1fr}.hero{padding-top:40px}.nav .l{display:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="#">The Marketing <em>Brief</em></a>
+    <span class="sp"></span>
+    <a class="l" href="#features">Features</a>
+    <a class="l" href="#trust">Sourced vs AI</a>
+    <a class="l" href="#start">Quick start</a>
+    <a class="btn ghost" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">GitHub ↗</a>
+  </nav>
+
+  <header class="hero">
+    <span class="eyebrow">Marketing intelligence · Personal portfolio</span>
+    <h1>Never start a LinkedIn post from a <em>blank page.</em></h1>
+    <p class="lede">The Marketing Brief pulls fresh campaigns, brand launches and marketing news from India and around the world, breaks them down into case studies, and drafts posts in a human voice. Every fact is sourced and dated, and the AI is clearly labelled.</p>
+    <div class="cta">
+      <a class="btn" href="#start">Run it in a minute</a>
+      <a class="btn ghost" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">View the repository</a>
+    </div>
+  </header>
+
+  <section aria-labelledby="preview-h" style="border-top:0;padding-top:16px">
+    <div class="mock" role="img" aria-label="Illustration of the Marketing Brief interface with placeholder content">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="inner">
+        <div class="tabs"><b>Everything</b><span>Campaigns</span><span>Case studies</span><span>News</span><span>My portfolio</span></div>
+        <div class="mgrid">
+          <div>
+            <div class="ph">Campaign image, credited to its publisher</div>
+            <span class="pill src" style="margin-top:12px">Sourced</span>
+            <h4 id="preview-h">Campaign headline appears here</h4>
+            <div class="meta">Publisher name · Published date · Read the original ↗</div>
+            <div class="line"></div><div class="line s"></div>
+          </div>
+          <div>
+            <span class="pill gen">AI-generated</span>
+            <div class="post" style="margin-top:10px"><b style="color:var(--ink)">LinkedIn draft</b><div class="line"></div><div class="line"></div><div class="line s"></div><br>[Your own take goes here]</div>
+            <div class="post" style="margin-top:10px"><b style="color:var(--ink)">Case study breakdown</b><br>Idea · Audience · Strategy · Execution · Why it worked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Illustration with placeholder content. Real stories load from live feeds when you run it.</p>
+  </section>
+
+  <section id="features" aria-labelledby="f-h">
+    <span class="eyebrow">What it does</span>
+    <h2 id="f-h">Everything between “saw it” and “posted it”.</h2>
+    <p class="sub">Built for marketers who want a steady stream of real material, not generic content.</p>
+    <div class="grid">
+      <div class="card"><h3>Auto-refreshing feed</h3><p>Pulls RSS from marketing publications on a schedule, with publication dates and a link to every original. Duplicate coverage is merged into one card.</p></div>
+      <div class="card"><h3>Campaigns and activations</h3><p>Browse by campaign, case study or news, filter by topic, and switch between India and global. Images and videos are credited and linked, never re-hosted.</p></div>
+      <div class="card"><h3>Case-study breakdowns</h3><p>Idea, audience, strategy, execution and why it worked. The AI writes “Not stated in the source” rather than guess, and shows how much of the article it read.</p></div>
+      <div class="card"><h3>LinkedIn drafts</h3><p>Three angles per story, written to avoid AI clichés and to leave [brackets] where your own experience belongs. Edit, count characters, copy.</p></div>
+      <div class="card"><h3>Your portfolio</h3><p>Save the stories you break down, with your notes and chosen draft. Export the lot as Markdown.</p></div>
+      <div class="card"><h3>Editorial, responsive UI</h3><p>Bold serif typography, featured section, search, dark mode and a layout that works on a phone. No framework and no dependencies.</p></div>
+    </div>
+  </section>
+
+  <section id="trust" aria-labelledby="t-h">
+    <span class="eyebrow">Built to be trusted</span>
+    <h2 id="t-h">Facts and AI are never blurred.</h2>
+    <p class="sub">If you post it under your name, you need to know what came from where.</p>
+    <div class="two">
+      <div class="card"><span class="pill src">Sourced</span><h3 style="margin-top:12px">From the publisher</h3>
+        <ul><li>Headline, outlet, publication date</li><li>Feed summary, image and video, with credit</li><li>A link to the original, always</li><li>Nothing is bundled or invented</li></ul></div>
+      <div class="card"><span class="pill gen">AI-generated</span><h3 style="margin-top:12px">Analysis you verify</h3>
+        <ul><li>Breakdowns limited to what the article says</li><li>Evidence basis and confidence shown</li><li>Drafts use only sourced facts</li><li>Works without a key: you get a worksheet and draft scaffolds</li></ul></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-h">
+    <span class="eyebrow">How it works</span>
+    <h2 id="h-h">Four steps, on repeat.</h2>
+    <div class="grid steps" style="margin-top:28px">
+      <div class="card"><div class="num">1</div><h3 style="margin-top:10px">Fetch</h3><p>Feeds are read in parallel and anything older than 60 days is dropped.</p></div>
+      <div class="card"><div class="num">2</div><h3 style="margin-top:10px">Dedupe</h3><p>Canonical URLs and headline similarity merge the same story across outlets.</p></div>
+      <div class="card"><div class="num">3</div><h3 style="margin-top:10px">Enrich</h3><p>Missing images, summaries and videos are read from the article's own metadata.</p></div>
+      <div class="card"><div class="num">4</div><h3 style="margin-top:10px">Create</h3><p>Open a story, get the breakdown and drafts, edit, and save to your portfolio.</p></div>
+    </div>
+  </section>
+
+  <section id="start" aria-labelledby="s-h">
+    <span class="eyebrow">Quick start</span>
+    <h2 id="s-h">Runs on Node. No dependencies.</h2>
+    <p class="sub">Requires Node 20 or newer. The first refresh starts automatically.</p>
+    <pre id="code"><code>git clone https://github.com/ishanihanda1709-debug/Linkedin-Automation.git
+cd Linkedin-Automation
+npm start
+
+# optional: AI breakdowns and drafts
+ANTHROPIC_API_KEY=your-key npm start</code></pre>
+    <button class="btn ghost copy" id="copy" type="button">Copy commands</button>
+    <p class="sub" style="margin-top:28px">Then open <b>http://127.0.0.1:3000</b>. Source feeds are listed in <code>sources.json</code> and their health appears in the app's Sources tab.</p>
+    <div class="chips" aria-label="Default sources">
+      <span>Ads of the World</span><span>Creative Review</span><span>Adweek</span><span>Marketing Dive</span><span>Marketing Week</span><span>Campaign</span><span>Digiday</span><span>Search Engine Land</span><span>MarTech</span><span>Campaign India</span><span>afaqs</span><span>exchange4media</span><span>BestMediaInfo</span><span>ET BrandEquity</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="q-h">
+    <span class="eyebrow">Good to know</span>
+    <h2 id="q-h">Honest answers.</h2>
+    <details><summary>Is this a hosted site?</summary><p>No. It is a small Node app you run yourself, because it fetches feeds and stores your portfolio on disk. This page only describes it. To host the app publicly, use any Node host with a persistent disk and set ACCESS_TOKEN.</p></details>
+    <details><summary>Does it show campaign launch dates?</summary><p>It shows publication dates. RSS feeds do not provide launch dates, and the app does not guess them.</p></details>
+    <details><summary>Do the feeds always work?</summary><p>Publishers change feed addresses. The Sources tab shows each feed's status and error, and you can fix or disable any of them in sources.json.</p></details>
+    <details><summary>Where do images and videos come from?</summary><p>From the publisher's feed or article page. They are linked with credit and not copied. Videos load only when you click play.</p></details>
+    <details><summary>Does it post to LinkedIn for me?</summary><p>No. It drafts, you edit and copy. Posting stays with you.</p></details>
+  </section>
+
+  <footer>
+    <span>The Marketing Brief · MIT licence</span>
+    <span><a href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Source on GitHub</a> · Headlines and images belong to their publishers.</span>
+  </footer>
+</div>
+<script>
+document.getElementById('copy').addEventListener('click', async (e) => {
+  try { await navigator.clipboard.writeText(document.getElementById('code').innerText); e.target.textContent = 'Copied'; }
+  catch { e.target.textContent = 'Select and copy manually'; }
+  setTimeout(() => (e.target.textContent = 'Copy commands'), 2000);
+});
+</script>
+</body>
+</html>
