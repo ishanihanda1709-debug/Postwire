@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseFeed, parseMeta } from '../lib/rss.js';
 import { canonicalUrl, jaccard, titleTokens } from '../lib/util.js';
 import { classify, detectRegion } from '../lib/classify.js';
-import { scaffoldPost } from '../lib/drafts.js';
+import { scaffoldPosts } from '../lib/drafts.js';
 
 const RSS = `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item><title><![CDATA[Brand X &amp; Y launch "Test" campaign]]></title><link>https://example.com/a?utm_source=rss</link>
@@ -58,9 +58,9 @@ test('parseMeta extracts og tags and resolves relative image', () => {
   assert.equal(m.description, 'Desc');
 });
 
-test('scaffold post asserts no unsourced facts', () => {
-  const p = scaffoldPost({ title: 'T', source: 'S', url: 'https://e.com' });
-  assert.match(p, /\[/);
-  assert.match(p, /Source: S$/);
-  assert.doesNotMatch(p, /\d{2,}/);
+test('scaffold posts: three angles, no unsourced facts', () => {
+  const ps = scaffoldPosts({ title: 'T', source: 'S', url: 'https://e.com' });
+  assert.equal(ps.length, 3);
+  assert.equal(new Set(ps.map((p) => p.angle)).size, 3);
+  for (const p of ps) { assert.match(p.text, /\[/); assert.match(p.text, /Source: S$/); assert.doesNotMatch(p.text, /\d{2,}/); }
 });

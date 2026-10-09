@@ -26,7 +26,7 @@ async function api(path, opts = {}) {
     const t = window.prompt('Access token required:');
     if (t) { sessionStorage.setItem('mb-token', t); return api(path, opts); }
   }
-  if (!res.ok && !data.post) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok && !data.posts) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
 }
 
@@ -91,47 +91,49 @@ function emptyState() {
 async function openItem(item) {
   const cur = { item, token: Math.random() }; state.cur = cur;
   $('#modal').hidden = false; document.body.style.overflow = 'hidden';
-  render(cur, { post: '', loading: true });
+  render(cur, { loading: true });
   $('#close').focus();
   await loadPost(cur, false);
 }
 
 async function loadPost(cur, force) {
-  render(cur, { post: cur.post ?? '', loading: true, keep: !!cur.post });
+  render(cur, { loading: true });
   try {
     const r = await api(`/api/items/${cur.item.id}/post`, { method: 'POST', body: { force } });
     if (state.cur !== cur) return;
-    cur.post = r.post; cur.card = r.card; cur.scaffold = !!r.scaffold; cur.error = r.error;
-    render(cur, { post: cur.post });
-  } catch (e) { toast(e.message); render(cur, { post: cur.post || '' }); }
+    cur.posts = r.posts; cur.scaffold = !!r.scaffold; cur.error = r.error; cur.active = 0;
+    render(cur, {});
+  } catch (e) { toast(e.message); render(cur, {}); }
 }
 
-function render(cur, { post, loading }) {
-  const { item } = cur;
-  const ta = h('textarea', { id: 'post', 'aria-label': 'LinkedIn post', placeholder: loading ? 'Writing your post…' : '' });
-  ta.value = post; ta.addEventListener('input', () => { cur.post = ta.value; $('#cc').textContent = `${ta.value.length} characters`; });
-  const ai = state.status?.aiEnabled;
+function render(cur, { loading }) {
+  const { item } = cur, posts = cur.posts || [], active = cur.active || 0, ai = state.status?.aiEnabled;
+  const ta = h('textarea', { id: 'post', 'aria-label': 'LinkedIn post', placeholder: loading ? 'Writing your post options…' : '' });
+  ta.value = posts[active]?.text || '';
+  ta.addEventListener('input', () => { posts[active].text = ta.value; $('#cc').textContent = `${ta.value.length} characters`; });
   $('#sheet-body').replaceChildren(
     h('h2', { id: 'm-title', text: item.title }),
     h('p', { class: 'facts' }, h('b', { text: item.source }), ` · ${fmtDate(item.publishedAt)} · `, h('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', text: 'Read the original ↗' })),
     h('div', { class: 'cols' },
       h('div', {},
-        h('h4', { text: 'Your LinkedIn post' }),
-        !ai ? h('div', { class: 'notice', text: 'This is an outline, not a finished post. To get a full post written in your voice, start the app with ANTHROPIC_API_KEY set (see README).' }) : null,
-        cur.error ? h('div', { class: 'notice', text: 'The AI call failed, so this is the outline instead: ' + cur.error }) : null,
+        h('h4', { text: loading ? 'Writing your post options…' : `Your LinkedIn post · ${posts.length} options` }),
+        !ai ? h('div', { class: 'notice', text: 'These are outlines, not finished posts. To get full posts written in your voice, start the app with ANTHROPIC_API_KEY set (see README).' }) : null,
+        cur.error ? h('div', { class: 'notice', text: 'The AI call failed, so these are outlines instead: ' + cur.error }) : null,
+        h('div', { class: 'opts', role: 'tablist' }, posts.map((p, i) => h('button', { class: 'chip' + (i === active ? ' on' : ''), type: 'button', role: 'tab', text: `${i + 1}. ${p.angle}`, onclick: () => { cur.active = i; render(cur, {}); } }))),
         ta,
         h('div', { class: 'row' },
-          h('button', { class: 'btn', disabled: !!loading, onclick: async () => { try { await navigator.clipboard.writeText(ta.value); toast('Copied. Paste it into LinkedIn.'); } catch { ta.select(); toast('Press Ctrl/Cmd+C to copy'); } }, text: 'Copy post' }),
-          ai ? h('button', { class: 'btn ghost', disabled: !!loading, onclick: () => loadPost(cur, true), text: '↻ Another version' }) : null,
-          h('span', { class: 'muted grow', id: 'cc', text: `${post.length} characters` }))),
+          h('button', { class: 'btn', disabled: !posts.length, onclick: async () => { try { await navigator.clipboard.writeText(ta.value); toast('Copied. Paste it into LinkedIn.'); } catch { ta.select(); toast('Press Ctrl/Cmd+C to copy'); } }, text: 'Copy this post' }),
+          ai ? h('button', { class: 'btn ghost', disabled: !!loading, onclick: () => loadPost(cur, true), text: '↻ More options' }) : null,
+          h('span', { class: 'muted grow', id: 'cc', text: `${ta.value.length} characters` }))),
       h('div', {}, h('h4', { text: 'Pictures for your post' }), h('div', { class: 'pics', id: 'pics' }))));
   if (!loading) renderPics(cur);
 }
 
 function renderPics(cur) {
   const { item } = cur, box = $('#pics');
-  const headline = cur.card?.headline || item.title;
-  const subline = cur.card?.subline || '';
+  const card = cur.posts?.[cur.active || 0]?.card;
+  const headline = card?.headline || item.title;
+  const subline = card?.subline || '';
   const author = state.status?.author || '';
   const add = (title, canvas, name, note) => {
     box.append(h('div', { class: 'pic' }, canvas, h('div', { class: 'row' },

@@ -13,7 +13,7 @@ npm test
 ## What you see
 
 - **Trending**: stories covered by several outlets, recent, with a picture, campaigns first. Tabs for **Campaigns** and **News**, an India / Global switch, and search.
-- **Click a story**: a LinkedIn post, ready to edit and copy, and pictures to go with it:
+- **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
   - a **text card** (your own graphic, 1080x1350) with the takeaway,
   - a **photo card** using the publisher's image,
   - the **original image** to download.

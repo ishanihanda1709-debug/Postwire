@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
 import { loadStore } from './lib/store.js';
 import { aiEnabled, writePost } from './lib/ai.js';
-import { scaffoldPost } from './lib/drafts.js';
+import { scaffoldPosts } from './lib/drafts.js';
 import { fetchImage } from './lib/image.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -85,9 +85,9 @@ async function route(req, res, url) {
     }
     if (m[2] === 'post' && req.method === 'POST') {
       const body = await readBody(req);
-      if (!aiEnabled()) return json(res, 200, { post: scaffoldPost(item), card: null, scaffold: true });
+      if (!aiEnabled()) return json(res, 200, { posts: scaffoldPosts(item), scaffold: true });
       try { return json(res, 200, await writePost(item, !!body.force)); }
-      catch (e) { return json(res, 502, { error: String(e.message), post: scaffoldPost(item), card: null, scaffold: true }); }
+      catch (e) { return json(res, 502, { error: String(e.message), posts: scaffoldPosts(item), scaffold: true }); }
     }
   }
 

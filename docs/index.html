@@ -65,6 +65,29 @@ pre{background:var(--code);color:var(--code-ink);border-radius:8px;padding:20px;
 details{border-bottom:1px solid var(--line);padding:16px 0}summary{font:700 19px var(--serif);cursor:pointer}details p{color:var(--mute);margin:10px 0 0;max-width:70ch}
 footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
 @media (max-width:980px){.steps{grid-template-columns:repeat(2,1fr)}}
+.mock .bar{align-items:center}.bar-t{margin-left:8px;font-size:12px;color:var(--mute)}
+.dtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.dtabs button{border:0;background:none;color:var(--mute);font:600 14px var(--sans);padding:8px 14px;border-radius:99px;cursor:pointer}
+.dtabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.dcard-btn{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:0;overflow:hidden;text-align:left;cursor:pointer;color:inherit;font:inherit;transition:transform .15s}
+.dcard-btn:hover,.dcard-btn[aria-expanded=true]{transform:translateY(-2px);border-color:var(--ink)}
+.dcard-btn .ph{border-radius:0;font-size:15px}
+.dcard-btn .t{padding:10px 12px 12px;font:700 17px/1.15 var(--serif)}.dcard-btn .m{display:block;font:400 12px var(--sans);color:var(--mute);margin-top:4px}
+.dpanel{margin-top:18px;border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--bg)}
+.dhead{display:flex;justify-content:space-between;gap:10px;font:700 18px var(--serif);margin-bottom:12px}
+.dclose{border:0;background:none;color:var(--ink);font-size:26px;line-height:1;cursor:pointer}
+.dcols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.dcols>*{min-width:0}
+.dopts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.dopts button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:99px;padding:5px 12px;font:500 13px var(--sans);cursor:pointer}
+.dopts button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.dpost{white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px;font:14px/1.6 var(--sans);margin:0 0 10px}
+.dcard{aspect-ratio:4/5;max-width:260px;background:#14110f;color:#f1ece3;border-radius:4px;padding:22px;display:flex;flex-direction:column;gap:10px;position:relative}
+.dcard b{font:900 22px/1.1 var(--serif)}.bar-a{width:36px;height:4px;background:#e5381f}.dcard small{position:absolute;left:22px;bottom:18px;font-size:10px;letter-spacing:.08em;color:#a39a8c}
+.dnote{font-size:13px;color:var(--mute);margin:8px 0 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[hidden]{display:none!important}
+@media (max-width:760px){.dcols{grid-template-columns:1fr}}
 @media (max-width:760px){.steps{grid-template-columns:1fr}.mgrid,.two{grid-template-columns:1fr}.hero{padding-top:40px}.nav .l{display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
@@ -90,27 +113,34 @@ footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
     </div>
   </header>
 
-  <section aria-labelledby="preview-h" style="border-top:0;padding-top:16px">
-    <div class="mock" role="img" aria-label="Illustration of the Marketing Brief interface with placeholder content">
-      <div class="bar"><i></i><i></i><i></i></div>
+  <section aria-labelledby="demo-h" style="border-top:0;padding-top:16px">
+    <div class="mock">
+      <div class="bar"><i></i><i></i><i></i><span class="bar-t">Interactive sample. Layout only, no real stories.</span></div>
       <div class="inner">
-        <div class="tabs"><b>Trending</b><span>Campaigns</span><span>News</span></div>
-        <div class="mgrid">
-          <div>
-            <div class="ph">Campaign image, credited to its publisher</div>
-            
-            <h4 id="preview-h">Campaign headline appears here</h4>
-            <div class="meta">Publisher name · Published date · Read the original ↗</div>
-            <div class="line"></div><div class="line s"></div>
-          </div>
-          <div>
-            <div class="post"><b style="color:var(--ink)">Your LinkedIn post</b><div class="line"></div><div class="line s"></div><div class="line"></div><div class="line s"></div></div>
-            <div class="post" style="margin-top:10px"><b style="color:var(--ink)">Pictures for your post</b><br>Text card · Photo card · Original image</div>
+        <h2 id="demo-h" class="sr">Try the layout</h2>
+        <div class="dtabs" id="dtabs" role="tablist" aria-label="Sections">
+          <button role="tab" data-k="trending" aria-selected="true">Trending</button>
+          <button role="tab" data-k="campaign" aria-selected="false">Campaigns</button>
+          <button role="tab" data-k="news" aria-selected="false">News</button>
+        </div>
+        <div class="dgrid" id="dgrid"></div>
+        <div class="dpanel" id="dpanel" hidden>
+          <div class="dhead"><b id="dtitle"></b><button class="dclose" id="dclose" type="button" aria-label="Close">×</button></div>
+          <div class="dcols">
+            <div>
+              <div class="dopts" id="dopts" role="tablist" aria-label="Post options"></div>
+              <pre class="dpost" id="dpost"></pre>
+              <button class="btn ghost" id="dcopy" type="button">Copy this post</button>
+            </div>
+            <div>
+              <div class="dcard"><span class="bar-a"></span><b>Takeaway headline for the picture card</b><small>SOURCE: PUBLISHER</small></div>
+              <p class="dnote">Text card, photo card and the original image are downloadable.</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <p class="cap">Illustration with placeholder content. Real stories load from live feeds when you run it.</p>
+    <p class="cap">Click a tab, then a card. In the real app the cards are live stories and the posts are written from the article, in your voice.</p>
   </section>
 
   <section id="features" aria-labelledby="f-h">
@@ -180,6 +210,17 @@ ANTHROPIC_API_KEY=your-key npm start</code></pre>
   </footer>
 </div>
 <script>
+
+const STORIES=[{k:'campaign',t:'Sample campaign headline one',m:'Brand A · Publisher'},{k:'campaign',t:'Sample campaign headline two',m:'Brand B · Publisher'},{k:'news',t:'Sample marketing news headline',m:'Publisher'},{k:'campaign',t:'Sample campaign headline three',m:'Brand C · Publisher'},{k:'news',t:'Another sample news headline',m:'Publisher'},{k:'news',t:'Sample industry report headline',m:'Publisher'}];
+const POSTS=[{a:'Story-led',x:'[A hook that makes people curious]\n\nWhat the brand actually did:\n[one line from the article]\n\nMost brands would have [the usual route].\n\nThis one [what was different].\n\nEveryone talks about [the launch].\nVery few notice [the lesson].\n\nSource: [Publisher]'},{a:'Lesson-led',x:'[The one lesson, in a sentence]\n\nWhat stood out:\n[detail 1]\n[detail 2]\n\nIf you work on [your area], steal this:\n[the takeaway]\n\nSource: [Publisher]'},{a:'Question-led',x:'[A sharp question about this move?]\n\nMy honest read:\n[what works]\n[what I am not sure about]\n\nWhat do you think?\n\nSource: [Publisher]'}];
+let tab='trending',open=-1,opt=0;
+const $=id=>document.getElementById(id);
+function grid(){const g=$('dgrid');g.replaceChildren();STORIES.forEach((s,i)=>{if(tab!=='trending'&&s.k!==tab)return;const b=document.createElement('button');b.type='button';b.className='dcard-btn';b.setAttribute('aria-expanded',String(open===i));const p=document.createElement('div');p.className='ph';p.textContent='Image';const t=document.createElement('div');t.className='t';t.textContent=s.t;const m=document.createElement('span');m.className='m';m.textContent=s.m;t.append(m);b.append(p,t);b.addEventListener('click',()=>{open=i;opt=0;grid();panel();$('dpanel').scrollIntoView({block:'nearest',behavior:'smooth'});});g.append(b);});}
+function panel(){const on=open>=0;$('dpanel').hidden=!on;if(!on)return;$('dtitle').textContent=STORIES[open].t;const o=$('dopts');o.replaceChildren();POSTS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(i===opt));b.textContent=(i+1)+'. '+p.a;b.addEventListener('click',()=>{opt=i;panel();});o.append(b);});$('dpost').textContent=POSTS[opt].x;}
+$('dtabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.k;open=-1;document.querySelectorAll('#dtabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));grid();panel();});
+$('dclose').addEventListener('click',()=>{open=-1;grid();panel();});
+$('dcopy').addEventListener('click',async e=>{try{await navigator.clipboard.writeText(POSTS[opt].x);e.target.textContent='Copied';}catch{e.target.textContent='Select and copy manually';}setTimeout(()=>e.target.textContent='Copy this post',1800);});
+grid();
 document.getElementById('copy').addEventListener('click', async (e) => {
   try { await navigator.clipboard.writeText(document.getElementById('code').innerText); e.target.textContent = 'Copied'; }
   catch { e.target.textContent = 'Select and copy manually'; }

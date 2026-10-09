@@ -61,14 +61,15 @@ test('refresh → dedupe → trending → post → image', async () => {
   // Without an API key the post route returns an honest outline.
   const post0 = await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{}' }).then((x) => x.json());
   assert.equal(post0.scaffold, true);
-  assert.match(post0.post, /Source: Outlet/);
+  assert.equal(post0.posts.length, 3);
+  assert.match(post0.posts[0].text, /Source: Outlet/);
 
   // With a key: mock the Anthropic endpoint, check prompt rules + caching.
   let calls = 0, lastBody;
   const fakeAi = http.createServer(async (rq, rs) => {
     calls++; let b = ''; for await (const c of rq) b += c; lastBody = JSON.parse(b);
     rs.setHeader('content-type', 'application/json');
-    rs.end(JSON.stringify({ content: [{ type: 'text', text: '{"post":"Hook line\\n\\nSource: Outlet A","card":{"headline":"Sharp takeaway","subline":"Short line"}}' }] }));
+    rs.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ posts: ['Story-led', 'Lesson-led', 'Question-led'].map((a) => ({ angle: a, post: `Hook ${a}\n\nSource: Outlet A`, card: { headline: 'Sharp takeaway', subline: 'Short line' } })) }) }] }));
   });
   await new Promise((ok) => fakeAi.listen(0, '127.0.0.1', ok));
   process.env.ANTHROPIC_API_KEY = 'test-key';
@@ -77,7 +78,10 @@ test('refresh → dedupe → trending → post → image', async () => {
   process.env.VOICE_FILE = path.join(dir, 'my-posts.md');
   const withKey = await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{}' }).then((x) => x.json());
   assert.equal(withKey.scaffold, undefined);
-  assert.equal(withKey.card.headline, 'Sharp takeaway');
+  assert.equal(withKey.posts.length, 3);
+  assert.equal(withKey.posts[1].angle, 'Lesson-led');
+  assert.equal(withKey.posts[0].card.headline, 'Sharp takeaway');
+  assert.match(lastBody.system, /THREE different/);
   assert.match(lastBody.system, /Do not invent personal experiences/);
   assert.match(lastBody.system, /EXAMPLE 1/);
   assert.doesNotMatch(lastBody.system, /Paste one of your own/);

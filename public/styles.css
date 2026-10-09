@@ -60,3 +60,4 @@ textarea{width:100%;min-height:420px;font:15px/1.6 var(--sans);color:var(--ink);
 @media (max-width:760px){.cols{grid-template-columns:1fr}.sheet{padding:20px 16px}textarea{min-height:360px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 [hidden]{display:none!important}
+.opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:99px;padding:6px 14px;font:500 13px var(--sans);cursor:pointer}.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
