@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
 import { loadStore, loadSaved, saveSaved } from './lib/store.js';
 import { sha } from './lib/util.js';
+import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
 import { aiEnabled, writePost } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
 import { fetchImage } from './lib/image.js';
@@ -23,6 +24,7 @@ const PUBLIC = path.join(__dirname, 'public');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
 const REFRESH_MINUTES = Number(process.env.REFRESH_MINUTES || 60);
+const REFRESH_TIMES = parseTimes(process.env.REFRESH_AT);
 const TOKEN = process.env.ACCESS_TOKEN || '';
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png' };
@@ -122,7 +124,7 @@ async function route(req, res, url) {
     for (const i of Object.values(store.items)) counts[i.kind] = (counts[i.kind] || 0) + 1;
     return json(res, 200, {
       updatedAt: store.updatedAt, lastRun: store.lastRun || null, refreshing: isRefreshing(), aiEnabled: aiEnabled(),
-      refreshMinutes: REFRESH_MINUTES, counts, author: process.env.AUTHOR_NAME || '',
+      refreshMinutes: REFRESH_MINUTES, refreshAt: REFRESH_TIMES, timezone: TIMEZONE, nextRefresh: REFRESH_TIMES.length ? nextLabel(REFRESH_TIMES) : null, counts, author: process.env.AUTHOR_NAME || '',
       sources: sources.map((s) => ({ id: s.id, name: s.name, region: s.region, ...(store.sources[s.id] || { ok: null }) })),
     });
   }
@@ -198,10 +200,22 @@ export function createServer() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   createServer().listen(PORT, HOST, async () => {
-    console.log(`The Marketing Brief running at http://${HOST}:${PORT}  (AI: ${aiEnabled() ? 'on' : 'off'}, refresh every ${REFRESH_MINUTES} min)`);
+    console.log(`The Marketing Brief running at http://${HOST}:${PORT}  (AI: ${aiEnabled() ? 'on' : 'off'}, refresh ${REFRESH_TIMES.length ? `daily at ${REFRESH_TIMES.join(', ')} ${TIMEZONE}` : `every ${REFRESH_MINUTES} min`})`);
     const store = await loadStore();
-    const stale = !store.updatedAt || Date.now() - Date.parse(store.updatedAt) > REFRESH_MINUTES * 60_000;
-    if (stale) refreshAll().then((r) => console.log('Initial refresh', r)).catch(console.error);
-    setInterval(() => refreshAll().then((r) => console.log('Scheduled refresh', r)).catch(console.error), REFRESH_MINUTES * 60_000).unref?.();
+    const run = (label) => refreshAll().then((r) => console.log(label, r)).catch(console.error);
+    if (REFRESH_TIMES.length) {
+      // Catch up if a slot was missed while the app was off, then check once a minute for the next slot.
+      if (isStale(store.updatedAt, REFRESH_TIMES)) run('Catch-up refresh');
+      let lastKey = '';
+      setInterval(() => {
+        const { ymd, hm } = localParts(new Date());
+        const key = `${ymd} ${hm}`;
+        if (REFRESH_TIMES.includes(hm) && key !== lastKey) { lastKey = key; run('Scheduled refresh'); }
+      }, 30_000).unref?.();
+    } else {
+      const stale = !store.updatedAt || Date.now() - Date.parse(store.updatedAt) > REFRESH_MINUTES * 60_000;
+      if (stale) run('Initial refresh');
+      setInterval(() => run('Scheduled refresh'), REFRESH_MINUTES * 60_000).unref?.();
+    }
   });
 }

@@ -4,6 +4,7 @@ import { parseFeed, parseMeta } from '../lib/rss.js';
 import { canonicalUrl, jaccard, titleTokens } from '../lib/util.js';
 import { classify, detectRegion } from '../lib/classify.js';
 import { scaffoldPosts } from '../lib/drafts.js';
+import { parseTimes, isStale, nextLabel } from '../lib/schedule.js';
 
 const RSS = `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item><title><![CDATA[Brand X &amp; Y launch "Test" campaign]]></title><link>https://example.com/a?utm_source=rss</link>
@@ -63,4 +64,18 @@ test('scaffold posts: three angles, no unsourced facts', () => {
   assert.equal(ps.length, 3);
   assert.equal(new Set(ps.map((p) => p.angle)).size, 3);
   for (const p of ps) { assert.match(p.text, /\[/); assert.match(p.text, /Source: S$/); assert.doesNotMatch(p.text, /\d{2,}/); }
+});
+
+test('daily schedule: parsing, catch-up and next label (Asia/Kolkata)', () => {
+  assert.deepEqual(parseTimes('9:00, 18:30,bad,25:00'), ['09:00', '18:30']);
+  const T = ['09:00'];
+  // 10:00 IST on 10 Oct = 04:30 UTC
+  const now = new Date('2026-10-10T04:30:00Z');
+  assert.equal(isStale('2026-10-09T05:00:00Z', T, now), true, 'last ran yesterday 10:30 IST, today 09:00 slot passed');
+  assert.equal(isStale('2026-10-10T03:45:00Z', T, now), false, 'ran at 09:15 IST today');
+  const early = new Date('2026-10-10T01:00:00Z'); // 06:30 IST, slot not yet reached
+  assert.equal(isStale('2026-10-09T05:00:00Z', T, early), false);
+  assert.equal(isStale('2026-10-08T00:00:00Z', T, early), true, 'older than 24h');
+  assert.equal(nextLabel(T, early), '9:00 am');
+  assert.equal(nextLabel(T, now), '9:00 am tomorrow');
 });

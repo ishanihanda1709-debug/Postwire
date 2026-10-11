@@ -93,7 +93,7 @@ function query() {
 async function loadStatus() {
   const s = await api('/api/status'); state.status = s;
   $('#dot').className = 'dot ' + (s.refreshing ? 'busy' : s.updatedAt ? 'ok' : '');
-  $('#status-text').textContent = s.refreshing ? 'Refreshing…' : s.updatedAt ? `Updated ${ago(s.updatedAt)}` : 'Not refreshed yet';
+  $('#status-text').textContent = s.refreshing ? 'Refreshing…' : s.updatedAt ? `Updated ${ago(s.updatedAt)}${s.nextRefresh ? ` · next ${s.nextRefresh}` : ''}` : 'Not refreshed yet';
   const ai = $('#ai'); ai.textContent = s.aiEnabled ? '✦ AI connected' : 'AI not connected'; ai.className = 'ai' + (s.aiEnabled ? '' : ' off');
   ai.title = s.aiEnabled ? 'Posts are written by the AI' : 'Add ANTHROPIC_API_KEY to a .env file and restart to get finished posts';
   return s;

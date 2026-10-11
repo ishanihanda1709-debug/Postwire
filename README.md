@@ -54,7 +54,9 @@ Without an API key you still get the stories and picture cards, and the post is 
 | Var | Default | |
 |---|---|---|
 | `PORT` / `HOST` | 3000 / 127.0.0.1 | Set `HOST=0.0.0.0` only behind auth |
-| `REFRESH_MINUTES` | 60 | Background refresh. Use 1440 for daily. It only runs while the server is running |
+| `REFRESH_MINUTES` | 60 | Background refresh interval. It only runs while the server is running |
+| `REFRESH_AT` | – | Refresh at fixed times instead, e.g. `09:00` or `09:00,18:00` (24h). If the app was off at that time, it catches up when it starts |
+| `APP_TIMEZONE` | Asia/Kolkata | Time zone for `REFRESH_AT` |
 | `ANTHROPIC_API_KEY` | – | Needed for finished posts |
 | `ANTHROPIC_MODEL` | claude-sonnet-5-5 | |
 | `AUTHOR_NAME` | – | Printed on the picture cards |
@@ -64,6 +66,10 @@ Without an API key you still get the stories and picture cards, and the post is 
 ## Sources
 
 `sources.json` lists the feeds (Ads of the World, Creative Review, Adweek, Marketing Dive, Marketing Week, Campaign, Digiday, Search Engine Land, Social Media Today, MarTech, Campaign India, afaqs, exchange4media, BestMediaInfo, ET BrandEquity, and two Google News searches for campaigns). Publishers move feed addresses. If a source fails, the empty-state message names it; fix or remove it in `sources.json`. These addresses could not be tested from the build sandbox, so expect to adjust a few on first run.
+
+## Where the data lives
+
+No database server. Everything is plain JSON files in `data/`: `store.json` (stories), `saved.json` (your saved posts) and `ai-cache.json` (generated posts, so a story is only written once). The app has its own built-in scheduler, so nothing else needs to be set up. Back up the `data/` folder to keep your saved posts.
 
 ## How refresh works
 
