@@ -143,6 +143,28 @@ test('refresh → dedupe → trending → post → image', async () => {
   await fetch(`${api}/api/voice/${added.id}`, { method: 'DELETE' });
   assert.equal((await get('/api/voice')).posts.length, 0);
 
+  // Free routes: chatbot prompt without any key, and an OpenAI-compatible provider
+  const savedKey = process.env.ANTHROPIC_API_KEY, savedUrl = process.env.ANTHROPIC_API_URL;
+  delete process.env.ANTHROPIC_API_KEY;
+  const pr = await fetch(`${api}/api/items/${camp.id}/prompt`, { method: 'POST', body: '{}' }).then((x) => x.json());
+  assert.match(pr.prompt, /THREE different LinkedIn posts/);
+  assert.match(pr.prompt, /HEADLINE: Fixtureco launches Spring campaign film/);
+  assert.match(pr.prompt, /Do not invent personal experiences/);
+  let compatReq;
+  const fakeCompat = http.createServer(async (rq, rs) => { let b = ''; for await (const c of rq) b += c; compatReq = { url: rq.url, auth: rq.headers.authorization, body: JSON.parse(b) }; rs.setHeader('content-type', 'application/json'); rs.end(JSON.stringify({ choices: [{ message: { content: 'Sure!\n```json\n{"posts":[{"angle":"Local","post":"Local model post","card":null}]}\n```' } }] })); });
+  await new Promise((ok) => fakeCompat.listen(0, '127.0.0.1', ok));
+  process.env.LLM_BASE_URL = `http://127.0.0.1:${fakeCompat.address().port}/v1`;
+  process.env.LLM_MODEL = 'llama3.1';
+  assert.equal((await get('/api/status')).aiEnabled, true);
+  const lc = await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{"force":true}' }).then((x) => x.json());
+  assert.equal(lc.posts[0].text, 'Local model post');
+  assert.equal(compatReq.url, '/v1/chat/completions');
+  assert.equal(compatReq.auth, undefined, 'no key header when LLM_API_KEY is unset');
+  assert.equal(compatReq.body.model, 'llama3.1');
+  assert.equal(compatReq.body.messages[0].role, 'system');
+  fakeCompat.close(); delete process.env.LLM_BASE_URL; delete process.env.LLM_MODEL;
+  process.env.ANTHROPIC_API_KEY = savedKey; process.env.ANTHROPIC_API_URL = savedUrl;
+
   // Image route: private hosts blocked by default, allowed (for this test) when opted in
   const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
   assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');

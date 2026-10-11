@@ -7,7 +7,7 @@ import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
 import { loadStore, loadSaved, saveSaved, loadVoice, saveVoice } from './lib/store.js';
 import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
-import { aiEnabled, writePost, voiceCount } from './lib/ai.js';
+import { aiEnabled, writePost, voiceCount, buildChatPrompt } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
 import { fetchImage } from './lib/image.js';
 
@@ -101,7 +101,7 @@ async function route(req, res, url) {
     return json(res, 200, { total: list.length, items: list.slice(offset, offset + limit).map(publicItem) });
   }
 
-  const m = p.match(/^\/api\/items\/([a-f0-9]+)\/(post|image)$/);
+  const m = p.match(/^\/api\/items\/([a-f0-9]+)\/(post|image|prompt)$/);
   if (m) {
     const store = await loadStore();
     const item = store.items[m[1]];
@@ -116,6 +116,7 @@ async function route(req, res, url) {
         return res.end(img.data);
       } catch (e) { return json(res, 502, { error: 'Could not fetch the image: ' + e.message }); }
     }
+    if (m[2] === 'prompt' && req.method === 'POST') return json(res, 200, { prompt: await buildChatPrompt(item) });
     if (m[2] === 'post' && req.method === 'POST') {
       const body = await readBody(req);
       if (!aiEnabled()) return json(res, 200, { posts: scaffoldPosts(item), scaffold: true });

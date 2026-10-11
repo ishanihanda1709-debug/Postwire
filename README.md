@@ -39,7 +39,13 @@ The easiest way: open the **My style** tab and paste 3 to 6 of your own posts, o
 
 LinkedIn does not allow automated reading of profiles or feeds, so the app cannot read your feed. Pasting your posts is the way to teach it your style.
 
-Without an API key you still get the stories and picture cards, and the post is an outline with `[blanks]` to fill in.
+### Free options
+
+- **No key (always free):** open a story and press **Copy prompt for a free chatbot**. The prompt includes the writing rules, your sample posts and the story. Paste it into Claude.ai, ChatGPT or Gemini, then copy the answer back.
+- **Free local AI:** install Ollama, run `ollama pull llama3.1`, and put `LLM_BASE_URL=http://localhost:11434/v1` and `LLM_MODEL=llama3.1` in `.env`. It costs nothing per use but needs a reasonably capable computer, and smaller models write less well and sometimes fail to return clean output.
+- **Other providers:** any service with an OpenAI-compatible API works through `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY`. Check the provider's own page for current free limits and terms.
+
+Without any of these you still get the stories and picture cards, and the post is an outline with `[blanks]` to fill in.
 
 ## Truthfulness
 
@@ -59,6 +65,7 @@ Without an API key you still get the stories and picture cards, and the post is 
 | `APP_TIMEZONE` | Asia/Kolkata | Time zone for `REFRESH_AT` |
 | `ANTHROPIC_API_KEY` | – | Needed for finished posts |
 | `ANTHROPIC_MODEL` | claude-sonnet-5-5 | |
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | – | Use any OpenAI-compatible AI instead of Anthropic (free tiers, local Ollama) |
 | `AUTHOR_NAME` | – | Printed on the picture cards |
 | `ACCESS_TOKEN` | – | If set, every API call needs it, so the site's data and your saved posts are private. The page asks for it once |
 | `VOICE_FILE`, `SOURCES_FILE`, `DATA_DIR` | voice/my-posts.md, sources.json, data/ | |

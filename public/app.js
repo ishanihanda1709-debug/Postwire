@@ -169,7 +169,11 @@ function render(cur, { loading }) {
     h('div', { class: 'cols' },
       h('div', {},
         h('h4', { text: loading ? 'Writing your post options…' : `Your LinkedIn post · ${posts.length} options` }),
-        !ai ? h('div', { class: 'notice', text: 'These are outlines, not finished posts. To get full posts written in your voice, start the app with ANTHROPIC_API_KEY set (see README).' }) : null,
+        !ai ? h('div', { class: 'notice' }, 'These are outlines. For free finished posts, copy the prompt below into Claude.ai, ChatGPT or Gemini and paste the answer back here. ',
+          h('button', { class: 'btn ghost', type: 'button', style: 'margin-top:8px', text: 'Copy prompt for a free chatbot', onclick: async () => {
+            try { const { prompt } = await api(`/api/items/${item.id}/prompt`, { method: 'POST', body: {} }); await navigator.clipboard.writeText(prompt); toast('Prompt copied. Paste it into a chatbot.'); }
+            catch (e) { toast(e.message || 'Could not copy the prompt'); }
+          } })) : null,
         ai && !state.status?.voiceCount ? h('div', { class: 'notice', text: 'Tip: add 3 or more of your own posts under "My style" so these sound like you.' }) : null,
         cur.error ? h('div', { class: 'notice', text: 'The AI call failed, so these are outlines instead: ' + cur.error }) : null,
         h('div', { class: 'opts', role: 'tablist' }, posts.map((p, i) => h('button', { class: 'chip' + (i === active ? ' on' : ''), type: 'button', role: 'tab', text: `${i + 1}. ${p.angle}`, onclick: () => { cur.active = i; render(cur, {}); } }))),
