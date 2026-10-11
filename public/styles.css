@@ -37,10 +37,12 @@ header.top{background:var(--cobalt);border-bottom:3px solid var(--edge);max-widt
 .linkbtn{background:none;border:0;padding:0;color:var(--mute);font:600 13px var(--sans);text-decoration:underline;cursor:pointer}.linkbtn.inv{color:var(--sun);margin-left:6px}
 .reset{text-align:center;margin:-34px 0 50px}
 .bar #shuffle{white-space:nowrap}
+.card>*{width:100%}
 .card{background:var(--paper);border:2px solid var(--edge);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;text-align:left;padding:0;color:inherit;font:inherit;box-shadow:6px 6px 0 var(--edge);transition:transform .12s,box-shadow .12s}
 .card:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--edge)}
-.media{position:relative;background:var(--sun);overflow:hidden;aspect-ratio:16/10;border-bottom:2px solid var(--edge)}
-.media img{width:100%;height:100%;object-fit:cover;display:block}
+.media{position:relative;width:100%;flex:none;background:var(--sun);overflow:hidden;aspect-ratio:16/10;border-bottom:2px solid var(--edge)}
+/* Absolute fill: Safari shrinks images and aspect-ratio boxes inside <button> otherwise. */
+.media img,.media .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .ph{width:100%;height:100%;display:flex;align-items:flex-end;padding:14px;font:800 28px/1 var(--display);letter-spacing:-.02em;color:#0b0b1e;background:var(--sun)}
 .ph.c1{background:var(--pink)}.ph.c2{background:var(--mint)}.ph.c3{background:var(--cobalt);color:#fff}
 .hot{position:absolute;left:10px;top:10px;background:var(--pink);color:#0b0b1e;border:2px solid var(--edge);font:700 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px}

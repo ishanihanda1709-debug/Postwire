@@ -51,6 +51,9 @@ test('refresh → dedupe → trending → post → image', async () => {
   assert.equal(camp.also.length, 1);
   assert.equal(camp.kind, 'campaign');
   assert.equal((await get('/api/items?kind=casestudy')).total, 1);
+  const cs = (await get('/api/items?kind=casestudy')).items[0];
+  assert.match(cs.image?.url || '', /\/pg\.jpg$/, 'story with no feed photo gets the article page og:image');
+  assert.equal(cs.image.credit, 'Outlet B');
   assert.equal((await get('/api/items?q=otherco')).total, 1);
   assert.equal((await get('/api/items?region=india')).total, 1);
 

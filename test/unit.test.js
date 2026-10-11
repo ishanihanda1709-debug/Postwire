@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseFeed, parseMeta } from '../lib/rss.js';
-import { canonicalUrl, jaccard, titleTokens } from '../lib/util.js';
+import { canonicalUrl, jaccard, titleTokens, cleanPublisher, looksLikeThumbnail } from '../lib/util.js';
 import { classify, detectRegion } from '../lib/classify.js';
 import { scaffoldPosts } from '../lib/drafts.js';
 import { parseTimes, isStale, nextLabel } from '../lib/schedule.js';
@@ -100,4 +100,13 @@ test('chatbot answer is split into options (several formats)', () => {
 test('headline comes from the user\'s own first line, capped at 12 words', () => {
   assert.equal(headlineFrom('\n\nShort hook\nmore'), 'Short hook');
   assert.equal(headlineFrom('one two three four five six seven eight nine ten eleven twelve thirteen'), 'one two three four five six seven eight nine ten eleven twelve…');
+});
+
+test('publisher names and thumbnail detection', () => {
+  assert.equal(cleanPublisher('https://safariindia.com/'), 'safariindia.com');
+  assert.equal(cleanPublisher('www.menafn.com'), 'menafn.com');
+  assert.equal(cleanPublisher('Adweek'), 'Adweek');
+  assert.equal(looksLikeThumbnail('https://x.com/thumb/123.cms?width=120'), true);
+  assert.equal(looksLikeThumbnail('https://x.com/img-150x100.jpg'), true);
+  assert.equal(looksLikeThumbnail('https://x.com/photos/big-campaign.jpg'), false);
 });
