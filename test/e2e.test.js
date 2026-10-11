@@ -95,6 +95,12 @@ test('refresh → dedupe → trending → post → image', async () => {
   const trending = await get('/api/items?sort=trending');
   assert.equal(trending.items[0].id, camp.id);
 
+  // Freshness: default window is 3 days; a tiny window leaves only the newest story
+  assert.equal((await get('/api/items')).total, 2);
+  assert.equal((await get('/api/items?days=0.1')).total, 1, '2.4h window: only the 2h-old story');
+  assert.equal((await get('/api/items?days=0.1&shuffle=3')).total, 1, 'shuffle respects freshness too');
+  assert.equal((await get('/api/status')).freshDays, 3);
+
   // Shuffle: same seed gives same order, exclude removes stories, different seed can reorder
   const sh1 = await get('/api/items?shuffle=7');
   const sh2 = await get('/api/items?shuffle=7');

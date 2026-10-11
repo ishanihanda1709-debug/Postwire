@@ -26,6 +26,7 @@ const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
 const REFRESH_MINUTES = Number(process.env.REFRESH_MINUTES || 60);
 const REFRESH_TIMES = parseTimes(process.env.REFRESH_AT);
+const FRESH_DAYS = Number(process.env.FRESH_DAYS || 3);
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png' };
 
@@ -88,6 +89,10 @@ async function route(req, res, url) {
       list = list.filter((i) => { const h = `${i.title} ${i.summary} ${i.source}`.toLowerCase(); return words.every((w) => h.includes(w)); });
     }
     const date = (i) => Date.parse(i.publishedAt || i.firstSeenAt) || 0;
+    // Freshness: only stories published within the last N days (default FRESH_DAYS=3). Undated stories are left out.
+    const days = Math.min(Math.max(Number(q.get('days')) || FRESH_DAYS, 0.01), 90);
+    const oldest = Date.now() - days * 86_400_000;
+    list = list.filter((i) => i.publishedAt && Date.parse(i.publishedAt) >= oldest);
     const exclude = new Set((q.get('exclude') || '').split(',').filter(Boolean).slice(0, 600));
     if (exclude.size) list = list.filter((i) => !exclude.has(i.id));
     const seed = Number(q.get('shuffle'));
@@ -132,7 +137,7 @@ async function route(req, res, url) {
     for (const i of Object.values(store.items)) counts[i.kind] = (counts[i.kind] || 0) + 1;
     return json(res, 200, {
       updatedAt: store.updatedAt, lastRun: store.lastRun || null, refreshing: isRefreshing(), aiEnabled: aiEnabled(),
-      voiceCount: await voiceCount(), refreshMinutes: REFRESH_MINUTES, refreshAt: REFRESH_TIMES, timezone: TIMEZONE, nextRefresh: REFRESH_TIMES.length ? nextLabel(REFRESH_TIMES) : null, counts, author: process.env.AUTHOR_NAME || '',
+      voiceCount: await voiceCount(), freshDays: FRESH_DAYS, refreshMinutes: REFRESH_MINUTES, refreshAt: REFRESH_TIMES, timezone: TIMEZONE, nextRefresh: REFRESH_TIMES.length ? nextLabel(REFRESH_TIMES) : null, counts, author: process.env.AUTHOR_NAME || '',
       sources: sources.map((s) => ({ id: s.id, name: s.name, region: s.region, ...(store.sources[s.id] || { ok: null }) })),
     });
   }

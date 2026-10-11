@@ -17,9 +17,9 @@ npm test
 - **Not for me (✕ on a card)**: hides that story for good, with Undo. Hidden stories are remembered in your browser only, and a link at the bottom brings them back.
 - **♡ Save this post**: in a story, saves the post you are looking at (and keeps your edits). Everything saved is under **♥ Saved**, where you can copy a post, open it in LinkedIn's post box (you review and post it yourself), delete it, or **Export all** as Markdown. Saved posts are stored in `data/saved.json`.
 - **Fetch new stories** (top right): checks the publications for anything new.
+- **Only fresh stories**: the page shows stories from the last 3 days by default (change with `FRESH_DAYS`, or use the 3 / 7 / 30 day switch). Cards show how old a story is, like "5 h ago" or "Yesterday".
 - **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
-  - a **text card** (your own graphic, 1080x1350) with the takeaway,
-  - a **photo card** using the publisher's image,
+  - a gallery of **ready-to-post creatives** in 3 LinkedIn sizes (portrait 4:5, square, landscape): four of your own graphics (Cobalt, Sunshine, Midnight quote, Pink poster) and, when the story has a publisher image, two photo styles. They contain only the headline, a one-line subtitle, the publisher and your name. Download as PNG and add to your post,
   - the **original image** to download.
 
 ## Posts in your voice
@@ -60,6 +60,7 @@ Without any of these you still get the stories and picture cards, and the post i
 | Var | Default | |
 |---|---|---|
 | `PORT` / `HOST` | 3000 / 127.0.0.1 | Set `HOST=0.0.0.0` only behind auth |
+| `FRESH_DAYS` | 3 | Only show stories published in the last N days, so posts stay relevant. The page also has a 3 / 7 / 30 day switch. Stories with no publish date are left out |
 | `REFRESH_MINUTES` | 60 | Background refresh interval. It only runs while the server is running |
 | `REFRESH_AT` | – | Refresh at fixed times instead, e.g. `09:00` or `09:00,18:00` (24h). If the app was off at that time, it catches up when it starts |
 | `APP_TIMEZONE` | Asia/Kolkata | Time zone for `REFRESH_AT` |

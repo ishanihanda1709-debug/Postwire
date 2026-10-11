@@ -1,6 +1,7 @@
 import { parseChatPosts, headlineFrom } from './parse.js';
+import { drawCreative, SIZES, TEMPLATES } from './creatives.js';
 const $ = (s, r = document) => r.querySelector(s);
-const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null, seed: 0, seen: new Set(), shown: [] };
+const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null, seed: 0, seen: new Set(), shown: [], days: 3 };
 // Stories the user hid with "Not for me". Stored in this browser only.
 let saved = new Map();
 let dismissed = new Set();
@@ -47,6 +48,14 @@ function toast(msg, action) {
   if (action) t.append(' ', h('button', { class: 'linkbtn inv', type: 'button', text: action.label, onclick: () => { action.run(); t.hidden = true; } }));
   t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), action ? 6000 : 2600);
 }
+function relDate(iso) {
+  if (!iso) return 'Date not given';
+  const hrs = Math.floor((Date.now() - Date.parse(iso)) / 3_600_000);
+  if (hrs < 1) return 'Just now';
+  if (hrs < 24) return `${hrs} h ago`;
+  if (hrs < 48) return 'Yesterday';
+  return fmtDate(iso);
+}
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date not given';
 function ago(iso) {
   if (!iso) return 'never';
@@ -65,7 +74,7 @@ function card(item, hot) {
   if (hot) media.append(h('span', { class: 'hot', text: `Covered by ${item.also.length + 1} outlets` }));
   const main = h('button', { class: 'card', type: 'button', onclick: () => openItem(item) }, media,
     h('div', { class: 'body' }, h('h3', { text: item.title }),
-      h('div', { class: 'meta' }, h('b', { text: item.source }), ' · ', fmtDate(item.publishedAt), item.region === 'india' ? ' · India' : '')));
+      h('div', { class: 'meta' }, h('b', { text: item.source }), ' · ', relDate(item.publishedAt), item.region === 'india' ? ' · India' : '')));
   const wrap = h('div', { class: 'cardw' }, main,
     h('button', { class: 'skip', type: 'button', title: 'Not for me: hide this story', 'aria-label': `Hide: ${item.title}`, text: '✕', onclick: () => hideItem(item, wrap) }));
   return wrap;
@@ -89,6 +98,7 @@ function query() {
   if (state.view === 'trending') p.set('sort', 'trending'); else p.set('kind', state.view);
   if (state.region !== 'all') p.set('region', state.region);
   if (state.q) p.set('q', state.q);
+  p.set('days', state.days);
   if (state.seed) p.set('shuffle', state.seed);
   const ex = [...dismissed, ...(state.seed ? state.seen : [])].slice(-500);
   if (ex.length) p.set('exclude', ex.join(','));
@@ -134,7 +144,8 @@ async function loadPage() {
 function emptyState() {
   const s = state.status;
   if (s && !s.updatedAt) return h('div', { class: 'empty' }, h('h3', { text: 'Fetching your first stories…' }), 'This takes under a minute.');
-  if (state.q || state.region !== 'all') return h('div', { class: 'empty' }, h('h3', { text: 'Nothing matches' }), 'Try a broader search.');
+  if (state.q || state.region !== 'all') return h('div', { class: 'empty' }, h('h3', { text: 'Nothing matches' }), `Nothing from the last ${state.days} days matches. Try a broader search, or choose 7 or 30 days.`);
+  if (s && s.updatedAt && state.days < 30 && !(s.sources || []).every((x) => x.ok === false)) return h('div', { class: 'empty' }, h('h3', { text: `Nothing from the last ${state.days} days` }), 'Pick 7 or 30 days above to see older stories, or press Fetch new stories.');
   const bad = (s?.sources || []).filter((x) => x.ok === false);
   return h('div', { class: 'empty' }, h('h3', { text: 'No stories yet' }),
     bad.length ? `${bad.length} of ${s.sources.length} sources failed. First error: ${bad[0].name}: ${bad[0].error}. Fix or disable them in sources.json.` : 'Press Refresh to fetch stories.');
@@ -214,63 +225,35 @@ function renderPics(cur) {
 
 function drawPics(cur) {
   const { item } = cur, box = $('#pics');
-  box.replaceChildren();
+  const size = cur.size || 'portrait';
   const card = cur.posts?.[cur.active || 0]?.card;
   const headline = card?.headline || item.title;
   const subline = card?.subline || '';
   const author = state.status?.author || '';
-  const add = (title, canvas, name, note) => {
-    box.append(h('div', { class: 'pic' }, canvas, h('div', { class: 'row' },
-      h('button', { class: 'btn ghost', onclick: () => canvas.toBlob((b) => { const a = h('a', { href: URL.createObjectURL(b), download: name }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png'), text: `Download ${title}` }),
-      h('span', { class: 'cap', text: note }))));
-  };
   const imgUrl = `/api/items/${item.id}/image`;
-  const done = (src) => {
-    add('text card', drawCard({ headline, subline, source: item.source, author }), 'text-card.png', 'Your own graphic. Free to post.');
-    if (src) add('photo card', drawCard({ headline, subline, source: item.source, author, photo: src }), 'photo-card.png', `Uses the publisher's image (${item.image.credit}). Credit them in your post.`);
-  };
-  if (!item.image) { done(null); return; }
-  const img = new Image();
-  img.onload = () => {
-    done(img);
-    box.append(h('div', { class: 'pic' }, h('img', { src: imgUrl, alt: '' }), h('div', { class: 'row' },
-      h('a', { class: 'btn ghost', href: imgUrl + '?download=1', text: 'Download original image' }),
-      h('span', { class: 'cap', text: `Image: ${item.image.credit}. Belongs to the publisher. Credit them or check usage rights before posting.` }))));
-  };
-  img.onerror = () => done(null);
-  img.src = imgUrl;
-}
 
-// 1080x1350 (LinkedIn portrait). Text and layout are drawn here; nothing is invented.
-function drawCard({ headline, subline, source, author, photo }) {
-  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d');
-  const disp = '"Bricolage Grotesque", "Arial Black", sans-serif', sans = '"DM Sans", system-ui, sans-serif';
-  x.fillStyle = '#3b4bff'; x.fillRect(0, 0, W, H);
-  if (photo) {
-    const r = Math.max(W / photo.width, (H * 0.5) / photo.height), pw = photo.width * r, ph = photo.height * r;
-    x.save(); x.beginPath(); x.rect(0, 0, W, H * 0.5); x.clip(); x.drawImage(photo, (W - pw) / 2, (H * 0.5 - ph) / 2, pw, ph); x.restore();
-    x.fillStyle = '#0b0b1e'; x.fillRect(0, H * 0.5 - 6, W, 12);
-  }
-  x.textBaseline = 'top';
-  const top = photo ? 760 : 170, size = headline.length > 70 ? 64 : headline.length > 45 ? 78 : 94;
-  if (!photo) { x.fillStyle = '#ffd43b'; x.fillRect(80, 110, 120, 16); }
-  x.fillStyle = '#ffffff'; x.font = `800 ${size}px ${disp}`;
-  const y = wrap(x, headline, 80, top, W - 160, size * 1.05);
-  if (subline) { x.fillStyle = '#dfe2ff'; x.font = `500 38px ${sans}`; wrap(x, subline, 80, y + 26, W - 160, 52); }
-  x.fillStyle = '#ffd43b'; x.fillRect(0, H - 150, W, 150);
-  x.fillStyle = '#0b0b1e'; x.font = `700 28px ${sans}`; x.textBaseline = 'middle';
-  x.fillText(`SOURCE: ${source}`.toUpperCase().slice(0, 40), 80, H - 75);
-  if (author) { x.textAlign = 'right'; x.fillText(author, W - 80, H - 75); x.textAlign = 'left'; }
-  return c;
-}
-function wrap(x, text, left, top, max, lh) {
-  let line = '', y = top;
-  for (const w of text.split(/\s+/)) {
-    const t = line ? `${line} ${w}` : w;
-    if (x.measureText(t).width > max && line) { x.fillText(line, left, y); y += lh; line = w; } else line = t;
-  }
-  x.fillText(line, left, y); return y + lh;
+  const build = (photo) => {
+    box.replaceChildren(
+      h('div', { class: 'sizes', role: 'group', 'aria-label': 'Creative size' }, Object.entries(SIZES).map(([k, s]) =>
+        h('button', { class: 'chip' + (k === size ? ' on' : ''), type: 'button', text: s.label, onclick: () => { cur.size = k; drawPics(cur); } }))),
+      h('p', { class: 'muted', text: `${TEMPLATES.filter((t) => (photo || !t.photo) && !(t.not || []).includes(size)).length} ready-to-post creatives. Tap Download, then add the image to your LinkedIn post.` }),
+      h('div', { class: 'pic-grid' }, TEMPLATES.filter((t) => (photo || !t.photo) && !(t.not || []).includes(size)).map((t) => {
+        const canvas = drawCreative({ template: t.id, size, headline, subline, source: item.source, author, photo: t.photo ? photo : null });
+        return h('div', { class: 'pic' }, canvas,
+          h('div', { class: 'pic-foot' }, h('b', { text: t.label }),
+            h('button', { class: 'btn ghost', type: 'button', text: 'Download', onclick: () => canvas.toBlob((b) => { const a = h('a', { href: URL.createObjectURL(b), download: `${t.id}-${size}.png` }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png') })),
+          h('span', { class: 'cap', text: t.photo ? `Uses ${item.image.credit}'s image. Credit them in your post.` : 'Your own graphic. Free to post.' }));
+      })),
+      photo ? h('div', { class: 'pic' }, h('img', { src: imgUrl, alt: '' }), h('div', { class: 'pic-foot' },
+        h('b', { text: 'Original image' }), h('a', { class: 'btn ghost', href: imgUrl + '?download=1', text: 'Download' })),
+        h('span', { class: 'cap', text: `Image: ${item.image.credit}. Belongs to the publisher. Credit them or check usage rights before posting.` })) : null,
+      !photo ? h('p', { class: 'muted', text: item.image ? 'The publisher image could not be loaded, so photo creatives are hidden.' : 'This story has no publisher image, so photo creatives are hidden.' }) : null);
+  };
+  if (!item.image) { build(null); return; }
+  const img = new Image();
+  img.onload = () => build(img);
+  img.onerror = () => build(null);
+  img.src = imgUrl;
 }
 
 // ---------- saved posts ----------
@@ -340,7 +323,7 @@ let debounce; $('#q').addEventListener('input', (e) => { clearTimeout(debounce);
 function showView() {
   const other = ['saved', 'style'].includes(state.view);
   // 'more' and 'reset' visibility is managed by loadPage/updateReset, so only force them hidden here.
-  for (const id of ['grid', 'shuffle', 'region']) $('#' + id).hidden = other;
+  for (const id of ['grid', 'shuffle', 'region', 'age']) $('#' + id).hidden = other;
   $('#q').closest('.search').hidden = other;
   if (other) { $('#more').hidden = true; $('#reset').hidden = true; }
   $('#saved').hidden = state.view !== 'saved';
@@ -368,6 +351,10 @@ $('#refresh').addEventListener('click', async () => { await api('/api/refresh', 
 
 (async function init() {
   const s = await loadStatus();
+  state.days = s.freshDays || 3;
+  const opts = [...new Set([state.days, 7, 30])].sort((a, b) => a - b);
+  $('#age').replaceChildren(...opts.map((d) => h('button', { 'data-d': d, class: d === state.days ? 'on' : '', type: 'button', text: d === 1 ? '24 h' : `${d} days` })));
+  $('#age').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.days = Number(b.dataset.d); resetShuffle(); document.querySelectorAll('#age button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
   updateReset();
   await loadSaved();
   await reload();
