@@ -31,7 +31,11 @@ async function api(path, opts = {}) {
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) {
     const t = window.prompt('Access token required:');
-    if (t) { sessionStorage.setItem('mb-token', t); return api(path, opts); }
+    if (t) {
+      sessionStorage.setItem('mb-token', t);
+      document.cookie = `mb_token=${encodeURIComponent(t)}; path=/; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;  // lets downloads and images carry it too
+      return api(path, opts);
+    }
   }
   if (!res.ok && !data.posts) throw new Error(data.error || `Request failed (${res.status})`);
   return data;

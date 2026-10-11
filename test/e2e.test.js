@@ -116,6 +116,16 @@ test('refresh → dedupe → trending → post → image', async () => {
   await fetch(`${api}/api/saved/${sv1.id}`, { method: 'DELETE' });
   assert.equal((await get('/api/saved')).entries.length, 0);
 
+  // ACCESS_TOKEN locks every API call, accepts header or cookie, and rejects wrong tokens
+  process.env.ACCESS_TOKEN = 'secret-token-123';
+  assert.equal((await fetch(`${api}/api/items`)).status, 401);
+  assert.equal((await fetch(`${api}/api/saved`)).status, 401);
+  assert.equal((await fetch(`${api}/api/items`, { headers: { 'x-access-token': 'wrong' } })).status, 401);
+  assert.equal((await fetch(`${api}/api/items`, { headers: { 'x-access-token': 'secret-token-123' } })).status, 200);
+  assert.equal((await fetch(`${api}/api/saved`, { headers: { cookie: 'mb_token=secret-token-123' } })).status, 200);
+  assert.equal((await fetch(`${api}/`)).status, 200, 'the page itself stays reachable so it can ask for the token');
+  delete process.env.ACCESS_TOKEN;
+
   // Image route: private hosts blocked by default, allowed (for this test) when opted in
   const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
   assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');

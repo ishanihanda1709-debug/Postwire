@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { promises as fs } from 'node:fs';
+import { timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
@@ -25,7 +26,6 @@ const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
 const REFRESH_MINUTES = Number(process.env.REFRESH_MINUTES || 60);
 const REFRESH_TIMES = parseTimes(process.env.REFRESH_AT);
-const TOKEN = process.env.ACCESS_TOKEN || '';
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png' };
 
@@ -63,8 +63,15 @@ async function route(req, res, url) {
   const p = url.pathname;
   const q = url.searchParams;
 
+  // With ACCESS_TOKEN set, every API call needs it (header, or the cookie the page sets after you enter it).
+  const TOKEN = process.env.ACCESS_TOKEN || '';
+  if (TOKEN && p.startsWith('/api/')) {
+    const cookie = /(?:^|;\s*)mb_token=([^;]*)/.exec(req.headers.cookie || '')?.[1];
+    const given = String(req.headers['x-access-token'] ?? (cookie ? decodeURIComponent(cookie) : ''));
+    const a = Buffer.from(given), b = Buffer.from(TOKEN);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return json(res, 401, { error: 'Access token required' });
+  }
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
-    if (TOKEN && req.headers['x-access-token'] !== TOKEN) return json(res, 401, { error: 'Access token required' });
     const origin = req.headers.origin;
     if (origin && new URL(origin).host !== req.headers.host) return json(res, 403, { error: 'Cross-origin request blocked' });
   }

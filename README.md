@@ -60,8 +60,23 @@ Without an API key you still get the stories and picture cards, and the post is 
 | `ANTHROPIC_API_KEY` | – | Needed for finished posts |
 | `ANTHROPIC_MODEL` | claude-sonnet-5-5 | |
 | `AUTHOR_NAME` | – | Printed on the picture cards |
-| `ACCESS_TOKEN` | – | If set, write endpoints need header `x-access-token` (the UI prompts for it) |
+| `ACCESS_TOKEN` | – | If set, every API call needs it, so the site's data and your saved posts are private. The page asks for it once |
 | `VOICE_FILE`, `SOURCES_FILE`, `DATA_DIR` | voice/my-posts.md, sources.json, data/ | |
+
+## Going live checklist
+
+Secrets (set them in your host's environment settings, never in the repo):
+
+1. `ANTHROPIC_API_KEY`: your Anthropic key. Set a monthly spend limit for it in the Anthropic console.
+2. `ACCESS_TOKEN`: a long random string you invent (for example 32+ characters). Without it, anyone with the link can read the site and your saved posts.
+
+Settings:
+
+3. `HOST=0.0.0.0` (the host usually sets `PORT` itself).
+4. `DATA_DIR` pointing at a persistent disk, so stories and saved posts survive redeploys. Put your `my-posts.md` in the same folder.
+5. `AUTHOR_NAME`, `REFRESH_AT=09:00` and `APP_TIMEZONE` if you want them.
+
+Use HTTPS (hosts like Render, Railway and Fly.io provide it). No other keys are needed: the news feeds are public.
 
 ## Sources
 
