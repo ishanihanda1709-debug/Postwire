@@ -41,7 +41,7 @@ LinkedIn does not allow automated reading of profiles or feeds, so the app canno
 
 ### Free options
 
-- **No key (always free):** open a story and press **Copy prompt for a free chatbot**. The prompt includes the writing rules, your sample posts and the story. Paste it into Claude.ai, ChatGPT or Gemini, then copy the answer back.
+- **No key (always free):** open a story and press **1. Copy prompt for a free chatbot**. The prompt includes the writing rules, your sample posts and the story. Paste it into Claude.ai, ChatGPT or Gemini, then press **2. Paste the answer** and paste the reply. The app splits it into three options you can edit, save with ♥, and pair with picture cards (the card headline is the first line of your post). Pasted posts are kept only if you save them.
 - **Free local AI:** install Ollama, run `ollama pull llama3.1`, and put `LLM_BASE_URL=http://localhost:11434/v1` and `LLM_MODEL=llama3.1` in `.env`. It costs nothing per use but needs a reasonably capable computer, and smaller models write less well and sometimes fail to return clean output.
 - **Other providers:** any service with an OpenAI-compatible API works through `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY`. Check the provider's own page for current free limits and terms.
 

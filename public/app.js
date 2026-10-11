@@ -1,3 +1,4 @@
+import { parseChatPosts, headlineFrom } from './parse.js';
 const $ = (s, r = document) => r.querySelector(s);
 const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null, seed: 0, seen: new Set(), shown: [] };
 // Stories the user hid with "Not for me". Stored in this browser only.
@@ -169,11 +170,7 @@ function render(cur, { loading }) {
     h('div', { class: 'cols' },
       h('div', {},
         h('h4', { text: loading ? 'Writing your post options…' : `Your LinkedIn post · ${posts.length} options` }),
-        !ai ? h('div', { class: 'notice' }, 'These are outlines. For free finished posts, copy the prompt below into Claude.ai, ChatGPT or Gemini and paste the answer back here. ',
-          h('button', { class: 'btn ghost', type: 'button', style: 'margin-top:8px', text: 'Copy prompt for a free chatbot', onclick: async () => {
-            try { const { prompt } = await api(`/api/items/${item.id}/prompt`, { method: 'POST', body: {} }); await navigator.clipboard.writeText(prompt); toast('Prompt copied. Paste it into a chatbot.'); }
-            catch (e) { toast(e.message || 'Could not copy the prompt'); }
-          } })) : null,
+        !ai ? freeBox(cur) : null,
         ai && !state.status?.voiceCount ? h('div', { class: 'notice', text: 'Tip: add 3 or more of your own posts under "My style" so these sound like you.' }) : null,
         cur.error ? h('div', { class: 'notice', text: 'The AI call failed, so these are outlines instead: ' + cur.error }) : null,
         h('div', { class: 'opts', role: 'tablist' }, posts.map((p, i) => h('button', { class: 'chip' + (i === active ? ' on' : ''), type: 'button', role: 'tab', text: `${i + 1}. ${p.angle}`, onclick: () => { cur.active = i; render(cur, {}); } }))),
@@ -185,6 +182,30 @@ function render(cur, { loading }) {
           h('span', { class: 'muted grow', id: 'cc', text: `${ta.value.length} characters` }))),
       h('div', {}, h('h4', { text: 'Pictures for your post' }), h('div', { class: 'pics', id: 'pics' }))));
   if (!loading) renderPics(cur);
+}
+
+// No-key flow: copy a prompt for a free chatbot, then paste its answer back to get three editable options.
+function freeBox(cur) {
+  const { item } = cur;
+  const copy = h('button', { class: 'btn ghost', type: 'button', text: '1. Copy prompt for a free chatbot', onclick: async () => {
+    try { const { prompt } = await api(`/api/items/${item.id}/prompt`, { method: 'POST', body: {} }); await navigator.clipboard.writeText(prompt); toast('Prompt copied. Paste it into Claude.ai, ChatGPT or Gemini.'); }
+    catch (e) { toast(e.message || 'Could not copy the prompt'); }
+  } });
+  if (!cur.pasting) {
+    return h('div', { class: 'notice' }, cur.pasted ? 'Using the posts you pasted. Edit them below.' : 'These are outlines. For finished posts at no cost, use a free chatbot: ',
+      h('div', { class: 'row' }, copy, h('button', { class: 'btn ghost', type: 'button', text: '2. Paste the answer', onclick: () => { cur.pasting = true; render(cur, {}); } })));
+  }
+  const ta = h('textarea', { id: 'paste-in', 'aria-label': 'Paste the chatbot answer', style: 'min-height:160px', placeholder: 'Paste the chatbot\'s whole answer here…' });
+  return h('div', { class: 'notice' }, 'Paste the chatbot\'s answer. It is split into separate options automatically.', ta,
+    h('div', { class: 'row' },
+      h('button', { class: 'btn', type: 'button', text: 'Use these posts', onclick: () => {
+        const parsed = parseChatPosts(ta.value);
+        if (!parsed.length) { toast('Nothing to use yet. Paste the chatbot answer first.'); return; }
+        cur.posts = parsed.map((p) => ({ angle: p.angle, text: p.text, card: { headline: headlineFrom(p.text), subline: '' } }));
+        cur.active = 0; cur.pasting = false; cur.pasted = true; cur.scaffold = false; render(cur, {});
+        toast(`${parsed.length} ${parsed.length === 1 ? 'post' : 'options'} ready.`);
+      } }),
+      h('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => { cur.pasting = false; render(cur, {}); } })));
 }
 
 function renderPics(cur) {
