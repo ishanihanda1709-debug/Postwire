@@ -170,6 +170,7 @@ function render(cur, { loading }) {
       h('div', {},
         h('h4', { text: loading ? 'Writing your post options…' : `Your LinkedIn post · ${posts.length} options` }),
         !ai ? h('div', { class: 'notice', text: 'These are outlines, not finished posts. To get full posts written in your voice, start the app with ANTHROPIC_API_KEY set (see README).' }) : null,
+        ai && !state.status?.voiceCount ? h('div', { class: 'notice', text: 'Tip: add 3 or more of your own posts under "My style" so these sound like you.' }) : null,
         cur.error ? h('div', { class: 'notice', text: 'The AI call failed, so these are outlines instead: ' + cur.error }) : null,
         h('div', { class: 'opts', role: 'tablist' }, posts.map((p, i) => h('button', { class: 'chip' + (i === active ? ' on' : ''), type: 'button', role: 'tab', text: `${i + 1}. ${p.angle}`, onclick: () => { cur.active = i; render(cur, {}); } }))),
         ta,
@@ -287,6 +288,24 @@ async function renderSaved() {
     ) : h('div', { class: 'empty' }, h('h3', { text: 'Nothing saved yet' }), 'Open a story and press ♡ Save this post. Saved posts live here so you can copy or share them later.'));
 }
 
+// ---------- my style (sample posts) ----------
+async function renderStyle() {
+  const { posts } = await api('/api/voice');
+  $('#style-n').textContent = posts.length || '';
+  const ta = h('textarea', { id: 'style-in', 'aria-label': 'Paste one of your LinkedIn posts', placeholder: 'Paste one of your own LinkedIn posts here, exactly as you posted it…' });
+  const add = h('button', { class: 'btn', type: 'button', text: 'Add to my style', onclick: async () => {
+    try { await api('/api/voice', { method: 'POST', body: { text: ta.value } }); toast('Added. New posts will follow this style.'); renderStyle(); }
+    catch (e) { toast(e.message); }
+  } });
+  $('#style').replaceChildren(
+    h('div', { class: 'style-box' },
+      h('h2', { text: 'My style' }),
+      h('p', { text: 'Paste 3 to 6 of your own LinkedIn posts, one at a time. The app copies your rhythm, tone and word choices, not your content. Stories you already opened keep their old posts until you press "More options".' }),
+      ta, h('div', { class: 'row' }, add, h('span', { class: 'muted', text: `${posts.length} saved${posts.length >= 3 ? '' : ' · 3 or more works best'}` }))),
+    h('div', { class: 'style-list' }, posts.map((p) => h('article', { class: 'sp' }, h('pre', { text: p.text }),
+      h('button', { class: 'btn ghost', type: 'button', text: 'Delete', onclick: async () => { await api('/api/voice/' + p.id, { method: 'DELETE' }); renderStyle(); } })))));
+}
+
 function closeModal() { $('#modal').hidden = true; document.body.style.overflow = ''; state.cur = null; }
 
 // ---------- wiring ----------
@@ -294,13 +313,16 @@ $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button
 $('#region').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.region = b.dataset.r; resetShuffle(); document.querySelectorAll('#region button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
 let debounce; $('#q').addEventListener('input', (e) => { clearTimeout(debounce); debounce = setTimeout(() => { state.q = e.target.value.trim(); resetShuffle(); reload(); }, 250); });
 function showView() {
-  const s = state.view === 'saved';
+  const other = ['saved', 'style'].includes(state.view);
   // 'more' and 'reset' visibility is managed by loadPage/updateReset, so only force them hidden here.
-  for (const id of ['grid', 'shuffle', 'region']) $('#' + id).hidden = s;
-  $('#q').closest('.search').hidden = s;
-  if (s) { $('#more').hidden = true; $('#reset').hidden = true; }
-  $('#saved').hidden = !s;
-  if (s) renderSaved(); else { updateReset(); reload(); }
+  for (const id of ['grid', 'shuffle', 'region']) $('#' + id).hidden = other;
+  $('#q').closest('.search').hidden = other;
+  if (other) { $('#more').hidden = true; $('#reset').hidden = true; }
+  $('#saved').hidden = state.view !== 'saved';
+  $('#style').hidden = state.view !== 'style';
+  if (state.view === 'saved') renderSaved();
+  else if (state.view === 'style') renderStyle();
+  else { updateReset(); reload(); }
 }
 const resetShuffle = () => { state.seed = 0; state.seen = new Set(); };
 $('#shuffle').addEventListener('click', shuffle);

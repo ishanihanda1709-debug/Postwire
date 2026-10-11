@@ -35,7 +35,7 @@ npm start
 
 The post format is: a curiosity hook, one idea per line, a turn, the real lesson, a short contrast line ("Everyone talks about X. Very few notice Y."), then a source line. It is 110 to 170 words.
 
-To make it sound like you, copy `voice/my-posts.example.md` to `voice/my-posts.md` and paste 3 to 6 of your own past posts, separated by `---`. The app matches your rhythm and tone and never copies your content. The file is git-ignored.
+The easiest way: open the **My style** tab and paste 3 to 6 of your own posts, one at a time. They are stored in `data/voice.json`. Alternatively, copy `voice/my-posts.example.md` to `voice/my-posts.md` and paste 3 to 6 of your own past posts, separated by `---`. The app matches your rhythm and tone and never copies your content. The file is git-ignored.
 
 LinkedIn does not allow automated reading of profiles or feeds, so the app cannot read your feed. Pasting your posts is the way to teach it your style.
 

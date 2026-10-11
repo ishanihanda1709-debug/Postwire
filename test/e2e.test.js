@@ -126,6 +126,23 @@ test('refresh → dedupe → trending → post → image', async () => {
   assert.equal((await fetch(`${api}/`)).status, 200, 'the page itself stays reachable so it can ask for the token');
   delete process.env.ACCESS_TOKEN;
 
+  // My style: add / list / validate / delete, and the pasted post reaches the AI prompt
+  const short = await fetch(`${api}/api/voice`, { method: 'POST', body: JSON.stringify({ text: 'too short' }) });
+  assert.equal(short.status, 400);
+  const mine = 'This is my own LinkedIn post about brands and why small details matter. '.repeat(3);
+  const added = await fetch(`${api}/api/voice`, { method: 'POST', body: JSON.stringify({ text: mine }) }).then((x) => x.json());
+  assert.equal((await get('/api/voice')).posts.length, 1);
+  assert.equal((await get('/api/status')).voiceCount, 1);
+  process.env.ANTHROPIC_API_KEY = 'test-key';
+  const fakeAi2 = http.createServer(async (rq, rs) => { let b = ''; for await (const c of rq) b += c; globalThis.__sys = JSON.parse(b).system; rs.setHeader('content-type', 'application/json'); rs.end(JSON.stringify({ content: [{ type: 'text', text: '{"posts":[{"angle":"A","post":"x","card":null}]}' }] })); });
+  await new Promise((ok) => fakeAi2.listen(0, '127.0.0.1', ok));
+  process.env.ANTHROPIC_API_URL = `http://127.0.0.1:${fakeAi2.address().port}/v1/messages`;
+  await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{"force":true}' });
+  assert.match(globalThis.__sys, /my own LinkedIn post about brands/);
+  fakeAi2.close();
+  await fetch(`${api}/api/voice/${added.id}`, { method: 'DELETE' });
+  assert.equal((await get('/api/voice')).posts.length, 0);
+
   // Image route: private hosts blocked by default, allowed (for this test) when opted in
   const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
   assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');

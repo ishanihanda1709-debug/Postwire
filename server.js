@@ -4,10 +4,10 @@ import { timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
-import { loadStore, loadSaved, saveSaved } from './lib/store.js';
+import { loadStore, loadSaved, saveSaved, loadVoice, saveVoice } from './lib/store.js';
 import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
-import { aiEnabled, writePost } from './lib/ai.js';
+import { aiEnabled, writePost, voiceCount } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
 import { fetchImage } from './lib/image.js';
 
@@ -131,7 +131,7 @@ async function route(req, res, url) {
     for (const i of Object.values(store.items)) counts[i.kind] = (counts[i.kind] || 0) + 1;
     return json(res, 200, {
       updatedAt: store.updatedAt, lastRun: store.lastRun || null, refreshing: isRefreshing(), aiEnabled: aiEnabled(),
-      refreshMinutes: REFRESH_MINUTES, refreshAt: REFRESH_TIMES, timezone: TIMEZONE, nextRefresh: REFRESH_TIMES.length ? nextLabel(REFRESH_TIMES) : null, counts, author: process.env.AUTHOR_NAME || '',
+      voiceCount: await voiceCount(), refreshMinutes: REFRESH_MINUTES, refreshAt: REFRESH_TIMES, timezone: TIMEZONE, nextRefresh: REFRESH_TIMES.length ? nextLabel(REFRESH_TIMES) : null, counts, author: process.env.AUTHOR_NAME || '',
       sources: sources.map((s) => ({ id: s.id, name: s.name, region: s.region, ...(store.sources[s.id] || { ok: null }) })),
     });
   }
@@ -177,6 +177,30 @@ async function route(req, res, url) {
     const sv = await loadSaved();
     delete sv.entries[sm[1]];
     await saveSaved(sv);
+    return json(res, 200, { ok: true });
+  }
+
+  if (p === '/api/voice' && req.method === 'GET') {
+    return json(res, 200, { posts: (await loadVoice()).posts.slice().reverse() });
+  }
+
+  if (p === '/api/voice' && req.method === 'POST') {
+    const body = await readBody(req);
+    const text = String(body.text ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
+    if (text.length < 80) return json(res, 400, { error: 'Paste a full post (at least a few lines) so the style can be learned.' });
+    const v = await loadVoice();
+    if (v.posts.length >= 20) return json(res, 400, { error: 'You can keep up to 20 sample posts. Delete one to add another.' });
+    const entry = { id: sha(text + Date.now()), text, addedAt: new Date().toISOString() };
+    v.posts.push(entry);
+    await saveVoice(v);
+    return json(res, 200, entry);
+  }
+
+  const vm = p.match(/^\/api\/voice\/([a-f0-9]+)$/);
+  if (vm && req.method === 'DELETE') {
+    const v = await loadVoice();
+    v.posts = v.posts.filter((x) => x.id !== vm[1]);
+    await saveVoice(v);
     return json(res, 200, { ok: true });
   }
 
