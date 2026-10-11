@@ -223,8 +223,9 @@ footer{border-top:3px solid var(--edge)}
 cd Linkedin-Automation
 npm start
 
-# for finished posts in your voice (Anthropic API key)
-ANTHROPIC_API_KEY=your-key npm start</code></pre>
+# optional: have the app write posts itself (paid AI key)
+# ANTHROPIC_API_KEY=your-key npm start
+# No key needed: copy a prompt into a free chatbot and paste the answer back</code></pre>
     <button class="btn ghost copy" id="copy" type="button">Copy commands</button>
     <p class="sub" style="margin-top:28px">Then open <b>http://127.0.0.1:3000</b>. Paste a few of your own past posts into <code>voice/my-posts.md</code> so the writing sounds like you. Feeds are listed in <code>sources.json</code>.</p>
     <div class="chips" aria-label="Default sources">
@@ -237,7 +238,7 @@ ANTHROPIC_API_KEY=your-key npm start</code></pre>
     <h2 id="q-h">Honest answers.</h2>
     <details><summary>Is this a hosted site?</summary><p>No. It is a small Node app you run yourself. This page only describes it. To host the app publicly, use any Node host and set ACCESS_TOKEN.</p></details>
     <details><summary>Does it read my LinkedIn feed?</summary><p>No. LinkedIn does not allow automated access to profiles or feeds. Instead, you paste a few of your own posts into a file and the app matches their style.</p></details>
-    <details><summary>Does it work without an API key?</summary><p>You still get the stories and picture cards. The post is an outline with blanks for you to fill, because writing a finished post needs the AI.</p></details>
+    <details><summary>Do I have to pay for an AI key?</summary><p>No. Press one button to copy a ready-made prompt, paste it into a free chatbot such as Claude.ai, ChatGPT or Gemini, then paste the answer back. The app splits it into three editable options and makes matching picture cards. A paid key or a free local model only automates that step.</p></details>
     <details><summary>Can I use the publisher's images?</summary><p>You can download them, but they belong to the publisher. Credit them or check usage rights. The text card is your own graphic and free to use.</p></details>
     <details><summary>Does it post to LinkedIn for me?</summary><p>No. You edit, copy and post yourself.</p></details>
   </section>
