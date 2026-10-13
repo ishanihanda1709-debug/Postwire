@@ -109,3 +109,5 @@ textarea{width:100%;min-height:420px;font:15px/1.65 var(--sans);color:var(--ink)
 .stock .row .cap{flex:1 1 100%}
 @media (max-width:420px){.stock-grid{grid-template-columns:repeat(3,1fr)}}
 .stockbadge{position:absolute;left:10px;bottom:10px;background:var(--paper);color:var(--ink);border:2px solid var(--edge);font:700 10px var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px}
+.stock-search{display:flex;gap:8px;margin:8px 0}.stock-search input{flex:1;min-width:0;padding:8px 14px;border:2px solid var(--edge);border-radius:99px;background:var(--paper);color:var(--ink);font:14px var(--sans)}
+.reset .linkbtn+.linkbtn{margin-left:14px}

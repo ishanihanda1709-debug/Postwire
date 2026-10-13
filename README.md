@@ -14,14 +14,14 @@ npm test
 
 - **Trending**: stories covered by several outlets, recent, with a picture, campaigns first. Tabs for **Campaigns** and **News**, an India / Global switch, and search.
 - **Show me different ones**: swaps the current picks for a fresh set from the best matches, never repeating what you've already seen. When fresh ones run low it mixes earlier stories back in.
-- **Thumbnails**: every card shows the publisher's own photo when there is one. When there isn't, it shows a free stock photo about the story's topic with a **Stock photo** label (hover for the credit). If none can be loaded it falls back to a colour block. Set `STOCK_THUMBS=0` to turn stock thumbnails off.
+- **Thumbnails**: every card shows the publisher's own photo when there is one. When there isn't, it shows a free stock photo about the story's topic with a **Stock photo** label (hover for the credit). If none can be loaded it falls back to a colour block. A stock photo can only match the story's *topic*, not the exact news. Turn stock thumbnails off with the link at the bottom of the page (**Stock photo thumbnails: on**), or set `STOCK_THUMBS=0`.
 - **Not for me (✕ on a card)**: hides that story for good, with Undo. Hidden stories are remembered in your browser only, and a link at the bottom brings them back.
 - **♡ Save this post**: in a story, saves the post you are looking at (and keeps your edits). Everything saved is under **♥ Saved**, where you can copy a post, open it in LinkedIn's post box (you review and post it yourself), delete it, or **Export all** as Markdown. Saved posts are stored in `data/saved.json`.
 - **Fetch new stories** (top right): checks the publications for anything new.
 - **Only fresh stories**: the page shows stories from the last 3 days by default (change with `FRESH_DAYS`, or use the 3 / 7 / 30 day switch). Cards show how old a story is, like "5 h ago" or "Yesterday".
 - **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
   - a gallery of **ready-to-post creatives** in 3 LinkedIn sizes (portrait 4:5, square, landscape): four of your own graphics (Cobalt, Sunshine, Midnight quote, Pink poster) and, when the story has a publisher image, two photo styles. They contain only the headline, a one-line subtitle, the publisher and your name. Download as PNG and add to your post,
-  - **stock photos** about the story's topic: pick one and the photo creatives are redrawn with it. They are illustrative only, labelled as such, carry a credit line (with a Copy button), and are never searched by brand or people names. Photos come from Openverse (no key needed) or Pexels (free key: set `PEXELS_API_KEY`),
+  - **stock photos** about the story's topic: pick one and the photo creatives are redrawn with it. They are illustrative only, labelled as such, and carry a credit line (with a Copy button). They are searched by topic words taken from the headline, never by brand or people names; a **Search another photo** box lets you type your own word. Each photo is downloaded once and kept in memory, and a photo that fails to load simply disappears. Photos come from Openverse (no key needed) or Pexels (free key: set `PEXELS_API_KEY`),
   - the **original image** to download.
 
 ## Posts in your voice

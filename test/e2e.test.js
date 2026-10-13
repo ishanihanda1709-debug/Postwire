@@ -205,6 +205,14 @@ test('refresh → dedupe → trending → post → image', async () => {
   process.env.STOCK_THUMBS = '0';
   assert.equal((await fetch(`${api}/api/items/${plain.id}/thumb`)).status, 404);
   delete process.env.STOCK_THUMBS;
+  // Photos are downloaded once and then served from memory; custom search words are used verbatim (cleaned)
+  const callsBefore = stockCalls;
+  await fetch(`${api}/api/items/${plain.id}/thumb`); await fetch(`${api}/api/items/${plain.id}/thumb`);
+  assert.equal(stockCalls, callsBefore, 'repeat thumbnail requests are served from the image cache');
+  const custom = await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: JSON.stringify({ q: 'snacks & tea <b>' }) }).then((x) => x.json());
+  assert.deepEqual(custom.queries, ['snacks & tea b']);
+  assert.match(decodeURIComponent(lastStock.url), /q=snacks & tea b/);
+  assert.equal((await fetch(`${api}/api/items/${camp.id}/stock/0/image?q=${encodeURIComponent('snacks & tea b')}&thumb=1`)).status, 200);
   const before = stockCalls;
   await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' });
   assert.equal(stockCalls, before, 'second lookup served from cache');

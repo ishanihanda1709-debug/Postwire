@@ -12,8 +12,10 @@ const phClass = (s) => 'ph c' + ([...s].reduce((a, c) => a + c.charCodeAt(0), 0)
 const phBox = (item) => h('div', { class: phClass(item.source), text: item.source });
 
 // Stories without a publisher photo get a topic stock photo as their thumbnail (labelled), a few at a time.
+const stockThumbsOn = () => { try { return localStorage.getItem('mb-stock-thumbs') !== 'off'; } catch { return true; } };
 const thumbQueue = []; let thumbActive = 0;
 function queueThumb(item, media) {
+  if (!stockThumbsOn()) return;
   thumbQueue.push({ item, media }); pumpThumbs();
 }
 function pumpThumbs() {
@@ -108,6 +110,11 @@ function hideItem(item, el) {
   updateReset();
   toast('Hidden. It won\'t show again.', { label: 'Undo', run: () => { dismissed.delete(item.id); saveHidden(); updateReset(); reload(); } });
   if (!$('#grid').children.length) reload();
+}
+
+function updateStockToggle() {
+  const b = $('#stock-toggle'); if (!b) return;
+  b.textContent = stockThumbsOn() ? 'Stock photo thumbnails: on (turn off)' : 'Stock photo thumbnails: off (turn on)';
 }
 
 function updateReset() {
@@ -282,22 +289,34 @@ function drawPics(cur) {
   img.src = imgUrl;
 }
 
-// Illustrative stock photos about the story's topic (never searched by brand or people names).
+// Illustrative stock photos about the story's topic (never searched by brand or people names unless the user types them).
+const qs = (cur) => (cur.stockQuery ? `q=${encodeURIComponent(cur.stockQuery)}&` : '');
 function stockSection(cur, pubImg) {
   const { item } = cur, st = cur.stockState;
   const wrap = h('div', { class: 'stock', id: 'stock' }, h('h4', { text: 'Pictures to post (stock photos)' }));
-  if (!st || st === 'loading') { wrap.append(h('p', { class: 'muted', text: 'Finding free photos about this topic…' })); return wrap; }
-  if (st.error) { wrap.append(h('p', { class: 'muted', text: `Stock photos are unavailable right now (${st.error}). You can add a free Pexels key as PEXELS_API_KEY to make this more reliable.` })); return wrap; }
-  if (!st.photos.length) { wrap.append(h('p', { class: 'muted', text: 'No stock photos found for this topic.' })); return wrap; }
+  const search = h('form', { class: 'stock-search', onsubmit: (e) => { e.preventDefault(); const q = e.target.elements.q.value.trim(); cur.stockQuery = q; cur.stock = null; cur.stockState = null; drawPics(cur); } },
+    h('input', { name: 'q', type: 'search', 'aria-label': 'Search for a different photo', placeholder: 'Search another photo, e.g. snacks, tiles, office', value: cur.stockQuery || '' }),
+    h('button', { class: 'btn ghost', type: 'submit', text: 'Search' }));
+  if (!st || st === 'loading') { wrap.append(h('p', { class: 'muted', text: 'Finding free photos…' })); return wrap; }
+  if (st.error) { wrap.append(h('p', { class: 'muted', text: `Stock photos are unavailable right now (${st.error}). You can add a free Pexels key as PEXELS_API_KEY to make this more reliable.` }), search); return wrap; }
+  if (!st.photos.length) { wrap.append(h('p', { class: 'muted', text: 'No stock photos found. Try a different search word.' }), search); return wrap; }
+  const grid = h('div', { class: 'stock-grid' });
+  let failed = 0;
+  st.photos.forEach((p) => {
+    const img = h('img', { src: `/api/items/${item.id}/stock/${p.n}/image?${qs(cur)}thumb=1`, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+    const tile = h('button', { type: 'button', class: 'stock-tile' + (cur.stock?.n === p.n ? ' on' : ''), title: p.credit, 'aria-label': `Use stock photo ${p.n + 1}`, onclick: () => pickStock(cur, p) }, img);
+    // A photo that cannot be loaded is removed instead of showing a broken-image icon.
+    img.addEventListener('error', () => { tile.remove(); failed++; if (failed >= st.photos.length) grid.replaceWith(h('p', { class: 'muted', text: 'The photos could not be loaded. The free photo service may be limiting requests: wait a minute and search again, or add a free Pexels key as PEXELS_API_KEY.' })); });
+    grid.append(tile);
+  });
   wrap.append(
     h('p', { class: 'muted', text: `Free photos about "${st.queries[0]}" from ${st.source}. Illustrative only: they are not from this campaign. Pick one to use it in the photo creatives below.` }),
-    h('div', { class: 'stock-grid' }, st.photos.map((p) => h('button', { type: 'button', class: 'stock-tile' + (cur.stock?.n === p.n ? ' on' : ''), title: p.credit, 'aria-label': `Use stock photo ${p.n + 1}`,
-      onclick: () => pickStock(cur, p) }, h('img', { src: `/api/items/${item.id}/stock/${p.n}/image?thumb=1`, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' })))));
+    search, grid);
   if (cur.stock) {
     wrap.append(h('div', { class: 'row' },
       h('span', { class: 'cap', text: cur.stock.credit }),
       h('button', { class: 'btn ghost', type: 'button', text: 'Copy credit line', onclick: async () => { try { await navigator.clipboard.writeText(cur.stock.credit); toast('Credit copied. Add it to your post.'); } catch { toast('Copy failed. Select the credit text instead.'); } } }),
-      h('a', { class: 'btn ghost', href: `/api/items/${item.id}/stock/${cur.stock.n}/image?download=1`, text: 'Download photo' }),
+      h('a', { class: 'btn ghost', href: `/api/items/${item.id}/stock/${cur.stock.n}/image?${qs(cur)}download=1`, text: 'Download photo' }),
       pubImg ? h('button', { class: 'btn ghost', type: 'button', text: 'Back to publisher image', onclick: () => { cur.stock = null; drawPics(cur); } }) : null));
   }
   return wrap;
@@ -305,7 +324,7 @@ function stockSection(cur, pubImg) {
 
 async function loadStock(cur, pubImg) {
   cur.stockState = 'loading';
-  try { cur.stockState = await api(`/api/items/${cur.item.id}/stock`, { method: 'POST', body: {} }); }
+  try { cur.stockState = await api(`/api/items/${cur.item.id}/stock`, { method: 'POST', body: { q: cur.stockQuery || '' } }); }
   catch (e) { cur.stockState = { error: e.message }; }
   if (state.cur === cur) drawPics(cur);
 }
@@ -314,7 +333,7 @@ function pickStock(cur, p) {
   const img = new Image();
   img.onload = () => { cur.stock = { n: p.n, img, credit: p.credit }; if (state.cur === cur) drawPics(cur); };
   img.onerror = () => toast('That photo could not be loaded. Try another.');
-  img.src = `/api/items/${cur.item.id}/stock/${p.n}/image`;
+  img.src = `/api/items/${cur.item.id}/stock/${p.n}/image${cur.stockQuery ? `?q=${encodeURIComponent(cur.stockQuery)}` : ''}`;
 }
 
 // ---------- saved posts ----------
@@ -387,6 +406,7 @@ function showView() {
   for (const id of ['grid', 'shuffle', 'region', 'age']) $('#' + id).hidden = other;
   $('#q').closest('.search').hidden = other;
   if (other) { $('#more').hidden = true; $('#reset').hidden = true; }
+  $('#stock-toggle').closest('p').hidden = other;
   $('#saved').hidden = state.view !== 'saved';
   $('#style').hidden = state.view !== 'style';
   if (state.view === 'saved') renderSaved();
@@ -396,6 +416,10 @@ function showView() {
 const resetShuffle = () => { state.seed = 0; state.seen = new Set(); };
 $('#shuffle').addEventListener('click', shuffle);
 $('#reset').addEventListener('click', () => { dismissed = new Set(); saveHidden(); updateReset(); reload(); });
+$('#stock-toggle').addEventListener('click', () => {
+  try { localStorage.setItem('mb-stock-thumbs', stockThumbsOn() ? 'off' : 'on'); } catch { /* storage unavailable */ }
+  updateStockToggle(); reload();
+});
 $('#more').addEventListener('click', loadPage);
 $('#close').addEventListener('click', closeModal);
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
@@ -416,7 +440,7 @@ $('#refresh').addEventListener('click', async () => { await api('/api/refresh', 
   const opts = [...new Set([state.days, 7, 30])].sort((a, b) => a - b);
   $('#age').replaceChildren(...opts.map((d) => h('button', { 'data-d': d, class: d === state.days ? 'on' : '', type: 'button', text: d === 1 ? '24 h' : `${d} days` })));
   $('#age').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.days = Number(b.dataset.d); resetShuffle(); document.querySelectorAll('#age button').forEach((x) => x.classList.toggle('on', x === b)); reload(); });
-  updateReset();
+  updateReset(); updateStockToggle();
   await loadSaved();
   await reload();
   if (s.refreshing || !s.updatedAt) pollRefresh();

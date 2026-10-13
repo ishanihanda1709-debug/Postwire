@@ -6,7 +6,7 @@ import { classify, detectRegion } from '../lib/classify.js';
 import { scaffoldPosts } from '../lib/drafts.js';
 import { parseTimes, isStale, nextLabel } from '../lib/schedule.js';
 import { parseChatPosts, headlineFrom } from '../public/parse.js';
-import { stockQueries } from '../lib/stock.js';
+import { stockQueries, cleanQuery } from '../lib/stock.js';
 
 const RSS = `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item><title><![CDATA[Brand X &amp; Y launch "Test" campaign]]></title><link>https://example.com/a?utm_source=rss</link>
@@ -120,4 +120,13 @@ test('stock photo queries use topics only, never brand or people names', () => {
   assert.ok(q2.length >= 1);
   const q3 = stockQueries({ title: 'Quarterly note', summary: '', tags: [], kind: 'news' });
   assert.deepEqual(q3, ['business team', 'marketing creative team']);
+});
+
+test('stock topics: headline decides, partnership and food topics, custom query is cleaned', () => {
+  assert.equal(stockQueries({ title: 'Bhuja Channels Dhum Dhum For First Brand Campaign In 60 Years', summary: 'bhujia snack brand', tags: ['campaign'] })[0], 'food and drink');
+  assert.equal(stockQueries({ title: 'Gresbond by Kajaria Appoints Ranveer Singh as Brand Ambassador', summary: '', tags: ['launch'] })[0], 'business handshake partnership');
+  assert.equal(stockQueries({ title: 'Brand appoints ambassador', summary: 'tiles and flooring range', tags: [] })[0], 'business handshake partnership', 'headline beats summary');
+  assert.equal(stockQueries({ title: 'BE Townhall: leaders answer CMOs toughest questions', summary: '', tags: [] })[0], 'conference stage speaker');
+  assert.equal(cleanQuery('  snacks <script>alert(1)</script> & tea!! '), 'snacks script alert 1 script & tea');
+  assert.equal(cleanQuery('x'.repeat(100)).length, 60);
 });

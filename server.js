@@ -9,8 +9,8 @@ import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
 import { aiEnabled, writePost, voiceCount, buildChatPrompt } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
-import { fetchImage } from './lib/image.js';
-import { findStock } from './lib/stock.js';
+import { fetchImageCached as fetchImage } from './lib/image.js';
+import { findStock, cleanQuery } from './lib/stock.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -129,7 +129,8 @@ async function route(req, res, url) {
     const item = store.items[sm0[1]];
     if (!item) return json(res, 404, { error: 'Not found' });
     let found;
-    try { found = await findStock(item); } catch (e) { return json(res, 502, { error: 'Could not load stock photos: ' + e.message }); }
+    const custom = cleanQuery(req.method === 'POST' ? (await readBody(req)).q : q.get('q'));
+    try { found = await findStock(item, custom); } catch (e) { return json(res, 502, { error: 'Could not load stock photos: ' + e.message }); }
     if (sm0[2] === undefined) {
       return json(res, 200, { source: found.source, queries: found.queries, photos: found.photos.map((x, n) => ({ n, credit: x.credit, license: x.license, landing: x.landing })) });
     }
