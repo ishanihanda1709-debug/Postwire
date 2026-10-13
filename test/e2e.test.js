@@ -174,6 +174,38 @@ test('refresh → dedupe → trending → post → image', async () => {
   fakeCompat.close(); delete process.env.LLM_BASE_URL; delete process.env.LLM_MODEL;
   process.env.ANTHROPIC_API_KEY = savedKey; process.env.ANTHROPIC_API_URL = savedUrl;
 
+  // Stock photos: Openverse (no key) and Pexels (key) via mock servers; cached; proxied; no private-host leaks
+  let stockCalls = 0, lastStock;
+  const fakeStock = http.createServer((rq, rs) => {
+    stockCalls++; lastStock = { url: rq.url, auth: rq.headers.authorization };
+    if (rq.url.startsWith('/photo')) { rs.setHeader('content-type', 'image/png'); return rs.end(Buffer.from('89504e470d0a1a0a', 'hex')); }
+    rs.setHeader('content-type', 'application/json');
+    const host = `http://127.0.0.1:${fakeStock.address().port}`;
+    if (rq.url.startsWith('/pexels')) rs.end(JSON.stringify({ photos: [{ src: { large2x: host + '/photo/a.png', medium: host + '/photo/a.png' }, photographer: 'Pat Pexel', url: 'https://pexels.com/photo/1' }] }));
+    else rs.end(JSON.stringify({ results: [{ url: host + '/photo/b.png', thumbnail: host + '/photo/b.png', creator: 'Olive', title: 'City', license: 'by', license_version: '4.0', foreign_landing_url: 'https://x.org/1', attribution: '"City" by Olive is licensed under CC BY 4.0' }] }));
+  });
+  await new Promise((ok) => fakeStock.listen(0, '127.0.0.1', ok));
+  process.env.OPENVERSE_API_URL = `http://127.0.0.1:${fakeStock.address().port}/openverse`;
+  process.env.PEXELS_API_URL = `http://127.0.0.1:${fakeStock.address().port}/pexels`;
+  process.env.ALLOW_PRIVATE_IMAGES = '1';
+  const sOv = await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' }).then((x) => x.json());
+  assert.equal(sOv.source, 'Openverse');
+  assert.match(sOv.photos[0].credit, /CC BY 4.0/);
+  assert.match(lastStock.url, /category=photograph&license_type=commercial/);
+  assert.ok(!/fixtureco/i.test(decodeURIComponent(lastStock.url)), 'brand name is never searched');
+  const before = stockCalls;
+  await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' });
+  assert.equal(stockCalls, before, 'second lookup served from cache');
+  const pic = await fetch(`${api}/api/items/${camp.id}/stock/0/image`);
+  assert.equal(pic.status, 200); assert.equal(pic.headers.get('content-type'), 'image/png');
+  assert.equal((await fetch(`${api}/api/items/${camp.id}/stock/9/image`)).status, 404);
+  process.env.PEXELS_API_KEY = 'pexels-key';
+  const sPx = await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' }).then((x) => x.json());
+  assert.equal(sPx.source, 'Pexels'); assert.equal(sPx.photos[0].credit, 'Photo by Pat Pexel on Pexels');
+  assert.equal(lastStock.auth, 'pexels-key');
+  delete process.env.PEXELS_API_KEY; delete process.env.ALLOW_PRIVATE_IMAGES;
+  fakeStock.close();
+
   // Image route: private hosts blocked by default, allowed (for this test) when opted in
   const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
   assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');

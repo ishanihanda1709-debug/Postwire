@@ -68,7 +68,7 @@ function subline(x, S, text, left, top, maxW, color) {
   lines.forEach((l, i) => x.fillText(l, left, top + i * S.sub * 1.4));
 }
 
-export function drawCreative({ template, size = 'portrait', headline, subline: sub = '', source, author = '', photo = null }) {
+export function drawCreative({ template, size = 'portrait', headline, subline: sub = '', source, author = '', photo = null, photoCredit = '' }) {
   const S = SIZES[size], c = document.createElement('canvas'); c.width = S.w; c.height = S.h;
   const x = c.getContext('2d'); x.textAlign = 'left';
   const innerW = S.w - S.pad * 2;
@@ -135,6 +135,13 @@ export function drawCreative({ template, size = 'portrait', headline, subline: s
     footer(x, S, { bg: C.sun, fg: C.ink, source, author });
   } else {
     throw new Error(`Unknown or unavailable template: ${template}`);
+  }
+  // Stock photos carry their credit on the image itself, small and right-aligned above the footer.
+  if (photoCredit && (template === 'photo-full' || template === 'photo-split')) {
+    x.font = `500 ${Math.round(S.src * 0.72)}px ${SANS}`; x.textAlign = 'right'; x.textBaseline = 'alphabetic';
+    x.fillStyle = 'rgba(255,255,255,.78)';
+    x.fillText(photoCredit.slice(0, 70), S.w - S.pad, S.h - S.foot - Math.round(S.pad * 0.2));
+    x.textAlign = 'left';
   }
   return c;
 }

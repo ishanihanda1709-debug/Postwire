@@ -102,3 +102,9 @@ textarea{width:100%;min-height:420px;font:15px/1.65 var(--sans);color:var(--ink)
 .sp{background:var(--paper);border:2px solid var(--edge);border-radius:14px;padding:14px;box-shadow:4px 4px 0 var(--edge)}
 .sp pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 var(--sans);margin:0 0 10px;max-height:180px;overflow:auto}
 @media (max-width:420px){.pic-grid{grid-template-columns:1fr}}
+.stock{margin-top:6px}.stock-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.stock-tile{padding:0;border:2px solid var(--edge);border-radius:8px;overflow:hidden;cursor:pointer;background:var(--paper);aspect-ratio:1}
+.stock-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.stock-tile.on{outline:4px solid var(--pink);outline-offset:1px}
+.stock .row .cap{flex:1 1 100%}
+@media (max-width:420px){.stock-grid{grid-template-columns:repeat(3,1fr)}}

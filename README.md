@@ -20,6 +20,7 @@ npm test
 - **Only fresh stories**: the page shows stories from the last 3 days by default (change with `FRESH_DAYS`, or use the 3 / 7 / 30 day switch). Cards show how old a story is, like "5 h ago" or "Yesterday".
 - **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
   - a gallery of **ready-to-post creatives** in 3 LinkedIn sizes (portrait 4:5, square, landscape): four of your own graphics (Cobalt, Sunshine, Midnight quote, Pink poster) and, when the story has a publisher image, two photo styles. They contain only the headline, a one-line subtitle, the publisher and your name. Download as PNG and add to your post,
+  - **stock photos** about the story's topic: pick one and the photo creatives are redrawn with it. They are illustrative only, labelled as such, carry a credit line (with a Copy button), and are never searched by brand or people names. Photos come from Openverse (no key needed) or Pexels (free key: set `PEXELS_API_KEY`),
   - the **original image** to download.
 
 ## Posts in your voice
@@ -67,6 +68,7 @@ Without any of these you still get the stories and picture cards, and the post i
 | `ANTHROPIC_API_KEY` | – | Needed for finished posts |
 | `ANTHROPIC_MODEL` | claude-sonnet-5-5 | |
 | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | – | Use any OpenAI-compatible AI instead of Anthropic (free tiers, local Ollama) |
+| `PEXELS_API_KEY` | – | Optional free key from pexels.com/api for stock photos. Without it the app uses Openverse (no key, lower limits) |
 | `AUTHOR_NAME` | – | Printed on the picture cards |
 | `ACCESS_TOKEN` | – | If set, every API call needs it, so the site's data and your saved posts are private. The page asks for it once |
 | `VOICE_FILE`, `SOURCES_FILE`, `DATA_DIR` | voice/my-posts.md, sources.json, data/ | |

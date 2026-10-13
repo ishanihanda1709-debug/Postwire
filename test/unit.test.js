@@ -6,6 +6,7 @@ import { classify, detectRegion } from '../lib/classify.js';
 import { scaffoldPosts } from '../lib/drafts.js';
 import { parseTimes, isStale, nextLabel } from '../lib/schedule.js';
 import { parseChatPosts, headlineFrom } from '../public/parse.js';
+import { stockQueries } from '../lib/stock.js';
 
 const RSS = `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item><title><![CDATA[Brand X &amp; Y launch "Test" campaign]]></title><link>https://example.com/a?utm_source=rss</link>
@@ -109,4 +110,14 @@ test('publisher names and thumbnail detection', () => {
   assert.equal(looksLikeThumbnail('https://x.com/thumb/123.cms?width=120'), true);
   assert.equal(looksLikeThumbnail('https://x.com/img-150x100.jpg'), true);
   assert.equal(looksLikeThumbnail('https://x.com/photos/big-campaign.jpg'), false);
+});
+
+test('stock photo queries use topics only, never brand or people names', () => {
+  const q1 = stockQueries({ title: 'Etihad Airways launches Beyond Borders brand campaign', summary: '', tags: ['campaign'], kind: 'campaign' });
+  assert.equal(q1[0], 'travel airplane');
+  const q2 = stockQueries({ title: 'Gresbond by Kajaria appoints Ranveer Singh as Brand Ambassador', summary: '', tags: ['launch'], kind: 'news' });
+  for (const q of q2) assert.ok(!/ranveer|singh|gresbond|kajaria/i.test(q), q);
+  assert.ok(q2.length >= 1);
+  const q3 = stockQueries({ title: 'Quarterly note', summary: '', tags: [], kind: 'news' });
+  assert.deepEqual(q3, ['business team', 'marketing creative team']);
 });

@@ -10,6 +10,7 @@ import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/sche
 import { aiEnabled, writePost, voiceCount, buildChatPrompt } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
 import { fetchImage } from './lib/image.js';
+import { findStock } from './lib/stock.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -104,6 +105,27 @@ async function route(req, res, url) {
     else list.sort((a, b) => date(b) - date(a));
     const limit = Math.min(Number(q.get('limit') || 24), 60), offset = Number(q.get('offset') || 0);
     return json(res, 200, { total: list.length, items: list.slice(offset, offset + limit).map(publicItem) });
+  }
+
+  const sm0 = p.match(/^\/api\/items\/([a-f0-9]+)\/stock(?:\/(\d+)\/image)?$/);
+  if (sm0) {
+    const store = await loadStore();
+    const item = store.items[sm0[1]];
+    if (!item) return json(res, 404, { error: 'Not found' });
+    let found;
+    try { found = await findStock(item); } catch (e) { return json(res, 502, { error: 'Could not load stock photos: ' + e.message }); }
+    if (sm0[2] === undefined) {
+      return json(res, 200, { source: found.source, queries: found.queries, photos: found.photos.map((x, n) => ({ n, credit: x.credit, license: x.license, landing: x.landing })) });
+    }
+    const photo = found.photos[Number(sm0[2])];
+    if (!photo) return json(res, 404, { error: 'No such photo' });
+    try {
+      const img = await fetchImage(q.get('thumb') ? photo.thumb : photo.url).catch(() => fetchImage(photo.thumb));
+      const ext = img.type.split('/')[1]?.replace('jpeg', 'jpg').replace(/[^a-z0-9]/g, '') || 'jpg';
+      res.writeHead(200, { 'content-type': img.type, 'cache-control': 'private, max-age=86400',
+        ...(q.get('download') ? { 'content-disposition': `attachment; filename="stock-photo-${sm0[2]}.${ext}"` } : {}) });
+      return res.end(img.data);
+    } catch (e) { return json(res, 502, { error: 'Could not fetch the photo: ' + e.message }); }
   }
 
   const m = p.match(/^\/api\/items\/([a-f0-9]+)\/(post|image|prompt)$/);

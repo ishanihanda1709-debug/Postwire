@@ -232,28 +232,67 @@ function drawPics(cur) {
   const author = state.status?.author || '';
   const imgUrl = `/api/items/${item.id}/image`;
 
-  const build = (photo) => {
+  const build = (pubImg) => {
+    const stock = cur.stock;
+    const photo = stock?.img || pubImg;
+    const list = TEMPLATES.filter((t) => (photo || !t.photo) && !(t.not || []).includes(size));
     box.replaceChildren(
       h('div', { class: 'sizes', role: 'group', 'aria-label': 'Creative size' }, Object.entries(SIZES).map(([k, s]) =>
         h('button', { class: 'chip' + (k === size ? ' on' : ''), type: 'button', text: s.label, onclick: () => { cur.size = k; drawPics(cur); } }))),
-      h('p', { class: 'muted', text: `${TEMPLATES.filter((t) => (photo || !t.photo) && !(t.not || []).includes(size)).length} ready-to-post creatives. Tap Download, then add the image to your LinkedIn post.` }),
-      h('div', { class: 'pic-grid' }, TEMPLATES.filter((t) => (photo || !t.photo) && !(t.not || []).includes(size)).map((t) => {
-        const canvas = drawCreative({ template: t.id, size, headline, subline, source: item.source, author, photo: t.photo ? photo : null });
+      stockSection(cur, pubImg),
+      h('p', { class: 'muted', text: `${list.length} ready-to-post creatives. Tap Download, then add the image to your LinkedIn post.` }),
+      h('div', { class: 'pic-grid' }, list.map((t) => {
+        const canvas = drawCreative({ template: t.id, size, headline, subline, source: item.source, author, photo: t.photo ? photo : null, photoCredit: stock ? stock.credit : '' });
         return h('div', { class: 'pic' }, canvas,
           h('div', { class: 'pic-foot' }, h('b', { text: t.label }),
             h('button', { class: 'btn ghost', type: 'button', text: 'Download', onclick: () => canvas.toBlob((b) => { const a = h('a', { href: URL.createObjectURL(b), download: `${t.id}-${size}.png` }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png') })),
-          h('span', { class: 'cap', text: t.photo ? `Uses ${item.image.credit}'s image. Credit them in your post.` : 'Your own graphic. Free to post.' }));
+          h('span', { class: 'cap', text: !t.photo ? 'Your own graphic. Free to post.' : stock ? `Stock photo: ${stock.credit}. Illustrative, not from this campaign.` : `Uses ${item.image.credit}'s image. Credit them in your post.` }));
       })),
-      photo ? h('div', { class: 'pic' }, h('img', { src: imgUrl, alt: '' }), h('div', { class: 'pic-foot' },
+      pubImg ? h('div', { class: 'pic' }, h('img', { src: imgUrl, alt: '' }), h('div', { class: 'pic-foot' },
         h('b', { text: 'Original image' }), h('a', { class: 'btn ghost', href: imgUrl + '?download=1', text: 'Download' })),
-        h('span', { class: 'cap', text: `Image: ${item.image.credit}. Belongs to the publisher. Credit them or check usage rights before posting.` })) : null,
-      !photo ? h('p', { class: 'muted', text: item.image ? 'The publisher image could not be loaded, so photo creatives are hidden.' : 'This story has no publisher image, so photo creatives are hidden.' }) : null);
+        h('span', { class: 'cap', text: `Image: ${item.image.credit}. Belongs to the publisher. Credit them or check usage rights before posting.` })) : null);
+    if (!cur.stockState) loadStock(cur, pubImg);
   };
   if (!item.image) { build(null); return; }
   const img = new Image();
-  img.onload = () => build(img);
+  img.onload = () => { cur.pubImg = img; build(img); };
   img.onerror = () => build(null);
   img.src = imgUrl;
+}
+
+// Illustrative stock photos about the story's topic (never searched by brand or people names).
+function stockSection(cur, pubImg) {
+  const { item } = cur, st = cur.stockState;
+  const wrap = h('div', { class: 'stock', id: 'stock' }, h('h4', { text: 'Pictures to post (stock photos)' }));
+  if (!st || st === 'loading') { wrap.append(h('p', { class: 'muted', text: 'Finding free photos about this topic…' })); return wrap; }
+  if (st.error) { wrap.append(h('p', { class: 'muted', text: `Stock photos are unavailable right now (${st.error}). You can add a free Pexels key as PEXELS_API_KEY to make this more reliable.` })); return wrap; }
+  if (!st.photos.length) { wrap.append(h('p', { class: 'muted', text: 'No stock photos found for this topic.' })); return wrap; }
+  wrap.append(
+    h('p', { class: 'muted', text: `Free photos about "${st.queries[0]}" from ${st.source}. Illustrative only: they are not from this campaign. Pick one to use it in the photo creatives below.` }),
+    h('div', { class: 'stock-grid' }, st.photos.map((p) => h('button', { type: 'button', class: 'stock-tile' + (cur.stock?.n === p.n ? ' on' : ''), title: p.credit, 'aria-label': `Use stock photo ${p.n + 1}`,
+      onclick: () => pickStock(cur, p) }, h('img', { src: `/api/items/${item.id}/stock/${p.n}/image?thumb=1`, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' })))));
+  if (cur.stock) {
+    wrap.append(h('div', { class: 'row' },
+      h('span', { class: 'cap', text: cur.stock.credit }),
+      h('button', { class: 'btn ghost', type: 'button', text: 'Copy credit line', onclick: async () => { try { await navigator.clipboard.writeText(cur.stock.credit); toast('Credit copied. Add it to your post.'); } catch { toast('Copy failed. Select the credit text instead.'); } } }),
+      h('a', { class: 'btn ghost', href: `/api/items/${item.id}/stock/${cur.stock.n}/image?download=1`, text: 'Download photo' }),
+      pubImg ? h('button', { class: 'btn ghost', type: 'button', text: 'Back to publisher image', onclick: () => { cur.stock = null; drawPics(cur); } }) : null));
+  }
+  return wrap;
+}
+
+async function loadStock(cur, pubImg) {
+  cur.stockState = 'loading';
+  try { cur.stockState = await api(`/api/items/${cur.item.id}/stock`, { method: 'POST', body: {} }); }
+  catch (e) { cur.stockState = { error: e.message }; }
+  if (state.cur === cur) drawPics(cur);
+}
+
+function pickStock(cur, p) {
+  const img = new Image();
+  img.onload = () => { cur.stock = { n: p.n, img, credit: p.credit }; if (state.cur === cur) drawPics(cur); };
+  img.onerror = () => toast('That photo could not be loaded. Try another.');
+  img.src = `/api/items/${cur.item.id}/stock/${p.n}/image`;
 }
 
 // ---------- saved posts ----------
