@@ -12,6 +12,7 @@ test('refresh → dedupe → trending → post → image', async () => {
   const mock = http.createServer((req, res) => {
     if (req.url === '/a') res.end(feed([
       { t: 'Fixtureco launches Spring campaign film', l: 'http://127.0.0.1:' + mock.address().port + '/p/1?utm_source=a', ago: 2, img: 'https://img.test/1.jpg' },
+      { t: 'Plain story without a photo', l: 'http://127.0.0.1:' + mock.address().port + '/p/noimg', ago: 3 },
       { t: 'Old story', l: 'http://127.0.0.1:' + mock.address().port + '/p/old', ago: 24 * 200 },
     ]));
     else if (req.url === '/b') res.end(feed([
@@ -20,6 +21,7 @@ test('refresh → dedupe → trending → post → image', async () => {
     ]));
     else if (req.url === '/img.png') { res.setHeader('content-type', 'image/png'); res.end(Buffer.from('89504e470d0a1a0a', 'hex')); }
     else if (req.url === '/notimg') { res.setHeader('content-type', 'text/html'); res.end('<html/>'); }
+    else if (req.url === '/p/noimg') res.end('<html></html>');
     else if (req.url.startsWith('/p/')) res.end('<meta property="og:image" content="/pg.jpg">');
     else { res.statusCode = 500; res.end('x'); }
   });
@@ -38,7 +40,7 @@ test('refresh → dedupe → trending → post → image', async () => {
   const { refreshAll } = await import('../lib/refresh.js');
   const { createServer } = await import('../server.js');
   const r = await refreshAll();
-  assert.equal(r.total, 2, 'old story pruned by age, duplicate merged');
+  assert.equal(r.total, 3, 'old story pruned by age, duplicate merged');
   assert.equal(r.merged, 1);
 
   const srv = createServer(); await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
@@ -46,7 +48,7 @@ test('refresh → dedupe → trending → post → image', async () => {
   const get = (p) => fetch(api + p).then((x) => x.json());
 
   const all = await get('/api/items');
-  assert.equal(all.total, 2);
+  assert.equal(all.total, 3);
   const camp = all.items.find((i) => i.title.includes('Spring'));
   assert.equal(camp.also.length, 1);
   assert.equal(camp.kind, 'campaign');
@@ -99,7 +101,7 @@ test('refresh → dedupe → trending → post → image', async () => {
   assert.equal(trending.items[0].id, camp.id);
 
   // Freshness: default window is 3 days; a tiny window leaves only the newest story
-  assert.equal((await get('/api/items')).total, 2);
+  assert.equal((await get('/api/items')).total, 3);
   assert.equal((await get('/api/items?days=0.1')).total, 1, '2.4h window: only the 2h-old story');
   assert.equal((await get('/api/items?days=0.1&shuffle=3')).total, 1, 'shuffle respects freshness too');
   assert.equal((await get('/api/status')).freshDays, 3);
@@ -193,6 +195,16 @@ test('refresh → dedupe → trending → post → image', async () => {
   assert.match(sOv.photos[0].credit, /CC BY 4.0/);
   assert.match(lastStock.url, /category=photograph&license_type=commercial/);
   assert.ok(!/fixtureco/i.test(decodeURIComponent(lastStock.url)), 'brand name is never searched');
+  // Card thumbnails: only for stories with no photo; stable choice; honours STOCK_THUMBS=0; credit in a header
+  const plain = (await get('/api/items?q=plain')).items[0];
+  assert.ok(plain && !plain.image, 'fixture story has no photo');
+  const th = await fetch(`${api}/api/items/${plain.id}/thumb`);
+  assert.equal(th.status, 200); assert.equal(th.headers.get('content-type'), 'image/png');
+  assert.match(decodeURIComponent(th.headers.get('x-photo-credit')), /CC BY 4.0/);
+  assert.equal((await fetch(`${api}/api/items/${camp.id}/thumb`)).status, 404, 'stories with their own photo never get one');
+  process.env.STOCK_THUMBS = '0';
+  assert.equal((await fetch(`${api}/api/items/${plain.id}/thumb`)).status, 404);
+  delete process.env.STOCK_THUMBS;
   const before = stockCalls;
   await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' });
   assert.equal(stockCalls, before, 'second lookup served from cache');

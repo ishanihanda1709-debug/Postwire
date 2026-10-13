@@ -107,6 +107,22 @@ async function route(req, res, url) {
     return json(res, 200, { total: list.length, items: list.slice(offset, offset + limit).map(publicItem) });
   }
 
+  const tm = p.match(/^\/api\/items\/([a-f0-9]+)\/thumb$/);
+  if (tm && req.method === 'GET') {
+    // Card thumbnail for stories whose publisher shared no photo: a topic stock photo, chosen per story.
+    const item = (await loadStore()).items[tm[1]];
+    if (!item) return json(res, 404, { error: 'Not found' });
+    if (item.image || process.env.STOCK_THUMBS === '0') return json(res, 404, { error: 'No stock thumbnail for this story' });
+    try {
+      const found = await findStock(item);
+      if (!found.photos.length) return json(res, 404, { error: 'No photo found' });
+      const photo = found.photos[parseInt(item.id.slice(0, 6), 16) % found.photos.length];
+      const img = await fetchImage(photo.thumb || photo.url).catch(() => fetchImage(photo.url));
+      res.writeHead(200, { 'content-type': img.type, 'cache-control': 'private, max-age=86400', 'x-photo-credit': encodeURIComponent(photo.credit || '') });
+      return res.end(img.data);
+    } catch (e) { return json(res, 502, { error: e.message }); }
+  }
+
   const sm0 = p.match(/^\/api\/items\/([a-f0-9]+)\/stock(?:\/(\d+)\/image)?$/);
   if (sm0) {
     const store = await loadStore();

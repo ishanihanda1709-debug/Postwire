@@ -14,6 +14,7 @@ npm test
 
 - **Trending**: stories covered by several outlets, recent, with a picture, campaigns first. Tabs for **Campaigns** and **News**, an India / Global switch, and search.
 - **Show me different ones**: swaps the current picks for a fresh set from the best matches, never repeating what you've already seen. When fresh ones run low it mixes earlier stories back in.
+- **Thumbnails**: every card shows the publisher's own photo when there is one. When there isn't, it shows a free stock photo about the story's topic with a **Stock photo** label (hover for the credit). If none can be loaded it falls back to a colour block. Set `STOCK_THUMBS=0` to turn stock thumbnails off.
 - **Not for me (✕ on a card)**: hides that story for good, with Undo. Hidden stories are remembered in your browser only, and a link at the bottom brings them back.
 - **♡ Save this post**: in a story, saves the post you are looking at (and keeps your edits). Everything saved is under **♥ Saved**, where you can copy a post, open it in LinkedIn's post box (you review and post it yourself), delete it, or **Export all** as Markdown. Saved posts are stored in `data/saved.json`.
 - **Fetch new stories** (top right): checks the publications for anything new.

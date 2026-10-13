@@ -11,6 +11,28 @@ const PAGE = 18;
 const phClass = (s) => 'ph c' + ([...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 4);
 const phBox = (item) => h('div', { class: phClass(item.source), text: item.source });
 
+// Stories without a publisher photo get a topic stock photo as their thumbnail (labelled), a few at a time.
+const thumbQueue = []; let thumbActive = 0;
+function queueThumb(item, media) {
+  thumbQueue.push({ item, media }); pumpThumbs();
+}
+function pumpThumbs() {
+  while (thumbActive < 4 && thumbQueue.length) {
+    const { item, media } = thumbQueue.shift(); thumbActive++;
+    const token = sessionStorage.getItem('mb-token');
+    fetch(`/api/items/${item.id}/thumb`, { headers: token ? { 'x-access-token': token } : {} })
+      .then(async (res) => {
+        if (!res.ok || !media.isConnected) return;
+        const credit = decodeURIComponent(res.headers.get('x-photo-credit') || '');
+        const img = h('img', { src: URL.createObjectURL(await res.blob()), alt: '', title: credit ? `Stock photo: ${credit}` : 'Stock photo' });
+        media.querySelector('.ph')?.replaceWith(img);
+        media.append(h('span', { class: 'stockbadge', text: 'Stock photo' }));
+      })
+      .catch(() => {})
+      .finally(() => { thumbActive--; pumpThumbs(); });
+  }
+}
+
 // Text is always set via textContent, never innerHTML.
 function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);
@@ -70,7 +92,7 @@ function card(item, hot) {
     const img = h('img', { src: item.image.url, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
     img.addEventListener('error', () => img.replaceWith(phBox(item)));
     media.append(img);
-  } else media.append(phBox(item));
+  } else { media.append(phBox(item)); queueThumb(item, media); }
   if (hot) media.append(h('span', { class: 'hot', text: `Covered by ${item.also.length + 1} outlets` }));
   const main = h('button', { class: 'card', type: 'button', onclick: () => openItem(item) }, media,
     h('div', { class: 'body' }, h('h3', { text: item.title }),
