@@ -1,4 +1,4 @@
-import { parseChatPosts, headlineFrom } from './parse.js';
+import { parseChatPosts, headlineFrom, brandTerms } from './parse.js';
 import { drawCreative, SIZES, TEMPLATES } from './creatives.js';
 const $ = (s, r = document) => r.querySelector(s);
 const state = { view: 'trending', region: 'all', q: '', offset: 0, status: null, cur: null, seed: 0, seen: new Set(), shown: [], days: 3 };
@@ -309,9 +309,12 @@ function stockSection(cur, pubImg) {
     img.addEventListener('error', () => { tile.remove(); failed++; if (failed >= st.photos.length) grid.replaceWith(h('p', { class: 'muted', text: 'The photos could not be loaded. The free photo service may be limiting requests: wait a minute and search again, or add a free Pexels key as PEXELS_API_KEY.' })); });
     grid.append(tile);
   });
+  const terms = brandTerms(item.title, item.source);
+  const chips = terms.length ? h('div', { class: 'brand-chips' }, h('span', { class: 'muted', text: 'Search by name:' }), terms.map((t) =>
+    h('button', { type: 'button', class: 'chip' + (cur.stockQuery === t ? ' on' : ''), text: t, onclick: () => { cur.stockQuery = t; cur.stock = null; cur.stockState = null; drawPics(cur); } }))) : null;
   wrap.append(
-    h('p', { class: 'muted', text: `Free photos about "${st.queries[0]}" from ${st.source}. Illustrative only: they are not from this campaign. Pick one to use it in the photo creatives below.` }),
-    search, grid);
+    h('p', { class: 'muted', text: `Free photos about "${st.queries[0]}" from ${st.source}. Illustrative only: they are not from this campaign. Pick one to use it in the photo creatives below. Names can bring up unrelated photos, and a brand's name or logo in a photo is worth a second look before you post.` }),
+    search, chips, grid);
   if (cur.stock) {
     wrap.append(h('div', { class: 'row' },
       h('span', { class: 'cap', text: cur.stock.credit }),

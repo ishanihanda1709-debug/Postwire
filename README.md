@@ -21,7 +21,7 @@ npm test
 - **Only fresh stories**: the page shows stories from the last 3 days by default (change with `FRESH_DAYS`, or use the 3 / 7 / 30 day switch). Cards show how old a story is, like "5 h ago" or "Yesterday".
 - **Click a story**: three LinkedIn post options (story-led, lesson-led, question-led), each ready to edit and copy, and pictures to go with it:
   - a gallery of **ready-to-post creatives** in 3 LinkedIn sizes (portrait 4:5, square, landscape): four of your own graphics (Cobalt, Sunshine, Midnight quote, Pink poster) and, when the story has a publisher image, two photo styles. They contain only the headline, a one-line subtitle, the publisher and your name. Download as PNG and add to your post,
-  - **stock photos** about the story's topic: pick one and the photo creatives are redrawn with it. They are illustrative only, labelled as such, and carry a credit line (with a Copy button). They are searched by topic words taken from the headline, never by brand or people names; a **Search another photo** box lets you type your own word. Each photo is downloaded once and kept in memory, and a photo that fails to load simply disappears. Photos come from Openverse (no key needed) or Pexels (free key: set `PEXELS_API_KEY`),
+  - **stock photos** about the story's topic: pick one and the photo creatives are redrawn with it. They are illustrative only, labelled as such, and carry a credit line (with a Copy button). They are searched by topic words taken from the headline, never by brand or people names; a **Search another photo** box lets you type your own word, and **Search by name** buttons (taken from the headline, e.g. a brand) search for it in one tap. Each photo is downloaded once and kept in memory, and a photo that fails to load simply disappears. Photos come from Openverse (no key needed) or Pexels (free key: set `PEXELS_API_KEY`),
   - the **original image** to download.
 
 ## Posts in your voice
@@ -96,6 +96,10 @@ Use HTTPS (hosts like Render, Railway and Fly.io provide it). No other keys are 
 ## Where the data lives
 
 No database server. Everything is plain JSON files in `data/`: `store.json` (stories), `saved.json` (your saved posts) and `ai-cache.json` (generated posts, so a story is only written once). The app has its own built-in scheduler, so nothing else needs to be set up. Back up the `data/` folder to keep your saved posts.
+
+## Finding each story's own photo
+
+For each recent story the app opens the article page and looks for its main photo (Open Graph, Twitter card, `image_src` and JSON-LD tags), skipping logos, icons and site-wide default images. Some sites refuse unknown programs, so page requests identify as an ordinary browser. After each refresh Terminal prints a line like `Photos: looked at 40 stories, found 22, 9 pages have no usable photo, 9 pages could not be opened {...}` with the reasons (for example `HTTP 403`). Stories where no photo is found fall back to a labelled stock photo.
 
 ## How refresh works
 

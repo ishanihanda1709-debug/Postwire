@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseFeed, parseMeta } from '../lib/rss.js';
+import { usableImage } from '../lib/util.js';
 import { canonicalUrl, jaccard, titleTokens, cleanPublisher, looksLikeThumbnail } from '../lib/util.js';
 import { classify, detectRegion } from '../lib/classify.js';
 import { scaffoldPosts } from '../lib/drafts.js';
 import { parseTimes, isStale, nextLabel } from '../lib/schedule.js';
-import { parseChatPosts, headlineFrom } from '../public/parse.js';
+import { parseChatPosts, headlineFrom, brandTerms } from '../public/parse.js';
 import { stockQueries, cleanQuery } from '../lib/stock.js';
 
 const RSS = `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
@@ -129,4 +130,31 @@ test('stock topics: headline decides, partnership and food topics, custom query 
   assert.equal(stockQueries({ title: 'BE Townhall: leaders answer CMOs toughest questions', summary: '', tags: [] })[0], 'conference stage speaker');
   assert.equal(cleanQuery('  snacks <script>alert(1)</script> & tea!! '), 'snacks script alert 1 script & tea');
   assert.equal(cleanQuery('x'.repeat(100)).length, 60);
+});
+
+test('name suggestions come from the headline, minus filler and the publisher name', () => {
+  assert.deepEqual(brandTerms('McDonald’s India launches ‘Tyohaar ki Taiyaari Mein Thodi Mazedaari’ campaign', 'IMPACT Magazine').slice(0, 2), ['McDonald', 'Tyohaar']);
+  assert.ok(brandTerms('Gresbond by Kajaria Appoints Ranveer Singh as Brand Ambassador', 'x').includes('Ranveer Singh'));
+  const pub = brandTerms('Publicis Groupe’s Jason Williams on the importance of listening', 'Creative Review');
+  assert.deepEqual(pub, ['Publicis Groupe', 'Jason Williams']);
+  assert.ok(!brandTerms('Adweek reports new campaign', 'Adweek').some((t) => /adweek/i.test(t)));
+  assert.deepEqual(brandTerms('', ''), []);
+});
+
+test('page photo finder: og, twitter, link and JSON-LD; skips logos and site defaults', () => {
+  const base = 'https://site.com/story';
+  assert.equal(parseMeta('<meta property="og:image" content="/logo.png"><meta name="twitter:image" content="https://cdn.site.com/a.jpg">', base).image, 'https://cdn.site.com/a.jpg');
+  assert.equal(parseMeta('<meta name="twitter:image:src" content="//cdn.site.com/b.jpg">', base).image, 'https://cdn.site.com/b.jpg');
+  assert.equal(parseMeta('<link rel="image_src" href="/pics/c.jpg">', base).image, 'https://site.com/pics/c.jpg');
+  assert.equal(parseMeta('<script type="application/ld+json">{"@type":"NewsArticle","image":["https:\\/\\/cdn.site.com\\/d.jpg"]}</script>', base).image, 'https://cdn.site.com/d.jpg');
+  assert.equal(parseMeta('<script type="application/ld+json">{"image":{"@type":"ImageObject","url":"https://cdn.site.com/e.jpg"}}</script>', base).image, 'https://cdn.site.com/e.jpg');
+  assert.equal(parseMeta('<meta property="og:image" content="https://site.com/default-image.jpg">', base).image, null);
+  assert.equal(usableImage('https://x.com/photos/campaign.jpg'), true);
+  assert.equal(usableImage('https://x.com/site-logo.png'), false);
+  assert.equal(usableImage('https://x.com/pixel.gif'), false);
+});
+
+test('feed images skip logos and tracking pixels but keep the first real photo', () => {
+  const xml = '<rss><channel><item><title>T here</title><link>https://e.com/a</link><description><![CDATA[<img src="https://e.com/avatar.png"><img src="https://e.com/real-photo.jpg">]]></description></item></channel></rss>';
+  assert.equal(parseFeed(xml)[0].image, 'https://e.com/real-photo.jpg');
 });
