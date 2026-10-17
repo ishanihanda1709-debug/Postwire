@@ -269,12 +269,30 @@ const IMG_STYLES = [
   { label: 'Photo-style scene', desc: 'a realistic, softly lit editorial photo-style scene of objects and places that suggest the topic (no people)' },
 ];
 const RATIOS = { portrait: '4:5 portrait', square: '1:1 square', landscape: '1.91:1 landscape' };
-const PALETTE = { marketing: 'coral red', product: 'violet', finance: 'teal', others: 'amber' };
+// Each section gets its own look, so a finance picture does not look like a marketing one.
+const LOOKS = {
+  marketing: { colours: 'coral red (#E8475F), warm cream and deep navy', mood: 'bold, energetic and creative', scene: 'a billboard, a megaphone, speech bubbles, a camera or a campaign storyboard' },
+  product: { colours: 'electric violet (#6D5BF6), soft lilac and deep navy', mood: 'clean, modern and focused', scene: 'a phone or app screen, interface cards, a roadmap, toggles, puzzle pieces or a launch rocket' },
+  finance: { colours: 'teal green (#0E9F8E), pale mint and deep navy', mood: 'calm, trustworthy and precise', scene: 'rising bars, a line chart, coins, a rupee symbol, a balance scale or city skyline' },
+  others: { colours: 'amber (#B45309), warm sand and deep charcoal', mood: 'warm, human and thoughtful', scene: 'a globe, a newspaper, open window light, or objects that hint at the story' },
+};
+// Extra scene ideas when the story's own topic is known.
+const TOPIC_SCENE = {
+  sport: 'a stadium, a ball and floodlights', entertainment: 'a film reel, a stage spotlight and a ticket', health: 'a heartbeat line, a leaf and a stethoscope shape', tech: 'a circuit pattern, a lab flask or a satellite',
+  funding: 'a seedling growing from coins', markets: 'candlestick-style bars and an upward arrow', economy: 'a factory outline, a shopping basket and a gauge', fintech: 'a phone with a payment tick and a card',
+  launch: 'a rocket lifting off', feature: 'a toggle switch and a glowing interface card', pm: 'sticky notes on a roadmap',
+  campaign: 'a billboard and a film clapper', casestudy: 'a magnifying glass over a chart',
+};
+const ANGLES = ['a single strong focal object, like a story told in one frame', 'a clear before-and-after contrast that shows the lesson', 'an open, curious composition with a question-mark shape or an empty doorway'];
+const brandColours = () => { try { return (localStorage.getItem('pw-brand') || '').trim(); } catch { return ''; } };
+const brandHex = () => (brandColours().match(/#[0-9a-f]{6}\b/i) || [])[0] || '';
 
-// A ready-made prompt for any AI image tool. Built from the headline only: no invented details, no people, no logos.
+// A ready-made prompt for any AI image tool. Built from the headline and section only: no invented details, no people, no logos.
 function imagePrompt(cur) {
-  const s = IMG_STYLES[cur.imgStyle || 0];
-  return `Create ${s.desc} for a LinkedIn post about this news headline: "${cur.item.title}".\n\nColours: ${PALETTE[cur.d.id] || 'violet'} and deep navy, with calm empty space where a headline could sit.\nRules: no text or lettering, no logos or brand names, no real people or recognisable faces.\nFormat: ${RATIOS[cur.size || 'portrait']}.`;
+  const s = IMG_STYLES[cur.imgStyle || 0], look = LOOKS[cur.d.id] || LOOKS.product, brand = brandColours();
+  const topic = (cur.item.tags || []).map((t) => TOPIC_SCENE[t]).find(Boolean) || look.scene;
+  const angle = ANGLES[cur.active || 0] || ANGLES[0];
+  return `Create ${s.desc} for a LinkedIn post about this news headline: "${cur.item.title}".\n\nMood: ${look.mood}.\nCould include: ${topic}.\nComposition: ${angle}, with calm empty space where a headline could sit.\nColours: ${brand ? `use the brand colours ${brand}, with deep navy or white where contrast is needed` : look.colours}.\nRules: no text or lettering, no logos or brand names, no real people or recognisable faces.\nFormat: ${RATIOS[cur.size || 'portrait']}.`;
 }
 
 function imageIdeaBlock(cur) {
@@ -284,6 +302,9 @@ function imageIdeaBlock(cur) {
     h('h2', { text: 'Want a picture made for this post?' }),
     h('p', { text: 'Copy this prompt into any AI image tool and it will draw a picture to match the post. It describes the topic only, with no people, logos or text.' }),
     h('div', { class: 'opts' }, IMG_STYLES.map((s, i) => h('button', { class: 'chip' + (i === (cur.imgStyle || 0) ? ' on' : ''), type: 'button', text: s.label, onclick: () => { cur.imgStyle = i; drawPics(cur); } }))),
+    h('label', { class: 'lbl', for: 'brand', text: 'Your brand colours (optional)' }),
+    h('input', { id: 'brand', type: 'text', maxlength: '80', placeholder: 'e.g. #0A66C2 and white. Leave empty to use this section\'s colours', value: brandColours(), 'aria-label': 'Brand colours',
+      oninput: (e) => { try { localStorage.setItem('pw-brand', e.target.value); } catch { /* storage unavailable */ } ta.value = imagePrompt(cur); }, onchange: () => drawPics(cur) }),
     ta,
     h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', text: 'Copy image prompt', onclick: async () => { try { await navigator.clipboard.writeText(ta.value); toast('Image prompt copied. Paste it into an AI image tool.'); } catch { ta.select(); toast('Press Ctrl/Cmd+C to copy'); } } })),
     h('p', { class: 'muted', style: 'margin-top:10px', text: 'Check the image tool\'s terms before you use its pictures commercially, and look the picture over before you post it.' }));
@@ -293,7 +314,7 @@ function drawPics(cur) {
   const { item, d } = cur, box = $('#pics'), size = cur.size || 'portrait';
   const card = cur.posts?.[cur.active || 0]?.card;
   const headline = card?.headline || item.title, subline = card?.subline || '';
-  const accent = getComputedStyle(document.body).getPropertyValue(colorVar[d.id] || '--prd').trim() || d.color;
+  const accent = brandHex() || getComputedStyle(document.body).getPropertyValue(colorVar[d.id] || '--prd').trim() || d.color;
   const toggle = h('button', { class: 'linkbtn', type: 'button', text: graphicsOn() ? 'Hide the graphics' : 'Show the graphics', onclick: () => { try { localStorage.setItem('pw-graphics', graphicsOn() ? 'off' : 'on'); } catch { /* storage unavailable */ } drawPics(cur); } });
   const build = () => {
     if (state.cur !== cur) return;
