@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postwire</title>
 <meta name="description" content="Postwire turns today's headlines in marketing, product and finance into LinkedIn drafts in your own voice, with a graphic to go with each.">
+<meta name="served-by-app" content="{{SERVED_BY_APP}}">
 <meta property="og:title" content="Postwire">
 <meta property="og:description" content="Today's news, ready to post. Marketing, product and finance headlines, with three LinkedIn drafts in your voice for each.">
 <meta property="og:type" content="website">
@@ -85,14 +86,15 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
     <span class="sp"></span>
     <a class="l" href="#sections">Sections</a><a class="l" href="#how">How it works</a><a class="l" href="#trust">Trust</a><a class="l" href="#faq">FAQ</a>
     <button class="btn ghost" id="theme" type="button" style="padding:8px 14px">Dark mode</button>
-    <a class="btn" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Get started</a>
+    <a class="btn ghost" href="/login.html" data-app="/login.html" style="padding:8px 14px">Log in</a>
+    <a class="btn" href="/login.html#signup" data-app="/login.html#signup">Get started</a>
   </nav>
 
   <header class="hero">
     <span class="eyebrow">Marketing · Product · Finance</span>
     <h1>Today's news, <span>ready to post.</span></h1>
     <p class="lede">Postwire turns the day's headlines into three LinkedIn drafts in your own voice, plus a graphic to go with them. You read, edit and post.</p>
-    <div class="cta"><a class="btn" href="#demo">Try the sample</a><a class="btn ghost" href="#pricing">Free for 7 days</a></div>
+    <div class="cta"><a class="btn" href="/login.html#signup" data-app="/login.html#signup">Start free trial</a><a class="btn ghost" href="#demo">Try the sample</a></div>
   </header>
 
   <section id="demo" style="padding-top:20px" aria-label="Interactive sample">
@@ -153,7 +155,7 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
   <section id="pricing" aria-labelledby="p-h">
     <div class="price"><span class="eyebrow" style="justify-self:start">Pricing</span><h2 id="p-h">Free for 7 days. No card needed.</h2>
       <p>Then a simple monthly plan. The price will be announced at launch.</p>
-      <div class="cta" style="margin-top:8px"><a class="btn" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Get started</a></div></div>
+      <div class="cta" style="margin-top:8px"><a class="btn" href="/login.html#signup" data-app="/login.html#signup">Start free trial</a></div></div>
   </section>
 
   <section id="faq" aria-labelledby="f-h">
@@ -162,28 +164,12 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
     <details><summary>Does it sound like me?</summary><p>Paste a few of your own posts under My style and every draft follows your rhythm and tone. It copies how you write, never what you wrote.</p></details>
     <details><summary>Do I need to pay for AI?</summary><p>Not necessarily. You can copy a ready-made prompt into a free chatbot and paste the answer back, and the app splits it into three options. A paid or local AI key just automates that step.</p></details>
     <details><summary>Where do the headlines come from?</summary><p>Public news feeds from publications in each section. Each card names its publisher and links to the original. The newest stories come first, and you choose a 3, 7 or 30 day window.</p></details>
-    <details><summary>Can I use it for free right now?</summary><p>You can run Postwire yourself from the repository. A hosted version with accounts and a free trial is on the way.</p></details>
+    <details><summary>Is there a free trial?</summary><p>Yes. New accounts get 7 days free with no card needed. After that, a simple monthly plan keeps your drafts and saved posts.</p></details>
   </section>
 
-  <footer><span>Postwire</span><span><a href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Source on GitHub</a> · Headlines belong to their publishers.</span></footer>
+  <footer><span>Postwire</span><span><a href="/terms.html" data-app="/terms.html">Terms</a> · <a href="/privacy.html" data-app="/privacy.html">Privacy</a> · Headlines belong to their publishers.</span></footer>
+<div id="toast" role="status" hidden style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:14px;font-weight:700;font-size:14px;max-width:min(92vw,520px);text-align:center;box-shadow:var(--shadow);z-index:50"></div>
 </div>
-<script>
-const S={marketing:{h:'Marketing',b:'New campaigns and marketing news',chips:[['All',''],['Campaigns','Campaign'],['News','News'],['Case studies','Case study']],cards:[['Campaign','Sample headline about a new brand campaign','Sample Publisher · 2 h ago'],['Campaign','Sample headline about a festive ad film','Sample Publisher · 5 h ago'],['News','Sample headline about marketing budgets','Sample Publisher · Yesterday'],['Case study','Sample headline about a brand growing its community','Sample Publisher · Yesterday']]},product:{h:'Product',b:'Launches, new features and ideas for product managers',chips:[['All',''],['Launches','Launch'],['Features','Feature'],['For PMs','For PMs']],cards:[['Launch','Sample headline about a new app launch','Sample Publisher · 1 h ago'],['Feature','Sample headline about a new feature rolling out','Sample Publisher · 4 h ago'],['For PMs','Sample headline about building a product roadmap','Sample Publisher · Yesterday'],['Launch','Sample headline about a new gadget','Sample Publisher · Yesterday']]},finance:{h:'Finance',b:'Markets, funding, the economy and fintech',chips:[['All',''],['Markets','Markets'],['Funding','Funding'],['Economy','Economy'],['Fintech','Fintech']],cards:[['Markets','Sample headline about the market moving','Sample Publisher · 1 h ago'],['Economy','Sample headline about interest rates','Sample Publisher · 6 h ago'],['Funding','Sample headline about a startup funding round','Sample Publisher · Yesterday'],['Fintech','Sample headline about digital payments','Sample Publisher · Yesterday']]}};
-const POSTS=[['Story-led','[A hook that makes people curious]\n\nWhat happened, in one line:\n[the facts from the story]\n\nMost teams would have [the usual route].\n\nThis one [what was different].\n\nEveryone talks about [the headline].\nVery few notice [the lesson].\n\nSource: [Publisher]'],['Lesson-led','[The one lesson, in a sentence]\n\nWhat stood out:\n[detail 1]\n[detail 2]\n\nIf you work on [your area], steal this:\n[the takeaway]\n\nSource: [Publisher]'],['Question-led','[A sharp question about this story?]\n\nMy honest read:\n[what works]\n[what I am not sure about]\n\nWhat do you think?\n\nSource: [Publisher]']];
-const $=(i)=>document.getElementById(i);let sec='marketing',open=-1,opt=0,chip=0;
-function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
-function draw(){const d=S[sec];$('app').dataset.d=sec;$('dh').textContent=d.h;$('db').textContent=d.b;
- const chips=$('dchips');chips.replaceChildren();d.chips.forEach((t,i)=>{const b=el('button','chip',t[0]);b.type='button';b.setAttribute('aria-pressed',String(i===chip));b.onclick=()=>{chip=i;draw()};chips.append(b)});
- const cards=$('dcards');cards.replaceChildren();d.cards.forEach((c,i)=>{if(chip>0&&c[0]!==d.chips[chip][1])return;const b=el('button','dc');b.type='button';b.setAttribute('aria-expanded',String(open===i));b.append(el('span','dtag',c[0]),el('b','',c[1]),el('small','',c[2]),el('em','','Write a post →'));b.onclick=()=>{open=i;opt=0;draw();$('dp').scrollIntoView({block:'nearest',behavior:'smooth'})};cards.append(b)});
- if(!cards.children.length)cards.append(el('p','muted','No sample stories for this tab.'));
- const p=$('dp');p.hidden=open<0;if(open<0)return;$('dpt').textContent=d.cards[open][1];$('dnote').hidden=sec!=='finance';
- const o=$('dopts');o.replaceChildren();POSTS.forEach((x,i)=>{const b=el('button','chip',(i+1)+'. '+x[0]);b.type='button';b.setAttribute('aria-selected',String(i===opt));b.onclick=()=>{opt=i;draw()};o.append(b)});$('dpost').textContent=POSTS[opt][1]}
-document.querySelectorAll('.dside button').forEach(b=>b.onclick=()=>{sec=b.dataset.s;open=-1;chip=0;document.querySelectorAll('.dside button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));draw()});
-$('dx').onclick=()=>{open=-1;draw()};
-$('dcopy').onclick=async e=>{try{await navigator.clipboard.writeText(POSTS[opt][1]);e.target.textContent='Copied'}catch{e.target.textContent='Select and copy'}setTimeout(()=>e.target.textContent='Copy this post',1800)};
-draw();
-const root=document.documentElement,tb=$('theme');const dark=()=>root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches);
-const lab=()=>{tb.textContent=dark()?'Light mode':'Dark mode'};tb.onclick=()=>{root.dataset.theme=dark()?'light':'dark';lab()};lab();
-</script>
+<script src="landing.js"></script>
 </body>
 </html>

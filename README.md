@@ -79,4 +79,6 @@ Plain JSON files in `DATA_DIR`: `store.json` (stories, 30 days), `users.json` (a
 
 ## Landing page
 
-`docs/index.html` is a static page for the project. `.github/workflows/pages.yml` publishes it with GitHub Pages when `main` changes (one-time: **Settings → Pages → Source: GitHub Actions**). The app itself is a Node server and is not hosted by Pages.
+`docs/index.html` (with `docs/landing.js`) is the public landing page. **The app serves it itself**: visitors who are not logged in see it at the home address, and *Get started* / *Log in* lead to the sign-up and login pages. Logged-in visitors get the app at the same address.
+
+If you also publish the page somewhere else (for example GitHub Pages, via `.github/workflows/pages.yml`), the buttons cannot reach the app until you tell them where it lives: set `APP_URL` at the top of the "Get started" section of `docs/landing.js` (for example `const APP_URL = 'https://postwire.example';`). Until then, outside the app, the buttons show a "Preview only" message instead of going anywhere.

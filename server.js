@@ -19,6 +19,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PUBLIC = path.join(__dirname, 'public');
+const DOCS = path.join(__dirname, 'docs');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
 const REFRESH_MINUTES = Number(process.env.REFRESH_MINUTES || 60);
@@ -63,10 +64,10 @@ function seededShuffle(arr, seed) {
   return arr;
 }
 
-async function html(res, file, user) {
-  let body = await fs.readFile(path.join(PUBLIC, file), 'utf8');
+async function html(res, file, dir = PUBLIC) {
+  let body = await fs.readFile(path.join(dir, file), 'utf8');
   const name = appName();
-  body = body.replaceAll('{{APP_NAME}}', name).replaceAll('{{APP_INITIAL}}', name.slice(0, 1).toUpperCase()).replaceAll('{{TAGLINE}}', tagline());
+  body = body.replaceAll('{{APP_NAME}}', name).replaceAll('{{APP_INITIAL}}', name.slice(0, 1).toUpperCase()).replaceAll('{{TAGLINE}}', tagline()).replaceAll('{{SERVED_BY_APP}}', '1');
   res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', 'content-security-policy': CSP });
   res.end(body);
 }
@@ -80,8 +81,16 @@ async function route(req, res, url) {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
     const user = await userFromRequest(req);
     if (p === '/' || p === '/index.html') {
-      if (requireLogin() && !user) { res.writeHead(302, { location: '/login.html' }); return res.end(); }
+      // Signed-in visitors get the app. Everyone else sees the public landing page (docs/index.html) at the home address.
+      if (requireLogin() && !user) {
+        if (p === '/index.html') { res.writeHead(302, { location: '/' }); return res.end(); }
+        return html(res, 'index.html', DOCS);
+      }
       return html(res, 'index.html');
+    }
+    if (p === '/landing.js') {
+      res.writeHead(200, { 'content-type': MIME['.js'], 'cache-control': 'no-cache' });
+      return res.end(await fs.readFile(path.join(DOCS, 'landing.js')));
     }
     if (p === '/login.html') {
       if (!requireLogin() || user) { res.writeHead(302, { location: '/' }); return res.end(); }

@@ -90,7 +90,12 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   assert.equal((await anon.get('/api/items')).status, 401);
   assert.equal((await anon.get('/api/saved')).status, 401);
   const root = await anon.get('/');
-  assert.equal(root.status, 302); assert.equal(root.headers.get('location'), '/login.html');
+  assert.equal(root.status, 200, 'logged-out visitors see the landing page at the home address');
+  assert.match(root.data, /Today's news, <span>ready to post/); assert.match(root.data, /name="served-by-app" content="1"/);
+  assert.ok(!root.data.includes('{{'), 'landing placeholders are filled in');
+  assert.match(root.data, /data-app="\/login\.html#signup"/, 'Get started points at the sign-up page, not GitHub');
+  assert.doesNotMatch(root.data, /href="https:\/\/github\.com/, 'no link sends visitors to GitHub');
+  assert.equal((await anon.get('/landing.js')).status, 200);
   const login = await anon.get('/login.html');
   assert.equal(login.status, 200); assert.match(login.data, /Postwire/); assert.ok(!login.data.includes('{{'), 'placeholders are filled in');
   assert.match(login.headers.get('content-security-policy'), /default-src 'self'/);
@@ -102,7 +107,8 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   assert.equal((await anon.get('/app.js')).status, 200);
   assert.equal((await anon.get('/..%2f..%2fetc/passwd')).status, 404);
   assert.equal((await anon.get('/server.js')).status, 404);
-  assert.equal((await anon.get('/index.html')).status, 302);
+  const idx = await anon.get('/index.html');
+  assert.equal(idx.status, 302); assert.equal(idx.headers.get('location'), '/');
 
   // ---------- 3. sign-up (first account is the owner) and login ----------
   assert.equal((await anon.post('/api/auth/signup', { email: 'bad', password: 'longenough1' })).status, 400);
@@ -129,6 +135,9 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   const limited = client(); let last;
   for (let i = 0; i < 10; i++) last = await limited.post('/api/auth/login', { email: 'victim@example.com', password: 'guess-' + i });
   assert.equal(last.status, 429, 'repeated guesses are throttled');
+
+  const appHome = await owner.get('/');
+  assert.equal(appHome.status, 200); assert.match(appHome.data, /id="main"/, 'signed-in visitors get the app at the home address');
 
   // ---------- 4. the app: sections, filters, freshness, headlines only ----------
   const me = (await owner.get('/api/me')).data;
@@ -269,6 +278,7 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   const lm = await local.get('/api/me');
   assert.equal(lm.status, 200); assert.equal(lm.data.user.role, 'admin');
   assert.equal((await local.get('/')).status, 200);
+  assert.match((await local.get('/')).data, /id="main"/, 'single-user mode opens the app straight away');
   assert.equal((await local.get('/login.html')).status, 302);
   assert.equal((await local.get('/api/items?domain=product')).data.total, 4);
   delete process.env.REQUIRE_LOGIN;
