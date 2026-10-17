@@ -177,3 +177,33 @@ test('sign-ups are sent to the form, without the password, and the owner is skip
     assert.equal(await notifySignup(user), false);
   } finally { if (prev === undefined) delete process.env.SIGNUP_FORM_URL; else process.env.SIGNUP_FORM_URL = prev; await new Promise((r) => srv.close(r)); }
 });
+
+test('accounts can live in a free Redis database instead of on disk', async () => {
+  const http = await import('node:http');
+  const os = await import('node:os'); const fsp = await import('node:fs/promises'); const path = await import('node:path');
+  const kv = new Map(); let auth = '';
+  const srv = http.createServer((req, res) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => {
+    auth = req.headers.authorization; const [cmd, k, v] = JSON.parse(b);
+    let result = null; if (cmd === 'SET') { kv.set(k, v); result = 'OK'; } else if (cmd === 'GET') result = kv.get(k) ?? null;
+    res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ result })); }); });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'pw-redis-'));
+  const prev = { ...process.env };
+  try {
+    Object.assign(process.env, { DATA_DIR: dir, UPSTASH_REDIS_REST_URL: `http://127.0.0.1:${srv.address().port}`, UPSTASH_REDIS_REST_TOKEN: 'tok' });
+    const st = await import('../lib/store.js');
+    assert.deepEqual(await st.loadUsers(), { users: {} });                 // nothing yet: the default
+    await st.saveUsers({ users: { a: { email: 'a@b.co' } } });
+    assert.equal((await st.loadUsers()).users.a.email, 'a@b.co');
+    assert.equal(auth, 'Bearer tok');
+    assert.ok(kv.has('pw:users.json'));
+    await st.saveStore({ items: { x: 1 }, sources: {}, updatedAt: null });  // the news store stays on local disk
+    assert.ok(!kv.has('pw:store.json'));
+    assert.ok((await fsp.readdir(dir)).includes('store.json'));
+    process.env.UPSTASH_REDIS_REST_URL = 'http://127.0.0.1:1';              // an unreachable database must fail loudly, not look empty
+    await assert.rejects(() => st.loadUsers());
+  } finally {
+    for (const k of ['DATA_DIR', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN']) { if (prev[k] === undefined) delete process.env[k]; else process.env[k] = prev[k]; }
+    await new Promise((r) => srv.close(r)); await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
