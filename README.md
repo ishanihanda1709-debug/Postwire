@@ -16,7 +16,7 @@ npm test
 - **A left sidebar** with the four news sections, **My style**, **Saved**, a light/dark switch and the account card (a top bar on phones).
 - **One page per section.** Each has its own tabs: Marketing (All, Campaigns, News, Case studies), Product (All, Launches, Features, For PMs), Finance (All, Markets, Funding, Economy, Fintech), Others (All, Science & tech, Sport, Entertainment, Health). **Others** is everything outside the first three: India and world news, science, sport and culture. Plus India / Global, a 3 / 7 / 30 day switch, search, **Show me different ones** and a ✕ to hide a story.
 - **Headlines only.** Each card is a headline, its publisher, its age and a link to the original. No publisher photos, no article text.
-- **Click a story** for three LinkedIn post options (story-led, lesson-led, question-led), editable and ready to copy, and four downloadable graphics in three LinkedIn sizes, drawn from the headline in the section's colour.
+- **Click a story** for three LinkedIn post options (story-led, lesson-led, question-led), editable and ready to copy, and four downloadable text graphics in three LinkedIn sizes, drawn from the headline in the section's colour. A *Hide the graphics* link turns them off (remembered per browser). Under them a **picture prompt** (pick a style: flat illustration, abstract, photo-style) can be copied into any AI image tool to make a picture for the post.
 - **My style**: paste your own posts and every draft follows your rhythm and tone.
 - **Saved**: keep posts, copy them, open them in LinkedIn's post box, export as Markdown.
 - **Light and dark mode**, remembered per browser.
@@ -26,7 +26,7 @@ npm test
 | Route | Cost | How |
 |---|---|---|
 | **AI key** | pay per use | Set `ANTHROPIC_API_KEY` in `.env`. Posts appear instantly in the story panel. Each person gets `AI_DAILY_LIMIT` (default 30) AI posts a day; a story they already opened is free to reopen. |
-| **Free chatbot** | free | In a story press *Copy prompt for a free chatbot*, paste it into Claude, ChatGPT or Gemini, then press *Paste the answer*. The app splits the reply into three options. |
+| **Free chatbot** | free | The story panel explains it in three steps: *1. Copy the prompt* (it asks for three posts, story-, lesson- and question-led, in your style), paste it into any AI chatbot (ChatGPT, Gemini, Claude, or an open-source model such as Llama or Mistral), then *2. Paste the answer back*. The app splits the reply into three options. |
 | **Local AI** | free | Install Ollama, then `LLM_BASE_URL=http://localhost:11434/v1` and `LLM_MODEL=llama3.1`. Needs a capable computer; smaller models write less well. |
 
 Without any of these the post is an outline with `[blanks]`.

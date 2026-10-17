@@ -258,8 +258,35 @@ function paint(cur, loading) {
           h('button', { class: 'heart' + (isSaved(cur) ? ' on' : ''), type: 'button', disabled: !posts.length, 'aria-pressed': String(isSaved(cur)), onclick: () => toggleSave(cur, ta), text: isSaved(cur) ? '♥ Saved' : '♡ Save this post' }),
           h('span', { class: 'muted grow', id: 'cc', text: `${ta.value.length} characters` })),
         ai ? h('p', { class: 'muted', text: `AI posts used today: ${state.me.aiUsedToday || 0} of ${state.me.aiLimit}` }) : null),
-      h('div', {}, h('h4', { class: 'lbl', text: 'Graphics for your post' }), h('div', { id: 'pics' }))));
+      h('div', {}, h('h4', { class: 'lbl', text: 'Pictures for your post' }), h('div', { id: 'pics' }))));
   if (!loading) drawPics(cur);
+}
+
+const graphicsOn = () => { try { return localStorage.getItem('pw-graphics') !== 'off'; } catch { return true; } };
+const IMG_STYLES = [
+  { label: 'Flat illustration', desc: 'a clean, modern flat vector illustration with bold simple shapes' },
+  { label: 'Abstract', desc: 'a minimal abstract composition of geometric shapes and soft gradients that suggests the topic' },
+  { label: 'Photo-style scene', desc: 'a realistic, softly lit editorial photo-style scene of objects and places that suggest the topic (no people)' },
+];
+const RATIOS = { portrait: '4:5 portrait', square: '1:1 square', landscape: '1.91:1 landscape' };
+const PALETTE = { marketing: 'coral red', product: 'violet', finance: 'teal', others: 'amber' };
+
+// A ready-made prompt for any AI image tool. Built from the headline only: no invented details, no people, no logos.
+function imagePrompt(cur) {
+  const s = IMG_STYLES[cur.imgStyle || 0];
+  return `Create ${s.desc} for a LinkedIn post about this news headline: "${cur.item.title}".\n\nColours: ${PALETTE[cur.d.id] || 'violet'} and deep navy, with calm empty space where a headline could sit.\nRules: no text or lettering, no logos or brand names, no real people or recognisable faces.\nFormat: ${RATIOS[cur.size || 'portrait']}.`;
+}
+
+function imageIdeaBlock(cur) {
+  const ta = h('textarea', { id: 'img-prompt', readonly: true, 'aria-label': 'Image prompt', style: 'min-height:130px;font-size:14px' });
+  ta.value = imagePrompt(cur);
+  return h('div', { class: 'panel', style: 'max-width:none;margin:16px 0 0;padding:14px' },
+    h('h2', { text: 'Want a picture made for this post?' }),
+    h('p', { text: 'Copy this prompt into any AI image tool and it will draw a picture to match the post. It describes the topic only, with no people, logos or text.' }),
+    h('div', { class: 'opts' }, IMG_STYLES.map((s, i) => h('button', { class: 'chip' + (i === (cur.imgStyle || 0) ? ' on' : ''), type: 'button', text: s.label, onclick: () => { cur.imgStyle = i; drawPics(cur); } }))),
+    ta,
+    h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', text: 'Copy image prompt', onclick: async () => { try { await navigator.clipboard.writeText(ta.value); toast('Image prompt copied. Paste it into an AI image tool.'); } catch { ta.select(); toast('Press Ctrl/Cmd+C to copy'); } } })),
+    h('p', { class: 'muted', style: 'margin-top:10px', text: 'Check the image tool\'s terms before you use its pictures commercially, and look the picture over before you post it.' }));
 }
 
 function drawPics(cur) {
@@ -267,31 +294,46 @@ function drawPics(cur) {
   const card = cur.posts?.[cur.active || 0]?.card;
   const headline = card?.headline || item.title, subline = card?.subline || '';
   const accent = getComputedStyle(document.body).getPropertyValue(colorVar[d.id] || '--prd').trim() || d.color;
-  Promise.race([document.fonts.load('700 80px Sora'), new Promise((r) => setTimeout(r, 1500))]).catch(() => {}).then(() => {
+  const toggle = h('button', { class: 'linkbtn', type: 'button', text: graphicsOn() ? 'Hide the graphics' : 'Show the graphics', onclick: () => { try { localStorage.setItem('pw-graphics', graphicsOn() ? 'off' : 'on'); } catch { /* storage unavailable */ } drawPics(cur); } });
+  const build = () => {
     if (state.cur !== cur) return;
-    box.replaceChildren(
-      h('div', { class: 'sizes', role: 'group', 'aria-label': 'Graphic size' }, Object.entries(SIZES).map(([k, s]) => h('button', { class: 'chip' + (k === size ? ' on' : ''), type: 'button', text: s.label, onclick: () => { cur.size = k; drawPics(cur); } }))),
-      h('p', { class: 'muted', text: `${TEMPLATES.length} designs, made from your headline. Download one and add it to your LinkedIn post.` }),
-      h('div', { class: 'pic-grid' }, TEMPLATES.map((t) => {
-        const canvas = drawCreative({ template: t.id, size, headline, subline, source: item.source, author: state.me.user.name, accent });
-        return h('div', { class: 'pic' }, canvas, h('div', { class: 'pic-foot' }, h('b', { text: t.label }),
-          h('button', { class: 'btn ghost', type: 'button', text: 'Download', onclick: () => canvas.toBlob((b) => { const a = h('a', { href: URL.createObjectURL(b), download: `${t.id}-${size}.png` }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png') })));
-      })));
-  });
+    const parts = [h('div', { class: 'row', style: 'margin:0 0 8px' }, toggle)];
+    if (graphicsOn()) {
+      parts.push(
+        h('div', { class: 'sizes', role: 'group', 'aria-label': 'Graphic size' }, Object.entries(SIZES).map(([k, s]) => h('button', { class: 'chip' + (k === size ? ' on' : ''), type: 'button', text: s.label, onclick: () => { cur.size = k; drawPics(cur); } }))),
+        h('p', { class: 'muted', text: `${TEMPLATES.length} designs, made from your headline. Download one and add it to your LinkedIn post.` }),
+        h('div', { class: 'pic-grid' }, TEMPLATES.map((t) => {
+          let canvas;
+          try { canvas = drawCreative({ template: t.id, size, headline, subline, source: item.source, author: state.me.user.name, accent }); }
+          catch (e) { console.error('Graphic failed', e); return h('div', { class: 'pic' }, h('p', { class: 'muted', style: 'padding:14px', text: 'This graphic could not be drawn in this browser.' })); }
+          return h('div', { class: 'pic' }, canvas, h('div', { class: 'pic-foot' }, h('b', { text: t.label }),
+            h('button', { class: 'btn ghost', type: 'button', text: 'Download', onclick: () => canvas.toBlob((b) => { if (!b) { toast('Could not save the image in this browser.'); return; } const a = h('a', { href: URL.createObjectURL(b), download: `${t.id}-${size}.png` }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png') })));
+        })));
+    } else parts.push(h('p', { class: 'muted', text: 'Graphics are hidden.' }));
+    parts.push(imageIdeaBlock(cur));
+    box.replaceChildren(...parts);
+  };
+  if (!graphicsOn()) { build(); return; }
+  Promise.race([document.fonts.load('700 80px Sora'), new Promise((r) => setTimeout(r, 1500))]).catch(() => {}).then(build);
 }
 
-// No-key flow: copy a prompt for a free chatbot, then paste its answer back to get three editable options.
+// No-key flow: copy a prompt for any AI chatbot, then paste its answer back to get three editable options.
 function freeBox(cur) {
-  const copy = h('button', { class: 'btn ghost', type: 'button', text: '1. Copy prompt for a free chatbot', onclick: async () => {
-    try { const { prompt } = await api(`/api/items/${cur.item.id}/prompt`, { method: 'POST', body: {} }); await navigator.clipboard.writeText(prompt); toast('Prompt copied. Paste it into Claude, ChatGPT or Gemini.'); }
+  const copy = h('button', { class: 'btn', type: 'button', text: '1. Copy the prompt', onclick: async () => {
+    try { const { prompt } = await api(`/api/items/${cur.item.id}/prompt`, { method: 'POST', body: {} }); await navigator.clipboard.writeText(prompt); toast('Prompt copied. Now paste it into an AI chatbot.'); }
     catch (e) { toast(e.message || 'Could not copy the prompt'); }
   } });
   if (!cur.pasting) {
-    return h('div', { class: 'notice' }, cur.pasted ? 'Using the posts you pasted. Edit them below.' : 'These are outlines. For finished posts, use a free chatbot:',
-      h('div', { class: 'row' }, copy, h('button', { class: 'btn ghost', type: 'button', text: '2. Paste the answer', onclick: () => { cur.pasting = true; paint(cur, false); } })));
+    return h('div', { class: 'notice howto' },
+      h('b', { text: cur.pasted ? 'Using the posts you pasted. Edit them below.' : 'Get your three posts in three steps. No AI key needed.' }),
+      cur.pasted ? null : h('ol', {},
+        h('li', { text: 'Copy the prompt. It asks for three LinkedIn posts about this headline (story-led, lesson-led and question-led) in your own style.' }),
+        h('li', { text: 'Paste it into any AI chatbot: ChatGPT, Gemini, Claude, or an open-source one such as Llama or Mistral.' }),
+        h('li', { text: 'Paste its answer back here. Pick one, edit it and copy it.' })),
+      h('div', { class: 'row', style: 'margin-top:8px' }, copy, h('button', { class: 'btn ghost', type: 'button', text: '2. Paste the answer back', onclick: () => { cur.pasting = true; paint(cur, false); } })));
   }
   const ta = h('textarea', { id: 'paste-in', 'aria-label': 'Paste the chatbot answer', style: 'min-height:150px', placeholder: 'Paste the chatbot\'s whole answer here…' });
-  return h('div', { class: 'notice' }, 'Paste the chatbot\'s answer. It is split into separate options automatically.', ta,
+  return h('div', { class: 'notice howto' }, h('b', { text: 'Paste the chatbot\'s answer.' }), ' It is split into separate options automatically.', ta,
     h('div', { class: 'row' },
       h('button', { class: 'btn', type: 'button', text: 'Use these posts', onclick: () => {
         const parsed = parseChatPosts(ta.value);

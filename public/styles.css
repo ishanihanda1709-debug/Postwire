@@ -191,3 +191,5 @@ h4.lbl{font:800 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;c
 }
 @media (max-width:460px){.pic-grid{grid-template-columns:1fr}.grid,.savedgrid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.howto ol{margin:8px 0 4px;padding-left:20px;font-weight:600}.howto li{margin-bottom:4px}
+.panel textarea{min-height:120px}
