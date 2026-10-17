@@ -14,11 +14,12 @@
     {
       "id": "creativereview",
       "name": "Creative Review",
-      "url": "https://www.creativereview.co.uk/feed/",
+      "url": "https://news.google.com/rss/search?q=site:creativereview.co.uk+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "marketing",
       "region": "global",
       "defaultKind": "campaign",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "adweek",
@@ -41,11 +42,12 @@
     {
       "id": "marketingweek",
       "name": "Marketing Week",
-      "url": "https://www.marketingweek.com/feed/",
+      "url": "https://news.google.com/rss/search?q=site:marketingweek.com+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "marketing",
       "region": "global",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "campaignlive",
