@@ -274,6 +274,19 @@ async function loadPost(cur, force) {
 const savedKey = (cur) => `${cur.item.id}|${cur.posts?.[cur.active || 0]?.angle}`;
 const isSaved = (cur) => state.saved.has(savedKey(cur));
 
+// "Also: …" outlets that covered the same story: a short readable label each, at most three.
+function alsoLinks(item) {
+  const label = (a) => {
+    const s = String(a.source || '').trim();
+    if (s && s.length <= 40 && !/https?:|\//.test(s)) return s;
+    try { const host = new URL(a.url).hostname.replace(/^www\./, ''); return host === 'news.google.com' ? '' : host; } catch { return ''; }
+  };
+  const list = (item.also || []).map((a) => ({ a, text: label(a) })).filter((x) => x.text && /^https?:/i.test(x.a.url));
+  if (!list.length) return null;
+  const shown = list.slice(0, 3);
+  return [' · Also: ', shown.map((x, i) => [i ? ', ' : '', h('a', { href: x.a.url, target: '_blank', rel: 'noopener noreferrer', text: x.text })]), list.length > 3 ? ` +${list.length - 3} more` : null];
+}
+
 function paint(cur, loading) {
   const { item, d } = cur, posts = cur.posts || [], active = cur.active || 0, ai = state.me.aiEnabled;
   const ta = h('textarea', { id: 'post', 'aria-label': 'LinkedIn post', style: 'min-height:380px', placeholder: loading ? 'Writing your post options…' : '' });
@@ -283,7 +296,7 @@ function paint(cur, loading) {
     h('div', { class: 'tags' }, h('span', { class: 'tag', text: d.label })),
     h('h2', { id: 'm-title', text: item.title }),
     h('p', { class: 'facts' }, h('b', { text: item.source }), ` · ${fmtDate(item.publishedAt)} · `, h('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', text: 'Read the original ↗' }),
-      item.also?.length ? [' · Also: ', item.also.map((a, i) => [i ? ', ' : '', h('a', { href: a.url, target: '_blank', rel: 'noopener noreferrer', text: a.source })])] : null),
+      alsoLinks(item)),
     h('div', { class: 'cols' },
       h('div', {},
         h('h4', { class: 'lbl', text: loading ? 'Writing your post options…' : `Your LinkedIn post · ${posts.length} options` }),
@@ -381,18 +394,31 @@ function drawPics(cur) {
 
 // No-key flow: copy a prompt for any AI chatbot, then paste its answer back to get three editable options.
 function freeBox(cur) {
+  // Browsers only allow copying right after a click. The prompt comes from the server, so hand the browser a promise
+  // (it waits for the text while keeping the click's permission); if copying is refused anyway, show the prompt to copy by hand.
   const copy = h('button', { class: 'btn', type: 'button', text: '1. Copy the prompt', onclick: async () => {
-    try { const { prompt } = await api(`/api/items/${cur.item.id}/prompt`, { method: 'POST', body: {} }); await navigator.clipboard.writeText(prompt); toast('Prompt copied. Now paste it into an AI chatbot.'); }
-    catch (e) { toast(e.message || 'Could not copy the prompt'); }
+    const fetched = api(`/api/items/${cur.item.id}/prompt`, { method: 'POST', body: {} }).then((r) => r.prompt);
+    try {
+      if (window.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': fetched.then((t) => new Blob([t], { type: 'text/plain' })) })]);
+      else await navigator.clipboard.writeText(await fetched);
+      toast('Prompt copied. Now paste it into an AI chatbot.');
+    } catch (e) {
+      try { cur.promptText = await fetched; } catch (err) { toast(err.message || 'Could not get the prompt'); return; }
+      paint(cur, false);
+      const box = $('#prompt-out'); if (box) { box.focus(); box.select(); }
+      toast('Your browser blocked copying. The prompt is shown below: press Ctrl+C (Cmd+C on Mac).');
+    }
   } });
   if (!cur.pasting) {
+    queueMicrotask(() => { const b = $('#prompt-out'); if (b && cur.promptText) b.value = cur.promptText; });
     return h('div', { class: 'notice howto' },
       h('b', { text: cur.pasted ? 'Using the posts you pasted. Edit them below.' : 'Get your three posts in three steps. No AI key needed.' }),
       cur.pasted ? null : h('ol', {},
         h('li', { text: 'Copy the prompt. It asks for three LinkedIn posts about this headline (story-led, lesson-led and question-led) in your own style.' }),
         h('li', { text: 'Paste it into any AI chatbot: ChatGPT, Gemini, Claude, or an open-source one such as Llama or Mistral.' }),
         h('li', { text: 'Paste its answer back here. Pick one, edit it and copy it.' })),
-      h('div', { class: 'row', style: 'margin-top:8px' }, copy, h('button', { class: 'btn ghost', type: 'button', text: '2. Paste the answer back', onclick: () => { cur.pasting = true; paint(cur, false); } })));
+      h('div', { class: 'row', style: 'margin-top:8px' }, copy, h('button', { class: 'btn ghost', type: 'button', text: '2. Paste the answer back', onclick: () => { cur.pasting = true; paint(cur, false); } })),
+      cur.promptText ? h('textarea', { id: 'prompt-out', readonly: true, 'aria-label': 'The prompt to copy', style: 'min-height:140px;margin-top:10px;font-size:13px', onfocus: (e) => e.target.select() }) : null);
   }
   const ta = h('textarea', { id: 'paste-in', 'aria-label': 'Paste the chatbot answer', style: 'min-height:150px', placeholder: 'Paste the chatbot\'s whole answer here…' });
   return h('div', { class: 'notice howto' }, h('b', { text: 'Paste the chatbot\'s answer.' }), ' It is split into separate options automatically.', ta,
