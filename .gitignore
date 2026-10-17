@@ -3,3 +3,4 @@ data/*.json
 data/*.tmp
 .env
 voice/my-posts.md
+data/*.bak

@@ -4,11 +4,12 @@
     {
       "id": "adsoftheworld",
       "name": "Ads of the World",
-      "url": "https://www.adsoftheworld.com/feed",
+      "url": "https://news.google.com/rss/search?q=site:adsoftheworld.com+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "marketing",
       "region": "global",
       "defaultKind": "campaign",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "creativereview",
@@ -49,11 +50,12 @@
     {
       "id": "campaignlive",
       "name": "Campaign (UK)",
-      "url": "https://www.campaignlive.co.uk/rss/news",
+      "url": "https://news.google.com/rss/search?q=site:campaignlive.co.uk+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "marketing",
       "region": "global",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "digiday",
@@ -67,11 +69,12 @@
     {
       "id": "sel",
       "name": "Search Engine Land",
-      "url": "https://searchengineland.com/feed",
+      "url": "https://news.google.com/rss/search?q=site:searchengineland.com+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "marketing",
       "region": "global",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "smt",
@@ -85,47 +88,52 @@
     {
       "id": "martech",
       "name": "MarTech",
-      "url": "https://martech.org/feed/",
+      "url": "https://news.google.com/rss/search?q=site:martech.org+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "marketing",
       "region": "global",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "campaignindia",
       "name": "Campaign India",
-      "url": "https://www.campaignindia.in/rss/news",
+      "url": "https://news.google.com/rss/search?q=site:campaignindia.in+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "marketing",
       "region": "india",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "afaqs",
       "name": "afaqs!",
-      "url": "https://www.afaqs.com/rss.xml",
+      "url": "https://news.google.com/rss/search?q=site:afaqs.com+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "marketing",
       "region": "india",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "e4m",
       "name": "exchange4media",
-      "url": "https://www.exchange4media.com/rss.xml",
+      "url": "https://news.google.com/rss/search?q=site:exchange4media.com+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "marketing",
       "region": "india",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "bestmediainfo",
       "name": "BestMediaInfo",
-      "url": "https://bestmediainfo.com/feed",
+      "url": "https://news.google.com/rss/search?q=site:bestmediainfo.com+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "marketing",
       "region": "india",
       "defaultKind": "news",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "brandequity",
@@ -183,10 +191,11 @@
     {
       "id": "mindtheproduct",
       "name": "Mind the Product",
-      "url": "https://www.mindtheproduct.com/feed/",
+      "url": "https://news.google.com/rss/search?q=site:mindtheproduct.com+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "product",
       "region": "global",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "lenny",
@@ -215,10 +224,11 @@
     {
       "id": "entrackr",
       "name": "Entrackr",
-      "url": "https://entrackr.com/feed",
+      "url": "https://news.google.com/rss/search?q=site:entrackr.com+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "product",
       "region": "india",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "medianama",
@@ -257,10 +267,11 @@
     {
       "id": "moneycontrol",
       "name": "Moneycontrol",
-      "url": "https://www.moneycontrol.com/rss/latestnews.xml",
+      "url": "https://news.google.com/rss/search?q=site:moneycontrol.com+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "finance",
       "region": "india",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "livemint",
@@ -281,10 +292,11 @@
     {
       "id": "financial-express",
       "name": "Financial Express",
-      "url": "https://www.financialexpress.com/feed/",
+      "url": "https://news.google.com/rss/search?q=site:financialexpress.com+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "domain": "finance",
       "region": "india",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "cnbc",
@@ -305,10 +317,11 @@
     {
       "id": "yahoo-finance",
       "name": "Yahoo Finance",
-      "url": "https://finance.yahoo.com/news/rssindex",
+      "url": "https://news.google.com/rss/search?q=site:finance.yahoo.com+when:7d&hl=en-US&gl=US&ceid=US:en",
       "domain": "finance",
       "region": "global",
-      "enabled": true
+      "enabled": true,
+      "aggregator": true
     },
     {
       "id": "gn-finance-india",

@@ -4,7 +4,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
-import { loadStore, loadSaved, saveSaved, loadVoice, saveVoice, lock } from './lib/store.js';
+import { loadStore, loadSaved, saveSaved, loadVoice, saveVoice, lock, dataDir } from './lib/store.js';
 import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
 import { aiEnabled, writePost, voiceCount, buildChatPrompt, hasCachedPost } from './lib/ai.js';
@@ -370,6 +370,7 @@ export function createServer() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   createServer().listen(PORT, HOST, async () => {
+    console.log(`Your data is saved in: ${dataDir()}`);
     console.log(`${appName()} running at http://${HOST}:${PORT}  (login: ${requireLogin() ? 'required' : 'off (single user)'}, AI: ${aiEnabled() ? 'on' : 'off'}, refresh ${REFRESH_TIMES.length ? `daily at ${REFRESH_TIMES.join(', ')} ${TIMEZONE}` : `every ${REFRESH_MINUTES} min`})`);
     if (requireLogin() && HOST !== '127.0.0.1' && process.env.COOKIE_SECURE !== '1') console.log('Reminder: serve this over HTTPS and set COOKIE_SECURE=1 before real users sign in.');
     const store = await loadStore();

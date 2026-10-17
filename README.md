@@ -75,6 +75,8 @@ See `.env.example` for every setting with a comment. The ones that matter most: 
 
 ## Where the data lives
 
+By default in the `data` folder inside the project (the app prints the exact path when it starts). **If you download or copy the project to a new folder, copy the old `data` folder across too, or your accounts and saved posts start empty.** Each save also keeps a `.bak` copy of the previous version, and the app refuses to start rather than silently reset if a data file is damaged.
+
 Plain JSON files in `DATA_DIR`: `store.json` (stories, 30 days), `users.json` (accounts; passwords are scrypt hashes), `sessions.json` (hashed session tokens), `saved.json`, `voice.json`, `ai-cache.json` (drafts per user, kept two weeks). Fine for a first few hundred users; move to a database before you grow past that.
 
 ## Sources and refresh
