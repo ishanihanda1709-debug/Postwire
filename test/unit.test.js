@@ -155,3 +155,25 @@ test('email checks and the rate limiter', () => {
   const key = 'test:' + Math.random();
   assert.deepEqual([1, 2, 3, 4].map(() => rateLimit(key, 3, 60_000)), [true, true, true, false]);
 });
+
+test('sign-ups are sent to the form, without the password, and the owner is skipped', async () => {
+  const http = await import('node:http');
+  const { notifySignup } = await import('../lib/notify.js');
+  const got = [];
+  const srv = http.createServer((req, res) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { got.push(JSON.parse(b)); res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"ok":true}'); }); });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const prev = process.env.SIGNUP_FORM_URL;
+  try {
+    process.env.SIGNUP_FORM_URL = `http://127.0.0.1:${srv.address().port}/f/x`;
+    const user = { name: 'Asha', email: 'asha@example.com', createdAt: '2026-10-17T00:00:00Z', trialEndsAt: '2026-10-24T00:00:00Z', passHash: 'SECRET' };
+    assert.equal(await notifySignup(user), true);
+    assert.equal(await notifySignup(user, { isOwner: true }), false);
+    assert.equal(got.length, 1);
+    assert.equal(got[0].email, 'asha@example.com');
+    assert.ok(!JSON.stringify(got[0]).includes('SECRET'));
+    process.env.SIGNUP_FORM_URL = '';
+    assert.equal(await notifySignup(user), false);
+    process.env.SIGNUP_FORM_URL = 'http://127.0.0.1:1/none';   // a dead form must not throw
+    assert.equal(await notifySignup(user), false);
+  } finally { if (prev === undefined) delete process.env.SIGNUP_FORM_URL; else process.env.SIGNUP_FORM_URL = prev; await new Promise((r) => srv.close(r)); }
+});

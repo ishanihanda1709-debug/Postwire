@@ -49,6 +49,8 @@ npm run users -- create friend@example.com TempPass123 "Friend"
 npm run users -- admin|unadmin|delete <email>
 ```
 
+**Sign-up notifications.** Every new sign-up (name, email, sign-up and trial-end dates; never the password) is sent in the background to your Formspree form, so you get an email for each one and a list in Formspree. The first account (the owner) is skipped, and a slow or broken form never blocks a sign-up. The form address is built in; change it with `SIGNUP_FORM_URL`, or set `SIGNUP_FORM_URL=` (empty) to switch it off. The privacy notice already mentions it.
+
 Set `ALLOW_SIGNUP=0` for an invite-only beta (create accounts with `users create`). Set `REQUIRE_LOGIN=0` to run privately on your own computer with no login.
 
 **Not built yet** (needed before you scale): automatic payment webhooks (Razorpay/Stripe) so access switches on and off by itself; password reset by email; a real database instead of JSON files; invoices/GST handling; monitoring and backups.

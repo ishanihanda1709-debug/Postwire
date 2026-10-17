@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
+import { notifySignup } from './lib/notify.js';
 import { loadStore, loadSaved, saveSaved, loadVoice, saveVoice, lock, dataDir } from './lib/store.js';
 import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
@@ -155,6 +156,7 @@ async function route(req, res, url) {
       const { user, first: isFirst } = await createUser({ name: body.name, email, password });
       if (isFirst) await adoptLegacyData(user.id);
       const token = await createSession(user.id);
+      notifySignup(user, { isOwner: isFirst });   // in the background: a slow form must never hold up a sign-up
       return json(res, 200, { user: publicUser(user) }, { 'set-cookie': cookieFor(token, req) });
     } catch (e) {
       if (e.code === 409) return json(res, 409, { error: e.message });

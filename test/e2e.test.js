@@ -58,7 +58,7 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
     { id: 'bad', name: 'Broken', url: base + '/broken', domain: 'finance', region: 'global' },
   ] }));
   Object.assign(process.env, { SOURCES_FILE: path.join(dir, 'sources.json'), DATA_DIR: dir, TRIAL_DAYS: '7', AI_DAILY_LIMIT: '2', APP_NAME: 'Postwire' });
-  delete process.env.ANTHROPIC_API_KEY; delete process.env.LLM_BASE_URL; delete process.env.REQUIRE_LOGIN; delete process.env.ALLOW_SIGNUP;
+  delete process.env.ANTHROPIC_API_KEY; delete process.env.LLM_BASE_URL; delete process.env.REQUIRE_LOGIN; delete process.env.ALLOW_SIGNUP; process.env.SIGNUP_FORM_URL = '';
 
   const { refreshAll } = await import('../lib/refresh.js');
   const { createServer } = await import('../server.js');
