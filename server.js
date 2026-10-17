@@ -9,7 +9,7 @@ import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
 import { aiEnabled, writePost, voiceCount, buildChatPrompt, hasCachedPost } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
-import { DOMAIN_IDS, publicDomains } from './lib/domains.js';
+import { DOMAIN_IDS, DOMAINS, publicDomains } from './lib/domains.js';
 import {
   requireLogin, trialDays, aiDailyLimit, createUser, findUserByEmail, createSession, destroySession, cookieFor, clearCookie,
   userFromRequest, publicUser, accessInfo, verifyPassword, burnPasswordTime, validEmail, normalizeEmail, userCount,
@@ -64,6 +64,21 @@ function seededShuffle(arr, seed) {
   return arr;
 }
 
+let headlinesCache = { at: 0, stamp: null, value: null };
+async function publicHeadlines() {
+  const store = await loadStore();
+  if (headlinesCache.value && headlinesCache.stamp === store.updatedAt && Date.now() - headlinesCache.at < 300_000) return headlinesCache.value;
+  const oldest = Date.now() - FRESH_DAYS * 86_400_000;
+  const sections = DOMAIN_IDS.map((id) => ({
+    id, label: DOMAINS[id].label,
+    items: Object.values(store.items).filter((i) => (i.domain || 'marketing') === id && i.publishedAt && Date.parse(i.publishedAt) >= oldest)
+      .sort((a, b) => scoreTrending(b) - scoreTrending(a)).slice(0, 6)
+      .map((i) => ({ title: i.title, source: i.source, url: i.url, publishedAt: i.publishedAt })),
+  })).filter((sct) => sct.items.length);
+  headlinesCache = { at: Date.now(), stamp: store.updatedAt, value: { updatedAt: store.updatedAt, sections } };
+  return headlinesCache.value;
+}
+
 async function html(res, file, dir = PUBLIC) {
   let body = await fs.readFile(path.join(dir, file), 'utf8');
   const name = appName();
@@ -115,6 +130,15 @@ async function route(req, res, url) {
 
   if (p === '/api/config' && req.method === 'GET') {
     return json(res, 200, { name: appName(), tagline: tagline(), requireLogin: requireLogin(), signupOpen: process.env.ALLOW_SIGNUP !== '0' || (await userCount()) === 0, trialDays: trialDays() });
+  }
+
+  // Public, for the landing page: today's top headlines per section. Headline, publisher, link and age only:
+  // no summaries and nothing else a publisher owns. Switch off with PUBLIC_HEADLINES=0.
+  if (p === '/api/public/headlines' && req.method === 'GET') {
+    const cors = { 'access-control-allow-origin': '*', 'cache-control': 'public, max-age=300' };
+    if (process.env.PUBLIC_HEADLINES === '0') return json(res, 200, { sections: [] }, cors);
+    if (!rateLimit(`pub:${clientIp(req)}`, 60, 60_000)) return json(res, 429, { error: 'Slow down a little.' });
+    return json(res, 200, await publicHeadlines(), cors);
   }
 
   if (p === '/api/auth/signup' && req.method === 'POST') {

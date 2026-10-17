@@ -1,45 +1,470 @@
 {
-  "_note": "Edit freely. Every source belongs to a domain: marketing | product | finance. region: india | global. defaultKind (marketing only): campaign | news. These are the publishers' public feeds; confirm each publisher's terms allow your use before charging for the service. A feed that has moved shows an error in Account > Sources.",
+  "_note": "Edit freely. Every source belongs to a domain: marketing | product | finance | others. region: india | global. defaultKind (marketing only): campaign | news. These are the publishers' public feeds; confirm each publisher's terms allow your use before charging for the service. A feed that has moved shows an error in Account > Sources.",
   "sources": [
-    { "id": "adsoftheworld", "name": "Ads of the World", "url": "https://www.adsoftheworld.com/feed", "domain": "marketing", "region": "global", "defaultKind": "campaign", "enabled": true },
-    { "id": "creativereview", "name": "Creative Review", "url": "https://www.creativereview.co.uk/feed/", "domain": "marketing", "region": "global", "defaultKind": "campaign", "enabled": true },
-    { "id": "adweek", "name": "Adweek", "url": "https://www.adweek.com/feed/", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "marketingdive", "name": "Marketing Dive", "url": "https://www.marketingdive.com/feeds/news/", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "marketingweek", "name": "Marketing Week", "url": "https://www.marketingweek.com/feed/", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "campaignlive", "name": "Campaign (UK)", "url": "https://www.campaignlive.co.uk/rss/news", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "digiday", "name": "Digiday", "url": "https://digiday.com/feed/", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "sel", "name": "Search Engine Land", "url": "https://searchengineland.com/feed", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "smt", "name": "Social Media Today", "url": "https://www.socialmediatoday.com/feeds/news/", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "martech", "name": "MarTech", "url": "https://martech.org/feed/", "domain": "marketing", "region": "global", "defaultKind": "news", "enabled": true },
-    { "id": "campaignindia", "name": "Campaign India", "url": "https://www.campaignindia.in/rss/news", "domain": "marketing", "region": "india", "defaultKind": "news", "enabled": true },
-    { "id": "afaqs", "name": "afaqs!", "url": "https://www.afaqs.com/rss.xml", "domain": "marketing", "region": "india", "defaultKind": "news", "enabled": true },
-    { "id": "e4m", "name": "exchange4media", "url": "https://www.exchange4media.com/rss.xml", "domain": "marketing", "region": "india", "defaultKind": "news", "enabled": true },
-    { "id": "bestmediainfo", "name": "BestMediaInfo", "url": "https://bestmediainfo.com/feed", "domain": "marketing", "region": "india", "defaultKind": "news", "enabled": true },
-    { "id": "brandequity", "name": "ET BrandEquity", "url": "https://brandequity.economictimes.indiatimes.com/rss/topstories", "domain": "marketing", "region": "india", "defaultKind": "news", "enabled": true },
-    { "id": "gn-india-campaigns", "name": "Google News: India ad campaigns", "url": "https://news.google.com/rss/search?q=%22ad+campaign%22+OR+%22brand+campaign%22+India+when:7d&hl=en-IN&gl=IN&ceid=IN:en", "domain": "marketing", "region": "india", "defaultKind": "campaign", "enabled": true, "aggregator": true },
-    { "id": "gn-global-campaigns", "name": "Google News: global ad campaigns", "url": "https://news.google.com/rss/search?q=%22ad+campaign%22+OR+%22brand+activation%22+OR+%22marketing+campaign%22+when:7d&hl=en&gl=US&ceid=US:en", "domain": "marketing", "region": "global", "defaultKind": "campaign", "enabled": true, "aggregator": true },
-
-    { "id": "techcrunch", "name": "TechCrunch", "url": "https://techcrunch.com/feed/", "domain": "product", "region": "global", "enabled": true },
-    { "id": "theverge", "name": "The Verge", "url": "https://www.theverge.com/rss/index.xml", "domain": "product", "region": "global", "enabled": true },
-    { "id": "producthunt", "name": "Product Hunt", "url": "https://www.producthunt.com/feed", "domain": "product", "region": "global", "enabled": true },
-    { "id": "mindtheproduct", "name": "Mind the Product", "url": "https://www.mindtheproduct.com/feed/", "domain": "product", "region": "global", "enabled": true },
-    { "id": "lenny", "name": "Lenny's Newsletter", "url": "https://www.lennysnewsletter.com/feed", "domain": "product", "region": "global", "enabled": true },
-    { "id": "inc42", "name": "Inc42", "url": "https://inc42.com/feed/", "domain": "product", "region": "india", "enabled": true },
-    { "id": "yourstory", "name": "YourStory", "url": "https://yourstory.com/feed", "domain": "product", "region": "india", "enabled": true },
-    { "id": "entrackr", "name": "Entrackr", "url": "https://entrackr.com/feed", "domain": "product", "region": "india", "enabled": true },
-    { "id": "medianama", "name": "MediaNama", "url": "https://www.medianama.com/feed/", "domain": "product", "region": "india", "enabled": true },
-    { "id": "gn-product-india", "name": "Google News: India product launches", "url": "https://news.google.com/rss/search?q=%22launches%22+OR+%22new+feature%22+app+OR+product+India+when:3d&hl=en-IN&gl=IN&ceid=IN:en", "domain": "product", "region": "india", "enabled": true, "aggregator": true },
-    { "id": "gn-product-global", "name": "Google News: product launches", "url": "https://news.google.com/rss/search?q=%22new+feature%22+OR+%22product+launch%22+OR+%22rolls+out%22+when:3d&hl=en&gl=US&ceid=US:en", "domain": "product", "region": "global", "enabled": true, "aggregator": true },
-
-    { "id": "et-markets", "name": "ET Markets", "url": "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms", "domain": "finance", "region": "india", "enabled": true },
-    { "id": "moneycontrol", "name": "Moneycontrol", "url": "https://www.moneycontrol.com/rss/latestnews.xml", "domain": "finance", "region": "india", "enabled": true },
-    { "id": "livemint", "name": "Mint", "url": "https://www.livemint.com/rss/money", "domain": "finance", "region": "india", "enabled": true },
-    { "id": "business-standard", "name": "Business Standard", "url": "https://www.business-standard.com/rss/markets-106.rss", "domain": "finance", "region": "india", "enabled": true },
-    { "id": "financial-express", "name": "Financial Express", "url": "https://www.financialexpress.com/feed/", "domain": "finance", "region": "india", "enabled": true },
-    { "id": "cnbc", "name": "CNBC", "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html", "domain": "finance", "region": "global", "enabled": true },
-    { "id": "marketwatch", "name": "MarketWatch", "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories", "domain": "finance", "region": "global", "enabled": true },
-    { "id": "yahoo-finance", "name": "Yahoo Finance", "url": "https://finance.yahoo.com/news/rssindex", "domain": "finance", "region": "global", "enabled": true },
-    { "id": "gn-finance-india", "name": "Google News: India finance", "url": "https://news.google.com/rss/search?q=sensex+OR+nifty+OR+RBI+OR+%22Indian+economy%22+when:2d&hl=en-IN&gl=IN&ceid=IN:en", "domain": "finance", "region": "india", "enabled": true, "aggregator": true },
-    { "id": "gn-finance-global", "name": "Google News: global finance", "url": "https://news.google.com/rss/search?q=%22stock+market%22+OR+%22central+bank%22+OR+%22venture+funding%22+when:2d&hl=en&gl=US&ceid=US:en", "domain": "finance", "region": "global", "enabled": true, "aggregator": true }
+    {
+      "id": "adsoftheworld",
+      "name": "Ads of the World",
+      "url": "https://www.adsoftheworld.com/feed",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "campaign",
+      "enabled": true
+    },
+    {
+      "id": "creativereview",
+      "name": "Creative Review",
+      "url": "https://www.creativereview.co.uk/feed/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "campaign",
+      "enabled": true
+    },
+    {
+      "id": "adweek",
+      "name": "Adweek",
+      "url": "https://www.adweek.com/feed/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "marketingdive",
+      "name": "Marketing Dive",
+      "url": "https://www.marketingdive.com/feeds/news/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "marketingweek",
+      "name": "Marketing Week",
+      "url": "https://www.marketingweek.com/feed/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "campaignlive",
+      "name": "Campaign (UK)",
+      "url": "https://www.campaignlive.co.uk/rss/news",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "digiday",
+      "name": "Digiday",
+      "url": "https://digiday.com/feed/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "sel",
+      "name": "Search Engine Land",
+      "url": "https://searchengineland.com/feed",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "smt",
+      "name": "Social Media Today",
+      "url": "https://www.socialmediatoday.com/feeds/news/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "martech",
+      "name": "MarTech",
+      "url": "https://martech.org/feed/",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "campaignindia",
+      "name": "Campaign India",
+      "url": "https://www.campaignindia.in/rss/news",
+      "domain": "marketing",
+      "region": "india",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "afaqs",
+      "name": "afaqs!",
+      "url": "https://www.afaqs.com/rss.xml",
+      "domain": "marketing",
+      "region": "india",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "e4m",
+      "name": "exchange4media",
+      "url": "https://www.exchange4media.com/rss.xml",
+      "domain": "marketing",
+      "region": "india",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "bestmediainfo",
+      "name": "BestMediaInfo",
+      "url": "https://bestmediainfo.com/feed",
+      "domain": "marketing",
+      "region": "india",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "brandequity",
+      "name": "ET BrandEquity",
+      "url": "https://brandequity.economictimes.indiatimes.com/rss/topstories",
+      "domain": "marketing",
+      "region": "india",
+      "defaultKind": "news",
+      "enabled": true
+    },
+    {
+      "id": "gn-india-campaigns",
+      "name": "Google News: India ad campaigns",
+      "url": "https://news.google.com/rss/search?q=%22ad+campaign%22+OR+%22brand+campaign%22+India+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
+      "domain": "marketing",
+      "region": "india",
+      "defaultKind": "campaign",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "gn-global-campaigns",
+      "name": "Google News: global ad campaigns",
+      "url": "https://news.google.com/rss/search?q=%22ad+campaign%22+OR+%22brand+activation%22+OR+%22marketing+campaign%22+when:7d&hl=en&gl=US&ceid=US:en",
+      "domain": "marketing",
+      "region": "global",
+      "defaultKind": "campaign",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "techcrunch",
+      "name": "TechCrunch",
+      "url": "https://techcrunch.com/feed/",
+      "domain": "product",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "theverge",
+      "name": "The Verge",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "domain": "product",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "producthunt",
+      "name": "Product Hunt",
+      "url": "https://www.producthunt.com/feed",
+      "domain": "product",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "mindtheproduct",
+      "name": "Mind the Product",
+      "url": "https://www.mindtheproduct.com/feed/",
+      "domain": "product",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "lenny",
+      "name": "Lenny's Newsletter",
+      "url": "https://www.lennysnewsletter.com/feed",
+      "domain": "product",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "inc42",
+      "name": "Inc42",
+      "url": "https://inc42.com/feed/",
+      "domain": "product",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "yourstory",
+      "name": "YourStory",
+      "url": "https://yourstory.com/feed",
+      "domain": "product",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "entrackr",
+      "name": "Entrackr",
+      "url": "https://entrackr.com/feed",
+      "domain": "product",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "medianama",
+      "name": "MediaNama",
+      "url": "https://www.medianama.com/feed/",
+      "domain": "product",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "gn-product-india",
+      "name": "Google News: India product launches",
+      "url": "https://news.google.com/rss/search?q=%22launches%22+OR+%22new+feature%22+app+OR+product+India+when:3d&hl=en-IN&gl=IN&ceid=IN:en",
+      "domain": "product",
+      "region": "india",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "gn-product-global",
+      "name": "Google News: product launches",
+      "url": "https://news.google.com/rss/search?q=%22new+feature%22+OR+%22product+launch%22+OR+%22rolls+out%22+when:3d&hl=en&gl=US&ceid=US:en",
+      "domain": "product",
+      "region": "global",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "et-markets",
+      "name": "ET Markets",
+      "url": "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
+      "domain": "finance",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "moneycontrol",
+      "name": "Moneycontrol",
+      "url": "https://www.moneycontrol.com/rss/latestnews.xml",
+      "domain": "finance",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "livemint",
+      "name": "Mint",
+      "url": "https://www.livemint.com/rss/money",
+      "domain": "finance",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "business-standard",
+      "name": "Business Standard",
+      "url": "https://www.business-standard.com/rss/markets-106.rss",
+      "domain": "finance",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "financial-express",
+      "name": "Financial Express",
+      "url": "https://www.financialexpress.com/feed/",
+      "domain": "finance",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "cnbc",
+      "name": "CNBC",
+      "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+      "domain": "finance",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "marketwatch",
+      "name": "MarketWatch",
+      "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+      "domain": "finance",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "yahoo-finance",
+      "name": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/news/rssindex",
+      "domain": "finance",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "gn-finance-india",
+      "name": "Google News: India finance",
+      "url": "https://news.google.com/rss/search?q=sensex+OR+nifty+OR+RBI+OR+%22Indian+economy%22+when:2d&hl=en-IN&gl=IN&ceid=IN:en",
+      "domain": "finance",
+      "region": "india",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "gn-finance-global",
+      "name": "Google News: global finance",
+      "url": "https://news.google.com/rss/search?q=%22stock+market%22+OR+%22central+bank%22+OR+%22venture+funding%22+when:2d&hl=en&gl=US&ceid=US:en",
+      "domain": "finance",
+      "region": "global",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "thehindu",
+      "name": "The Hindu",
+      "url": "https://www.thehindu.com/news/national/feeder/default.rss",
+      "domain": "others",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "indianexpress",
+      "name": "The Indian Express",
+      "url": "https://indianexpress.com/feed/",
+      "domain": "others",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "ndtv",
+      "name": "NDTV",
+      "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
+      "domain": "others",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "toi",
+      "name": "Times of India",
+      "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
+      "domain": "others",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "hindustantimes",
+      "name": "Hindustan Times",
+      "url": "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
+      "domain": "others",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "cricinfo",
+      "name": "ESPNcricinfo",
+      "url": "https://www.espncricinfo.com/rss/content/story/feeds/0.xml",
+      "domain": "others",
+      "region": "india",
+      "enabled": true
+    },
+    {
+      "id": "bbc",
+      "name": "BBC News",
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "bbc-science",
+      "name": "BBC Science & Environment",
+      "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "bbc-health",
+      "name": "BBC Health",
+      "url": "https://feeds.bbci.co.uk/news/health/rss.xml",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "guardian",
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com/world/rss",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "aljazeera",
+      "name": "Al Jazeera",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "npr",
+      "name": "NPR",
+      "url": "https://feeds.npr.org/1001/rss.xml",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "skysports",
+      "name": "Sky Sports",
+      "url": "https://www.skysports.com/rss/12040",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "variety",
+      "name": "Variety",
+      "url": "https://variety.com/feed/",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "spacecom",
+      "name": "Space.com",
+      "url": "https://www.space.com/feeds/all",
+      "domain": "others",
+      "region": "global",
+      "enabled": true
+    },
+    {
+      "id": "gn-top-india",
+      "name": "Google News: India top stories",
+      "url": "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
+      "domain": "others",
+      "region": "india",
+      "enabled": true,
+      "aggregator": true
+    },
+    {
+      "id": "gn-top-world",
+      "name": "Google News: world top stories",
+      "url": "https://news.google.com/rss?hl=en&gl=US&ceid=US:en",
+      "domain": "others",
+      "region": "global",
+      "enabled": true,
+      "aggregator": true
+    }
   ]
 }

@@ -35,6 +35,13 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
       { t: 'Startup raises $20M Series B', l: b + '/x/11', ago: 2 },
       shared,
     ]));
+    else if (req.url === '/o') res.end(feed([
+      { t: 'Cricket team wins the test series', l: b + '/x/12', ago: 1 },
+      { t: 'Scientists find water on a distant moon', l: b + '/x/13', ago: 2 },
+      { t: 'New film tops the box office', l: b + '/x/14', ago: 3 },
+      { t: 'Hospital opens a new cancer ward', l: b + '/x/15', ago: 4 },
+      { t: 'Council approves a new bridge', l: b + '/x/16', ago: 5 },
+    ]));
     else { res.statusCode = 500; res.end('x'); }
   });
   await new Promise((r) => mock.listen(0, '127.0.0.1', r));
@@ -47,6 +54,7 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
     { id: 'm2', name: 'Outlet B', url: base + '/m2', domain: 'marketing', region: 'india', defaultKind: 'news' },
     { id: 'p1', name: 'Product Wire', url: base + '/p', domain: 'product', region: 'global' },
     { id: 'f1', name: 'Money Wire', url: base + '/f', domain: 'finance', region: 'global' },
+    { id: 'o1', name: 'Daily World', url: base + '/o', domain: 'others', region: 'global' },
     { id: 'bad', name: 'Broken', url: base + '/broken', domain: 'finance', region: 'global' },
   ] }));
   Object.assign(process.env, { SOURCES_FILE: path.join(dir, 'sources.json'), DATA_DIR: dir, TRIAL_DAYS: '7', AI_DAILY_LIMIT: '2', APP_NAME: 'Postwire' });
@@ -61,6 +69,7 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   assert.equal(run.byDomain.marketing, 4, 'ancient story pruned; stale one kept for the 7/30 day views; merged duplicate counted once');
   assert.equal(run.byDomain.product, 4);
   assert.equal(run.byDomain.finance, 4);
+  assert.equal(run.byDomain.others, 5);
   assert.equal(run.merged, 1);
   const stored = JSON.parse(await fs.readFile(path.join(dir, 'store.json'), 'utf8'));
   const all = Object.values(stored.items);
@@ -110,6 +119,21 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   const idx = await anon.get('/index.html');
   assert.equal(idx.status, 302); assert.equal(idx.headers.get('location'), '/');
 
+  // ---------- 2b. public headlines for the landing page ----------
+  const pub = await anon.get('/api/public/headlines');
+  assert.equal(pub.status, 200); assert.equal(pub.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(pub.data.sections.map((s) => s.id), ['marketing', 'product', 'finance', 'others']);
+  for (const sct of pub.data.sections) {
+    assert.ok(sct.items.length >= 1 && sct.items.length <= 6);
+    for (const i of sct.items) assert.deepEqual(Object.keys(i).sort(), ['publishedAt', 'source', 'title', 'url'], 'headline, publisher, link and date only');
+  }
+  assert.ok(!pub.data.sections.find((s) => s.id === 'marketing').items.some((i) => /Stale|Ancient/.test(i.title)), 'only fresh headlines');
+  assert.doesNotMatch(JSON.stringify(pub.data), /Feed summary/, 'no summaries leave the building');
+  assert.doesNotMatch(root.data, /Try the sample|class="demo"/, 'the placeholder sample is gone from the landing page');
+  process.env.PUBLIC_HEADLINES = '0';
+  assert.deepEqual((await anon.get('/api/public/headlines')).data, { sections: [] });
+  delete process.env.PUBLIC_HEADLINES;
+
   // ---------- 3. sign-up (first account is the owner) and login ----------
   assert.equal((await anon.post('/api/auth/signup', { email: 'bad', password: 'longenough1' })).status, 400);
   assert.equal((await anon.post('/api/auth/signup', { email: 'o@x.com', password: 'short' })).status, 400);
@@ -141,8 +165,8 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
 
   // ---------- 4. the app: sections, filters, freshness, headlines only ----------
   const me = (await owner.get('/api/me')).data;
-  assert.deepEqual(me.domains.map((d) => d.id), ['marketing', 'product', 'finance']);
-  assert.ok(Array.isArray(me.sources) && me.sources.length === 5, 'owner sees source health');
+  assert.deepEqual(me.domains.map((d) => d.id), ['marketing', 'product', 'finance', 'others']);
+  assert.ok(Array.isArray(me.sources) && me.sources.length === 6, 'owner sees source health');
   assert.equal((await bob.get('/api/me')).data.sources.length, 0, 'normal users do not');
   assert.equal((await owner.get('/api/items')).headers.get('cache-control'), 'no-store');
 
@@ -166,6 +190,13 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   assert.equal((await items(bob, 'domain=finance&tag=funding')).total, 1);
   assert.equal((await items(bob, 'domain=finance&tag=economy')).total, 1);
   assert.equal((await items(bob, 'domain=finance&q=sensex')).total, 1);
+  const ot = await items(bob, 'domain=others');
+  assert.equal(ot.total, 5);
+  assert.equal((await items(bob, 'domain=others&tag=sport')).total, 1);
+  assert.equal((await items(bob, 'domain=others&tag=tech')).total, 1);
+  assert.equal((await items(bob, 'domain=others&tag=entertainment')).total, 1);
+  assert.equal((await items(bob, 'domain=others&tag=health')).total, 1);
+  assert.ok(ot.items.every((i) => i.domain === 'others' && !('summary' in i)));
   assert.equal((await items(bob, 'domain=nonsense')).total, mk.total, 'unknown section falls back to marketing');
   assert.equal((await items(bob, 'domain=marketing&days=0.1')).total, 1, '2.4 hour window keeps only the newest');
   const sh1 = await items(bob, 'domain=finance&shuffle=7'), sh2 = await items(bob, 'domain=finance&shuffle=7');

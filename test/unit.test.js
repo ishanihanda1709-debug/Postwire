@@ -73,10 +73,20 @@ test('product and finance classification', () => {
   assert.equal(detectRegion({ title: 'Sensex jumps' }, fin), 'india');
 });
 
-test('domains: three sections with sub-tabs, and the public view hides prompt internals', () => {
-  assert.deepEqual(Object.keys(DOMAINS), ['marketing', 'product', 'finance']);
+test('domains: four sections with sub-tabs, and the public view hides prompt internals', () => {
+  assert.deepEqual(Object.keys(DOMAINS), ['marketing', 'product', 'finance', 'others']);
+  assert.match(DOMAINS.others.guidance, /do not take sides/);
   assert.match(DOMAINS.finance.guidance, /NEVER give investment advice/);
   for (const d of publicDomains()) { assert.ok(d.subtabs.length >= 3); assert.equal('persona' in d, false); assert.equal('guidance' in d, false); }
+});
+
+test('others classification: science and tech, sport, entertainment, health', () => {
+  const o = { domain: 'others', region: 'global' };
+  assert.ok(classify({ title: 'ISRO schedules a new satellite launch' }, o).tags.includes('tech'));
+  assert.ok(classify({ title: 'India win the test series against Australia in cricket' }, o).tags.includes('sport'));
+  assert.ok(classify({ title: 'New Bollywood film tops the box office' }, o).tags.includes('entertainment'));
+  assert.ok(classify({ title: 'Hospital opens a new cancer ward' }, o).tags.includes('health'));
+  assert.deepEqual(classify({ title: 'Council approves a new bridge' }, o), { kind: 'news', tags: [] });
 });
 
 test('scaffold posts: three angles, no unsourced facts', () => {

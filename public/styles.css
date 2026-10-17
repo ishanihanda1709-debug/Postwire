@@ -2,7 +2,7 @@
 :root{
   --bg:#F3F5FA;--surface:#FFFFFF;--soft:#EBEFF7;--ink:#101828;--mute:#566176;--line:#DFE5F0;
   --side:#0E1630;--side-ink:#E9EDFB;--side-mute:#93A0C6;--side-hover:rgba(255,255,255,.07);--side-on:rgba(255,255,255,.12);
-  --mkt:#E8475F;--prd:#6D5BF6;--fin:#0E9F8E;--dom:var(--prd);--on-dom:#FFFFFF;
+  --mkt:#E8475F;--prd:#6D5BF6;--fin:#0E9F8E;--oth:#B45309;--dom:var(--prd);--on-dom:#FFFFFF;
   --ok:#0E9F6E;--warn:#9A6700;--warnbg:#FFF4D6;--bad:#C0352B;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.07);
   --display:'Sora','Segoe UI',system-ui,sans-serif;--sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -10,16 +10,17 @@
 }
 :root[data-theme=dark]{
   --bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;
-  --side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--on-dom:#0A0F1E;--warn:#F2C14E;--warnbg:#2B2410;--bad:#FF8A80;
+  --side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--oth:#FBBF24;--on-dom:#0A0F1E;--warn:#F2C14E;--warnbg:#2B2410;--bad:#FF8A80;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);color-scheme:dark;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;
-  --side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--on-dom:#0A0F1E;--warn:#F2C14E;--warnbg:#2B2410;--bad:#FF8A80;
+  --side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--oth:#FBBF24;--on-dom:#0A0F1E;--warn:#F2C14E;--warnbg:#2B2410;--bad:#FF8A80;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);color-scheme:dark;}}
 body[data-domain=marketing]{--dom:var(--mkt)}
 body[data-domain=product]{--dom:var(--prd)}
 body[data-domain=finance]{--dom:var(--fin)}
+body[data-domain=others]{--dom:var(--oth)}
 :root:not([data-theme=dark]) body[data-domain=marketing]{--on-dom:#FFFFFF}
 
 *{box-sizing:border-box}
@@ -42,7 +43,7 @@ a{color:inherit}
 .nav a:hover{background:var(--side-hover);color:#fff}
 .nav a.on{background:var(--side-on);color:#fff}
 .nav i{width:10px;height:10px;border-radius:50%;flex:none;background:var(--side-mute)}
-.nav a[data-r=marketing] i{background:var(--mkt)}.nav a[data-r=product] i{background:var(--prd)}.nav a[data-r=finance] i{background:var(--fin)}
+.nav a[data-r=marketing] i{background:var(--mkt)}.nav a[data-r=product] i{background:var(--prd)}.nav a[data-r=finance] i{background:var(--fin)}.nav a[data-r=others] i{background:var(--oth)}
 .nav .count{margin-left:auto}
 .group{display:flex;flex-direction:column}
 .group2{margin-top:18px}

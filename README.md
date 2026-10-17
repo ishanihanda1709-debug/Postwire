@@ -1,6 +1,6 @@
 # Postwire
 
-News in **Marketing**, **Product** and **Finance**, each with ready-to-post LinkedIn drafts. Open a headline, get three post options in your own voice and a graphic to go with them.
+News in **Marketing**, **Product**, **Finance** and **Others**, each with ready-to-post LinkedIn drafts. Open a headline, get three post options in your own voice and a graphic to go with them.
 
 Zero dependencies. Node 20+.
 
@@ -13,8 +13,8 @@ npm test
 
 ## What people see
 
-- **A left sidebar** with the three news sections, **My style**, **Saved**, a light/dark switch and the account card (a top bar on phones).
-- **One page per section.** Each has its own tabs: Marketing (All, Campaigns, News, Case studies), Product (All, Launches, Features, For PMs), Finance (All, Markets, Funding, Economy, Fintech). Plus India / Global, a 3 / 7 / 30 day switch, search, **Show me different ones** and a ✕ to hide a story.
+- **A left sidebar** with the four news sections, **My style**, **Saved**, a light/dark switch and the account card (a top bar on phones).
+- **One page per section.** Each has its own tabs: Marketing (All, Campaigns, News, Case studies), Product (All, Launches, Features, For PMs), Finance (All, Markets, Funding, Economy, Fintech), Others (All, Science & tech, Sport, Entertainment, Health). **Others** is everything outside the first three: India and world news, science, sport and culture. Plus India / Global, a 3 / 7 / 30 day switch, search, **Show me different ones** and a ✕ to hide a story.
 - **Headlines only.** Each card is a headline, its publisher, its age and a link to the original. No publisher photos, no article text.
 - **Click a story** for three LinkedIn post options (story-led, lesson-led, question-led), editable and ready to copy, and four downloadable graphics in three LinkedIn sizes, drawn from the headline in the section's colour.
 - **My style**: paste your own posts and every draft follows your rhythm and tone.
@@ -31,7 +31,7 @@ npm test
 
 Without any of these the post is an outline with `[blanks]`.
 
-**Truth rules in every prompt:** only facts from the headline and the feed's own short summary; no invented numbers, quotes or personal stories; a source line at the end. **Finance** posts are additionally forbidden from investment advice, price targets, predictions and buy/sell/hold views, and the panel says "News only, not investment advice". Posts are drafts: always read them before you post. LinkedIn does not allow automated reading of profiles or feeds, so the app never touches your LinkedIn; it only opens LinkedIn's post box with your text for you to review and publish.
+**Truth rules in every prompt:** only facts from the headline and the feed's own short summary; no invented numbers, quotes or personal stories; a source line at the end. **Finance** posts are additionally forbidden from investment advice, price targets, predictions and buy/sell/hold views, and the panel says "News only, not investment advice". **Others** posts are told to stay balanced and respectful, not to take sides on political, religious or other divisive issues, and not to speculate about people. Posts are drafts: always read them before you post. LinkedIn does not allow automated reading of profiles or feeds, so the app never touches your LinkedIn; it only opens LinkedIn's post box with your text for you to review and publish.
 
 ## Running it as a business
 
@@ -51,6 +51,10 @@ npm run users -- admin|unadmin|delete <email>
 Set `ALLOW_SIGNUP=0` for an invite-only beta (create accounts with `users create`). Set `REQUIRE_LOGIN=0` to run privately on your own computer with no login.
 
 **Not built yet** (needed before you scale): automatic payment webhooks (Razorpay/Stripe) so access switches on and off by itself; password reset by email; a real database instead of JSON files; invoices/GST handling; monitoring and backups.
+
+## The public landing page
+
+Visitors who are not logged in see the landing page at the home address. It shows **today's real headlines** in each section (headline, publisher, age and a link to the original, six per section, refreshed with the news) with a *Write a post →* button that leads to sign-up. It is fed by the public endpoint `/api/public/headlines`, which never includes summaries. If you would rather not show any headlines to the public, set `PUBLIC_HEADLINES=0` and the section simply disappears.
 
 ## Content rights
 
@@ -75,7 +79,7 @@ Plain JSON files in `DATA_DIR`: `store.json` (stories, 30 days), `users.json` (a
 
 ## Sources and refresh
 
-`sources.json` lists about 38 feeds across the three sections (plus Google News searches). Publishers move feed addresses: a failing feed shows its error under *Account > Owner tools*. The app fetches every hour by default, or at `REFRESH_AT` times, and catches up if it was off. Stories are merged across outlets (by URL, then headline similarity) within each section, classified by keywords in the headline, and kept for 30 days. These feed addresses could not be tested from the build sandbox, so expect to adjust a few on first run.
+`sources.json` lists about 55 feeds across the four sections (plus Google News searches). Publishers move feed addresses: a failing feed shows its error under *Account > Owner tools*. The app fetches every hour by default, or at `REFRESH_AT` times, and catches up if it was off. Stories are merged across outlets (by URL, then headline similarity) within each section, classified by keywords in the headline, and kept for 30 days. These feed addresses could not be tested from the build sandbox, so expect to adjust a few on first run.
 
 ## Landing page
 

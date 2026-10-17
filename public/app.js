@@ -3,7 +3,7 @@ import { drawCreative, SIZES, TEMPLATES } from './creatives.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const PAGE = 18;
-const ROUTES = ['marketing', 'product', 'finance', 'style', 'saved', 'account', 'upgrade'];
+const ROUTES = ['marketing', 'product', 'finance', 'others', 'style', 'saved', 'account', 'upgrade'];
 const state = { me: null, doms: {}, cur: null, saved: new Map(), timer: null, rt: 0 };
 
 // Text is always set via textContent, never innerHTML.
@@ -50,7 +50,7 @@ function ago(iso) {
   return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
 }
 const domainById = (id) => state.me.domains.find((d) => d.id === id) || state.me.domains[0];
-const colorVar = { marketing: '--mkt', product: '--prd', finance: '--fin' };
+const colorVar = { marketing: '--mkt', product: '--prd', finance: '--fin', others: '--oth' };
 
 // Stories hidden with the ✕ are remembered in this browser, per account.
 const hiddenKey = () => `pw-hidden-${state.me.user.id}`;

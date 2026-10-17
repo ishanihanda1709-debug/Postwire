@@ -14,16 +14,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F3F5FA;--surface:#fff;--soft:#EBEFF7;--ink:#101828;--mute:#566176;--line:#DFE5F0;--side:#0E1630;--mkt:#E8475F;--prd:#6D5BF6;--fin:#0E9F8E;--dom:var(--prd);--on:#fff;--warnbg:#FFF4D6;--warn:#9A6700;--display:'Sora','Segoe UI',system-ui,sans-serif;--sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;--shadow:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.08)}
-:root[data-theme=dark]{--bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;--side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--on:#0A0F1E;--warnbg:#2B2410;--warn:#F2C14E;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;--side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--on:#0A0F1E;--warnbg:#2B2410;--warn:#F2C14E;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}}
-[data-d=marketing]{--dom:var(--mkt)}[data-d=product]{--dom:var(--prd)}[data-d=finance]{--dom:var(--fin)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
+:root{--bg:#F3F5FA;--surface:#fff;--soft:#EBEFF7;--ink:#101828;--mute:#566176;--line:#DFE5F0;--side:#0E1630;--mkt:#E8475F;--prd:#6D5BF6;--fin:#0E9F8E;--oth:#B45309;--dom:var(--prd);--on:#fff;--warnbg:#FFF4D6;--warn:#9A6700;--display:'Sora','Segoe UI',system-ui,sans-serif;--sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;--shadow:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.08)}
+:root[data-theme=dark]{--bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;--side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--oth:#FBBF24;--on:#0A0F1E;--warnbg:#2B2410;--warn:#F2C14E;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;--side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--oth:#FBBF24;--on:#0A0F1E;--warnbg:#2B2410;--warn:#F2C14E;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}}
+[data-d=marketing]{--dom:var(--mkt)}[data-d=product]{--dom:var(--prd)}[data-d=finance]{--dom:var(--fin)}[data-d=others]{--dom:var(--oth)}
+*{box-sizing:border-box}[hidden]{display:none!important}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--sans)}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--prd);outline-offset:3px}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
-.nav{display:flex;align-items:center;gap:18px;padding:16px 0}
+.nav{display:flex;align-items:center;gap:14px;padding:16px 0;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 21px var(--display);letter-spacing:-.02em}
 .mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;font:800 18px var(--display);background:linear-gradient(135deg,#E8475F,#6D5BF6 55%,#0E9F8E)}
 .sp{flex:1}.nav a.l{color:var(--mute);text-decoration:none;font-weight:700;font-size:15px}.nav a.l:hover{color:var(--ink)}
@@ -43,39 +43,25 @@ h2{font:800 clamp(28px,4vw,42px)/1.1 var(--display);letter-spacing:-.03em;margin
 .card h3{font:800 21px var(--display);margin:0 0 8px;letter-spacing:-.02em;color:var(--dom)}.card p{margin:0;color:var(--mute);font-size:15px}
 .card ul{margin:12px 0 0;padding-left:18px;color:var(--mute);font-size:14px}
 .step{font:800 40px var(--display);color:var(--prd)}
-/* interactive sample */
-.demo{display:grid;grid-template-columns:200px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
-.dside{background:var(--side);color:#E9EDFB;padding:18px 12px;display:flex;flex-direction:column;gap:6px}
-.dside .brand{font-size:17px;margin:0 6px 12px;color:#fff}.dside .mark{width:30px;height:30px;border-radius:9px;font-size:15px}
-.dside button{display:flex;align-items:center;gap:10px;background:none;border:0;color:#93A0C6;font:700 14px var(--sans);padding:10px;border-radius:10px;cursor:pointer;text-align:left}
-.dside button:hover{background:rgba(255,255,255,.07);color:#fff}.dside button[aria-selected=true]{background:rgba(255,255,255,.12);color:#fff}
-.dside i{width:9px;height:9px;border-radius:50%}
-.dmain{padding:22px;min-width:0}
-.dmain h3{font:800 24px var(--display);margin:0 0 4px;letter-spacing:-.02em}.dmain .muted{color:var(--mute);font-size:14px;margin:0 0 16px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 14px;font:700 13px var(--sans);cursor:pointer}
-.chip[aria-pressed=true],.chip[aria-selected=true]{background:var(--dom);border-color:var(--dom);color:var(--on)}
-.dcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-.dc{position:relative;text-align:left;background:var(--surface);color:inherit;font:inherit;border:1px solid var(--line);border-top:4px solid var(--dom);border-radius:12px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px}
-.dc:hover,.dc[aria-expanded=true]{border-color:var(--dom)}
-.dc b{font:700 15px/1.3 var(--display)}.dc small{color:var(--mute)}.dc em{font-style:normal;font-weight:800;color:var(--dom);font-size:13px}
-.dtag{font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--dom);background:color-mix(in srgb,var(--dom) 12%,transparent);padding:3px 8px;border-radius:99px;align-self:flex-start}
-.panel{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg)}
-.panel header{display:flex;justify-content:space-between;gap:10px;font:800 17px var(--display);margin-bottom:12px}
-.x{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer}
-.pcols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.pcols>*{min-width:0}
-pre{white-space:pre-wrap;word-break:break-word;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;font:14px/1.6 var(--sans);margin:8px 0 10px}
-.gfx{aspect-ratio:4/5;max-width:230px;border-radius:10px;background:var(--side);color:#fff;padding:18px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
-.gfx b{font:700 19px/1.15 var(--display)}.gfx i{display:block;height:5px;width:44px;background:var(--dom);border-radius:3px;margin-bottom:12px}
-.gfx small{font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#0E1630;background:var(--dom);margin:0 -18px -18px;padding:10px 18px}
-.note{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;margin:0 0 10px}
-.cap{text-align:center;color:var(--mute);font-size:14px;margin-top:14px}
+/* live headlines */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:8px 16px;font:700 14px var(--sans);cursor:pointer}
+.tab[aria-selected=true]{background:var(--dom);border-color:var(--dom);color:var(--on)}
+.hl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.hc{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--dom);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.hc h3{font:700 17px/1.35 var(--display);margin:0;letter-spacing:-.01em}
+.hc .meta{font-size:13px;color:var(--mute)}.hc .meta b{color:var(--ink)}
+.hc .acts{display:flex;gap:14px;flex-wrap:wrap;margin-top:auto;font-size:13px;font-weight:800}
+.hc .acts a{text-decoration:none}.hc .acts a.go{color:var(--dom)}.hc .acts a.src{color:var(--mute)}
+.hc .acts a:hover{text-decoration:underline}
+.dtag{font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--dom);background:color-mix(in srgb,var(--dom) 12%,transparent);padding:3px 9px;border-radius:99px;align-self:flex-start}
+.livenote{color:var(--mute);font-size:14px;margin-top:16px}
 .trust li{margin-bottom:8px}
 .price{background:var(--side);color:#E9EDFB;border-radius:22px;padding:34px;display:grid;gap:10px;box-shadow:var(--shadow)}
 .price h2{color:#fff;margin:0}.price p{margin:0;color:#B7C2E4}
 details{border-bottom:1px solid var(--line);padding:16px 0}summary{font:700 18px var(--display);cursor:pointer}details p{color:var(--mute);margin:10px 0 0;max-width:68ch}
 footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);font-size:14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
-@media (max-width:760px){.demo{grid-template-columns:1fr}.dside{flex-direction:row;overflow-x:auto;padding:10px}.dside .brand{margin:0 8px 0 0}.pcols{grid-template-columns:1fr}.hero{padding-top:36px}.nav a.l{display:none}}
+@media (max-width:760px){.hero{padding-top:36px}.nav a.l,.nav .login{display:none}.nav{gap:10px}.nav .btn{padding:9px 14px;font-size:14px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -86,56 +72,40 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
     <span class="sp"></span>
     <a class="l" href="#sections">Sections</a><a class="l" href="#how">How it works</a><a class="l" href="#trust">Trust</a><a class="l" href="#faq">FAQ</a>
     <button class="btn ghost" id="theme" type="button" style="padding:8px 14px">Dark mode</button>
-    <a class="btn ghost" href="/login.html" data-app="/login.html" style="padding:8px 14px">Log in</a>
+    <a class="btn ghost login" href="/login.html" data-app="/login.html" style="padding:8px 14px">Log in</a>
     <a class="btn" href="/login.html#signup" data-app="/login.html#signup">Get started</a>
   </nav>
 
   <header class="hero">
-    <span class="eyebrow">Marketing · Product · Finance</span>
+    <span class="eyebrow">Marketing · Product · Finance · More</span>
     <h1>Today's news, <span>ready to post.</span></h1>
     <p class="lede">Postwire turns the day's headlines into three LinkedIn drafts in your own voice, plus a graphic to go with them. You read, edit and post.</p>
-    <div class="cta"><a class="btn" href="/login.html#signup" data-app="/login.html#signup">Start free trial</a><a class="btn ghost" href="#demo">Try the sample</a></div>
+    <div class="cta"><a class="btn" href="/login.html#signup" data-app="/login.html#signup">Start free trial</a><a class="btn ghost" href="#live" id="seelive" hidden>See today's headlines</a></div>
   </header>
 
-  <section id="demo" style="padding-top:20px" aria-label="Interactive sample">
-    <div class="demo" data-d="marketing" id="app">
-      <div class="dside" role="tablist" aria-label="Sections">
-        <div class="brand"><span class="mark">P</span>Postwire</div>
-        <button role="tab" data-s="marketing" aria-selected="true"><i style="background:var(--mkt)"></i>Marketing</button>
-        <button role="tab" data-s="product" aria-selected="false"><i style="background:var(--prd)"></i>Product</button>
-        <button role="tab" data-s="finance" aria-selected="false"><i style="background:var(--fin)"></i>Finance</button>
-      </div>
-      <div class="dmain">
-        <h3 id="dh">Marketing</h3><p class="muted" id="db">New campaigns and marketing news</p>
-        <div class="chips" id="dchips"></div>
-        <div class="dcards" id="dcards"></div>
-        <div class="panel" id="dp" hidden>
-          <header><span id="dpt"></span><button class="x" id="dx" type="button" aria-label="Close">×</button></header>
-          <div class="note" id="dnote" hidden>News only, not investment advice. Check facts at the source before you post.</div>
-          <div class="pcols">
-            <div><div class="chips" id="dopts" role="tablist" aria-label="Post options"></div><pre id="dpost"></pre><button class="btn ghost" id="dcopy" type="button" style="padding:8px 14px;font-size:13px">Copy this post</button></div>
-            <div><div class="gfx"><div><i></i><b>Your headline, as a graphic</b></div><small>Source: Publisher</small></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <p class="cap">An interactive sample: the headlines and drafts here are placeholders that show the layout. In the real app they are live stories and drafts written from them in your voice.</p>
+  <section id="live" hidden aria-labelledby="l-h" style="padding-top:20px">
+    <span class="eyebrow">Live now</span><h2 id="l-h">Today's headlines</h2>
+    <p class="sub" id="live-sub">The newest stories, straight from the feeds.</p>
+    <div class="tabs" id="live-tabs" role="tablist" aria-label="Sections"></div>
+    <div class="hl" id="live-cards"></div>
+    <p class="livenote">Headlines link to their publishers. Create an account to get three LinkedIn drafts for any of them.</p>
   </section>
 
   <section id="sections" aria-labelledby="s-h">
-    <span class="eyebrow">Three sections</span><h2 id="s-h">One page for each part of your feed.</h2>
+    <span class="eyebrow">Four sections</span><h2 id="s-h">One page for each part of your feed.</h2>
     <p class="sub">Each section has its own tabs, an India or global view, and a 3, 7 or 30 day window so what you post is current.</p>
     <div class="grid3">
       <div class="card" data-d="marketing"><h3>Marketing</h3><p>New campaigns and marketing news.</p><ul><li>Campaigns and case studies</li><li>Industry news</li></ul></div>
       <div class="card" data-d="product"><h3>Product</h3><p>Launches, new features and ideas for product managers.</p><ul><li>New launches</li><li>Feature updates</li><li>Craft for PMs</li></ul></div>
       <div class="card" data-d="finance"><h3>Finance</h3><p>Markets, funding, the economy and fintech.</p><ul><li>Markets and economy</li><li>Funding rounds</li><li>Never investment advice</li></ul></div>
+      <div class="card" data-d="others"><h3>Others</h3><p>Everything else: India, the world, science, sport and culture.</p><ul><li>Science and tech</li><li>Sport and entertainment</li><li>Health</li></ul></div>
     </div>
   </section>
 
   <section id="how" aria-labelledby="h-h">
     <span class="eyebrow">How it works</span><h2 id="h-h">Headline in, post out.</h2>
     <div class="grid3" style="margin-top:24px">
-      <div class="card"><div class="step">1</div><h3 style="color:var(--ink)">Pick a headline</h3><p>Fresh stories from public news feeds, merged across outlets, each linked to its publisher.</p></div>
+      <div class="card"><div class="step">1</div><h3 style="color:var(--ink)">Pick a headline</h3><p>Fresh stories from public news feeds in four sections, merged across outlets, each linked to its publisher.</p></div>
       <div class="card"><div class="step">2</div><h3 style="color:var(--ink)">Get three drafts</h3><p>Story-led, lesson-led and question-led, written in your rhythm from posts you paste once.</p></div>
       <div class="card"><div class="step">3</div><h3 style="color:var(--ink)">Add a graphic, post</h3><p>Download a ready-made graphic in a LinkedIn size, edit the text, copy it, and publish yourself.</p></div>
     </div>
