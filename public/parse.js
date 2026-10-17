@@ -29,27 +29,3 @@ export function headlineFrom(text) {
   const words = first.split(/\s+/);
   return words.length > 12 ? words.slice(0, 12).join(' ') + '…' : first;
 }
-
-// One-tap photo-search suggestions taken from a headline: its proper names, minus marketing filler words.
-const FILLER = new Set(('brand brands campaign campaigns launches launch launched appoints appoint appointed unveils unveil introduces introduce announces announce channels channel first new years year ' +
-  'ambassador marketing magazine how why what who when where the and for with from into over says say said gets get gives give goes go makes make takes take returns return brings bring ' +
-  'its their this that these those answer answers questions toughest most best top big new next last one two three four five six seven eight nine ten monday tuesday wednesday thursday friday saturday sunday ' +
-  'january february march april may june july august september october november december india indian global world ads ad advertising film films ad-film jingle').split(/\s+/));
-const SMALL = /^(by|as|of|in|on|at|to|for|with|from|the|a|an|and|or|vs|is|are|its|ki|ka|ke|ko|se|mein|hai|aur)$/i;
-
-export function brandTerms(title, source = '') {
-  const src = new Set(String(source).toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2));
-  const words = String(title || '').replace(/[“”"]/g, ' ').replace(/[‘’]/g, "'").split(/\s+/);
-  const out = []; let run = [];
-  const flush = () => { if (run.length) out.push((run.length > 3 ? run.slice(0, 2) : run).join(' ')); run = []; };
-  for (const raw of words) {
-    const w = raw.replace(/[:,;!?()]+$/g, '').replace(/^[('"]+/, '').replace(/['"]+$/, '');
-    const possessive = /'s$/i.test(w);
-    const bare = w.replace(/'s$/i, '').replace(/[.'-]+$/, '');
-    const isName = /^[A-Z0-9][\p{L}\p{N}&'.-]*$/u.test(bare) && !FILLER.has(bare.toLowerCase()) && !SMALL.test(bare) && !src.has(bare.toLowerCase()) && bare.length > 1;
-    if (isName) run.push(bare); else flush();
-    if (possessive || /[:,;]$/.test(raw)) flush();
-  }
-  flush();
-  return [...new Set(out)].filter((t) => t.length > 2).slice(0, 5);
-}

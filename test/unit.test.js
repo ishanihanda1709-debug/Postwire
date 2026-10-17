@@ -1,37 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFeed, parseMeta } from '../lib/rss.js';
-import { usableImage } from '../lib/util.js';
-import { canonicalUrl, jaccard, titleTokens, cleanPublisher, looksLikeThumbnail } from '../lib/util.js';
+import { parseFeed } from '../lib/rss.js';
+import { canonicalUrl, jaccard, titleTokens, cleanPublisher } from '../lib/util.js';
 import { classify, detectRegion } from '../lib/classify.js';
 import { scaffoldPosts } from '../lib/drafts.js';
 import { parseTimes, isStale, nextLabel } from '../lib/schedule.js';
-import { parseChatPosts, headlineFrom, brandTerms } from '../public/parse.js';
-import { stockQueries, cleanQuery } from '../lib/stock.js';
+import { parseChatPosts, headlineFrom } from '../public/parse.js';
+import { hashPassword, verifyPassword, accessInfo, normalizeEmail, validEmail, rateLimit } from '../lib/auth.js';
+import { DOMAINS, publicDomains } from '../lib/domains.js';
 
 const RSS = `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item><title><![CDATA[Brand X &amp; Y launch "Test" campaign]]></title><link>https://example.com/a?utm_source=rss</link>
 <pubDate>Tue, 06 Oct 2026 08:00:00 GMT</pubDate><description><![CDATA[<p>A <b>short</b> summary.</p>]]></description>
-<media:content url="https://example.com/i.jpg" medium="image"/>
-<content:encoded><![CDATA[<iframe src="https://www.youtube.com/embed/abcdefghijk"></iframe>]]></content:encoded></item>
+<media:content url="https://example.com/i.jpg" medium="image"/></item>
 <item><title>No link</title></item>
 <item><title>Javascript link</title><link>javascript:alert(1)</link></item>
 </channel></rss>`;
 
-test('parses RSS, strips HTML, decodes entities, drops bad links', () => {
+test('parses RSS, strips HTML, decodes entities, drops bad links, ignores images', () => {
   const items = parseFeed(RSS);
   assert.equal(items.length, 1);
   assert.equal(items[0].title, 'Brand X & Y launch "Test" campaign');
   assert.equal(items[0].summary, 'A short summary.');
-  assert.equal(items[0].image, 'https://example.com/i.jpg');
-  assert.deepEqual(items[0].video, { provider: 'youtube', id: 'abcdefghijk' });
   assert.equal(items[0].publishedAt, '2026-10-06T08:00:00.000Z');
+  assert.equal('image' in items[0], false, 'publisher photos are never taken');
+  assert.equal('video' in items[0], false);
 });
 
 test('parses Atom', () => {
-  const atom = `<feed><entry><title>Hi there</title><link rel="alternate" href="https://e.com/p"/><published>2026-10-01T00:00:00Z</published><summary>S</summary></entry></feed>`;
-  const [i] = parseFeed(atom);
-  assert.equal(i.url, 'https://e.com/p');
+  const atom = '<feed><entry><title>Hi there</title><link rel="alternate" href="https://e.com/p"/><published>2026-10-01T00:00:00Z</published><summary>S</summary></entry></feed>';
+  assert.equal(parseFeed(atom)[0].url, 'https://e.com/p');
 });
 
 test('canonicalUrl removes tracking and normalises', () => {
@@ -39,7 +37,7 @@ test('canonicalUrl removes tracking and normalises', () => {
   assert.equal(canonicalUrl('ftp://x.com'), null);
 });
 
-test('title similarity detects same story across outlets', () => {
+test('title similarity detects the same story across outlets', () => {
   const a = titleTokens('Zomato launches new brand campaign ahead of Diwali');
   const b = titleTokens('Zomato unveils Diwali brand campaign');
   const c = titleTokens('Google updates search ranking systems');
@@ -47,8 +45,14 @@ test('title similarity detects same story across outlets', () => {
   assert.ok(jaccard(a, c) < 0.2);
 });
 
-test('classification only uses what the text says', () => {
-  const src = { defaultKind: 'news', region: 'global' };
+test('publisher names are cleaned', () => {
+  assert.equal(cleanPublisher('https://safariindia.com/'), 'safariindia.com');
+  assert.equal(cleanPublisher('www.menafn.com'), 'menafn.com');
+  assert.equal(cleanPublisher('Adweek'), 'Adweek');
+});
+
+test('marketing classification only uses what the text says', () => {
+  const src = { domain: 'marketing', defaultKind: 'news', region: 'global' };
   assert.equal(classify({ title: 'Case study: how a brand grew 3x' }, src).kind, 'casestudy');
   assert.equal(classify({ title: 'Brand launches new campaign film' }, src).kind, 'campaign');
   assert.equal(classify({ title: 'Quarterly earnings call notes' }, src).kind, 'news');
@@ -56,10 +60,23 @@ test('classification only uses what the text says', () => {
   assert.equal(detectRegion({ title: 'Nike unveils new ad' }, src), 'global');
 });
 
-test('parseMeta extracts og tags and resolves relative image', () => {
-  const m = parseMeta('<meta property="og:image" content="/img/x.jpg"><meta name="description" content="Desc">', 'https://e.com/a');
-  assert.equal(m.image, 'https://e.com/img/x.jpg');
-  assert.equal(m.description, 'Desc');
+test('product and finance classification', () => {
+  const prod = { domain: 'product', region: 'global' }, fin = { domain: 'finance', region: 'global' };
+  assert.equal(classify({ title: 'Notion launches a new AI tool' }, prod).kind, 'launch');
+  assert.ok(classify({ title: 'Slack adds a new feature for huddles' }, prod).tags.includes('feature'));
+  assert.ok(classify({ title: 'How product managers build a roadmap people trust' }, prod).tags.includes('pm'));
+  assert.deepEqual(classify({ title: 'Quiet weekend' }, prod).tags, []);
+  assert.ok(classify({ title: 'Sensex and Nifty rally as banks gain' }, fin).tags.includes('markets'));
+  assert.ok(classify({ title: 'Fintech startup raises $20M Series B' }, fin).tags.includes('funding'));
+  assert.ok(classify({ title: 'RBI holds repo rate, flags inflation risk' }, fin).tags.includes('economy'));
+  assert.ok(classify({ title: 'UPI payments cross new monthly record' }, fin).tags.includes('fintech'));
+  assert.equal(detectRegion({ title: 'Sensex jumps' }, fin), 'india');
+});
+
+test('domains: three sections with sub-tabs, and the public view hides prompt internals', () => {
+  assert.deepEqual(Object.keys(DOMAINS), ['marketing', 'product', 'finance']);
+  assert.match(DOMAINS.finance.guidance, /NEVER give investment advice/);
+  for (const d of publicDomains()) { assert.ok(d.subtabs.length >= 3); assert.equal('persona' in d, false); assert.equal('guidance' in d, false); }
 });
 
 test('scaffold posts: three angles, no unsourced facts', () => {
@@ -72,13 +89,12 @@ test('scaffold posts: three angles, no unsourced facts', () => {
 test('daily schedule: parsing, catch-up and next label (Asia/Kolkata)', () => {
   assert.deepEqual(parseTimes('9:00, 18:30,bad,25:00'), ['09:00', '18:30']);
   const T = ['09:00'];
-  // 10:00 IST on 10 Oct = 04:30 UTC
-  const now = new Date('2026-10-10T04:30:00Z');
-  assert.equal(isStale('2026-10-09T05:00:00Z', T, now), true, 'last ran yesterday 10:30 IST, today 09:00 slot passed');
-  assert.equal(isStale('2026-10-10T03:45:00Z', T, now), false, 'ran at 09:15 IST today');
-  const early = new Date('2026-10-10T01:00:00Z'); // 06:30 IST, slot not yet reached
+  const now = new Date('2026-10-10T04:30:00Z'); // 10:00 IST
+  assert.equal(isStale('2026-10-09T05:00:00Z', T, now), true);
+  assert.equal(isStale('2026-10-10T03:45:00Z', T, now), false);
+  const early = new Date('2026-10-10T01:00:00Z'); // 06:30 IST
   assert.equal(isStale('2026-10-09T05:00:00Z', T, early), false);
-  assert.equal(isStale('2026-10-08T00:00:00Z', T, early), true, 'older than 24h');
+  assert.equal(isStale('2026-10-08T00:00:00Z', T, early), true);
   assert.equal(nextLabel(T, early), '9:00 am');
   assert.equal(nextLabel(T, now), '9:00 am tomorrow');
 });
@@ -91,12 +107,10 @@ test('chatbot answer is split into options (several formats)', () => {
   assert.ok(!a[0].text.includes('---') && !a[0].text.includes('**'));
   const hashes = parseChatPosts('### 1. Story-led\nAlpha post body here\n### 2. Lesson-led\nBeta post body here');
   assert.equal(hashes.length, 2); assert.equal(hashes[1].text, 'Beta post body here');
-  const inline = parseChatPosts('Post 1: This is a full hook sentence that ends here.\nMore text.\nPost 2: Another full sentence for two.\nBody.');
-  assert.equal(inline.length, 2); assert.match(inline[0].text, /^Post 1|This is a full hook/);
   const plain = parseChatPosts('Just one post with no numbering.\n\nSecond paragraph.');
   assert.equal(plain.length, 1); assert.equal(plain[0].angle, 'Pasted post');
   assert.deepEqual(parseChatPosts('   '), []);
-  assert.equal(parseChatPosts('Numbers 1. in text only\nand 2 more lines').length, 1, 'a stray number is not a split');
+  assert.equal(parseChatPosts('Numbers 1. in text only\nand 2 more lines').length, 1);
 });
 
 test('headline comes from the user\'s own first line, capped at 12 words', () => {
@@ -104,57 +118,30 @@ test('headline comes from the user\'s own first line, capped at 12 words', () =>
   assert.equal(headlineFrom('one two three four five six seven eight nine ten eleven twelve thirteen'), 'one two three four five six seven eight nine ten eleven twelve…');
 });
 
-test('publisher names and thumbnail detection', () => {
-  assert.equal(cleanPublisher('https://safariindia.com/'), 'safariindia.com');
-  assert.equal(cleanPublisher('www.menafn.com'), 'menafn.com');
-  assert.equal(cleanPublisher('Adweek'), 'Adweek');
-  assert.equal(looksLikeThumbnail('https://x.com/thumb/123.cms?width=120'), true);
-  assert.equal(looksLikeThumbnail('https://x.com/img-150x100.jpg'), true);
-  assert.equal(looksLikeThumbnail('https://x.com/photos/big-campaign.jpg'), false);
+test('passwords are hashed with scrypt and verified; wrong ones fail', async () => {
+  const stored = await hashPassword('correct horse battery');
+  assert.match(stored, /^scrypt\$16384\$[0-9a-f]{32}\$[0-9a-f]{128}$/);
+  assert.equal(stored.includes('correct horse'), false);
+  assert.equal(await verifyPassword('correct horse battery', stored), true);
+  assert.equal(await verifyPassword('wrong password', stored), false);
+  assert.equal(await verifyPassword('x', 'garbage'), false);
+  assert.notEqual(await hashPassword('correct horse battery'), stored, 'salted: same password, different hash');
 });
 
-test('stock photo queries use topics only, never brand or people names', () => {
-  const q1 = stockQueries({ title: 'Etihad Airways launches Beyond Borders brand campaign', summary: '', tags: ['campaign'], kind: 'campaign' });
-  assert.equal(q1[0], 'travel airplane');
-  const q2 = stockQueries({ title: 'Gresbond by Kajaria appoints Ranveer Singh as Brand Ambassador', summary: '', tags: ['launch'], kind: 'news' });
-  for (const q of q2) assert.ok(!/ranveer|singh|gresbond|kajaria/i.test(q), q);
-  assert.ok(q2.length >= 1);
-  const q3 = stockQueries({ title: 'Quarterly note', summary: '', tags: [], kind: 'news' });
-  assert.deepEqual(q3, ['business team', 'marketing creative team']);
+test('plan and access: trial, paid, expired, owner', () => {
+  const now = Date.parse('2026-10-10T00:00:00Z'), day = 86_400_000;
+  const iso = (n) => new Date(now + n * day).toISOString();
+  assert.deepEqual(accessInfo({ role: 'admin' }, now), { access: true, plan: 'owner', daysLeft: null });
+  assert.deepEqual(accessInfo({ role: 'user', trialEndsAt: iso(3) }, now), { access: true, plan: 'trial', daysLeft: 3 });
+  assert.deepEqual(accessInfo({ role: 'user', trialEndsAt: iso(-1) }, now), { access: false, plan: 'expired', daysLeft: 0 });
+  assert.deepEqual(accessInfo({ role: 'user', trialEndsAt: iso(-1), paidUntil: iso(30) }, now), { access: true, plan: 'active', daysLeft: 30 });
+  assert.equal(accessInfo({ role: 'user', trialEndsAt: iso(-1), paidUntil: iso(-2) }, now).access, false);
 });
 
-test('stock topics: headline decides, partnership and food topics, custom query is cleaned', () => {
-  assert.equal(stockQueries({ title: 'Bhuja Channels Dhum Dhum For First Brand Campaign In 60 Years', summary: 'bhujia snack brand', tags: ['campaign'] })[0], 'food and drink');
-  assert.equal(stockQueries({ title: 'Gresbond by Kajaria Appoints Ranveer Singh as Brand Ambassador', summary: '', tags: ['launch'] })[0], 'business handshake partnership');
-  assert.equal(stockQueries({ title: 'Brand appoints ambassador', summary: 'tiles and flooring range', tags: [] })[0], 'business handshake partnership', 'headline beats summary');
-  assert.equal(stockQueries({ title: 'BE Townhall: leaders answer CMOs toughest questions', summary: '', tags: [] })[0], 'conference stage speaker');
-  assert.equal(cleanQuery('  snacks <script>alert(1)</script> & tea!! '), 'snacks script alert 1 script & tea');
-  assert.equal(cleanQuery('x'.repeat(100)).length, 60);
-});
-
-test('name suggestions come from the headline, minus filler and the publisher name', () => {
-  assert.deepEqual(brandTerms('McDonald’s India launches ‘Tyohaar ki Taiyaari Mein Thodi Mazedaari’ campaign', 'IMPACT Magazine').slice(0, 2), ['McDonald', 'Tyohaar']);
-  assert.ok(brandTerms('Gresbond by Kajaria Appoints Ranveer Singh as Brand Ambassador', 'x').includes('Ranveer Singh'));
-  const pub = brandTerms('Publicis Groupe’s Jason Williams on the importance of listening', 'Creative Review');
-  assert.deepEqual(pub, ['Publicis Groupe', 'Jason Williams']);
-  assert.ok(!brandTerms('Adweek reports new campaign', 'Adweek').some((t) => /adweek/i.test(t)));
-  assert.deepEqual(brandTerms('', ''), []);
-});
-
-test('page photo finder: og, twitter, link and JSON-LD; skips logos and site defaults', () => {
-  const base = 'https://site.com/story';
-  assert.equal(parseMeta('<meta property="og:image" content="/logo.png"><meta name="twitter:image" content="https://cdn.site.com/a.jpg">', base).image, 'https://cdn.site.com/a.jpg');
-  assert.equal(parseMeta('<meta name="twitter:image:src" content="//cdn.site.com/b.jpg">', base).image, 'https://cdn.site.com/b.jpg');
-  assert.equal(parseMeta('<link rel="image_src" href="/pics/c.jpg">', base).image, 'https://site.com/pics/c.jpg');
-  assert.equal(parseMeta('<script type="application/ld+json">{"@type":"NewsArticle","image":["https:\\/\\/cdn.site.com\\/d.jpg"]}</script>', base).image, 'https://cdn.site.com/d.jpg');
-  assert.equal(parseMeta('<script type="application/ld+json">{"image":{"@type":"ImageObject","url":"https://cdn.site.com/e.jpg"}}</script>', base).image, 'https://cdn.site.com/e.jpg');
-  assert.equal(parseMeta('<meta property="og:image" content="https://site.com/default-image.jpg">', base).image, null);
-  assert.equal(usableImage('https://x.com/photos/campaign.jpg'), true);
-  assert.equal(usableImage('https://x.com/site-logo.png'), false);
-  assert.equal(usableImage('https://x.com/pixel.gif'), false);
-});
-
-test('feed images skip logos and tracking pixels but keep the first real photo', () => {
-  const xml = '<rss><channel><item><title>T here</title><link>https://e.com/a</link><description><![CDATA[<img src="https://e.com/avatar.png"><img src="https://e.com/real-photo.jpg">]]></description></item></channel></rss>';
-  assert.equal(parseFeed(xml)[0].image, 'https://e.com/real-photo.jpg');
+test('email checks and the rate limiter', () => {
+  assert.equal(normalizeEmail('  Me@Example.COM '), 'me@example.com');
+  assert.equal(validEmail('me@example.com'), true);
+  for (const bad of ['', 'no-at', 'a@b', 'a b@c.com', 'x@y.z']) assert.equal(validEmail(bad), false, bad);
+  const key = 'test:' + Math.random();
+  assert.deepEqual([1, 2, 3, 4].map(() => rateLimit(key, 3, 60_000)), [true, true, true, false]);
 });

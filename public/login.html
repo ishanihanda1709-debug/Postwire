@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in · {{APP_NAME}}</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D5BF6'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3E{{APP_INITIAL}}%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body data-domain="product">
+<div class="auth">
+  <section class="auth-art" aria-label="About {{APP_NAME}}">
+    <a class="brand" href="/login.html" style="padding:0"><span class="mark">{{APP_INITIAL}}</span><span class="bname">{{APP_NAME}}</span></a>
+    <div>
+      <h1>{{TAGLINE}}</h1>
+      <ul>
+        <li><i style="background:var(--mkt)"></i><span><b>Marketing</b>New campaigns and marketing news</span></li>
+        <li><i style="background:var(--prd)"></i><span><b>Product</b>Launches, new features and ideas for product managers</span></li>
+        <li><i style="background:var(--fin)"></i><span><b>Finance</b>Markets, funding, the economy and fintech</span></li>
+      </ul>
+      <p style="margin-top:26px;color:var(--side-mute)">Pick a headline. Get three LinkedIn posts in your voice, plus a graphic to go with them.</p>
+    </div>
+    <p class="muted" style="color:var(--side-mute)">Headlines link to their publishers. Posts are drafts for you to review.</p>
+  </section>
+  <section class="auth-form">
+    <button class="btn ghost themebtn" id="theme" type="button">Dark mode</button>
+    <div class="auth-card">
+      <h2 id="title">Welcome back</h2>
+      <p class="muted" id="sub">Log in to see today's news.</p>
+      <div class="auth-tabs" id="tabs" role="tablist">
+        <button class="chip on" type="button" role="tab" data-m="login">Log in</button>
+        <button class="chip" type="button" role="tab" data-m="signup" id="tab-signup">Create account</button>
+      </div>
+      <form id="form" novalidate>
+        <div class="field" id="f-name" hidden><label for="name">Your name</label><input id="name" name="name" autocomplete="name" maxlength="60"></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required></div>
+        <p class="err" id="err" role="alert"></p>
+        <button class="btn" id="go" type="submit" style="width:100%;justify-content:center;padding:12px">Log in</button>
+      </form>
+      <p class="muted" id="note" style="margin-top:16px"></p>
+      <p class="legal"><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></p>
+    </div>
+  </section>
+</div>
+<script src="/login.js" type="module"></script>
+</body>
+</html>

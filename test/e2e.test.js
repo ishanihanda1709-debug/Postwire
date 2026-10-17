@@ -5,240 +5,272 @@ import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 
-// Test-only fixtures served from a local mock; none of this ships as site content.
-const feed = (items) => `<?xml version="1.0"?><rss xmlns:media="http://search.yahoo.com/mrss/"><channel>${items.map((i) => `<item><title>${i.t}</title><link>${i.l}</link><pubDate>${new Date(Date.now() - i.ago * 3600e3).toUTCString()}</pubDate><description>${i.d || 'Fixture description long enough to be kept as the summary text here.'}</description>${i.img ? `<media:content url="${i.img}" medium="image"/>` : ''}</item>`).join('')}</channel></rss>`;
+// Test-only fixtures served from a local mock. None of this ships as site content.
+const H = 3600e3;
+const feed = (items) => `<?xml version="1.0"?><rss><channel>${items.map((i) => `<item><title>${i.t}</title><link>${i.l}</link><pubDate>${new Date(Date.now() - i.ago * H).toUTCString()}</pubDate><description>Feed summary for ${i.t}, long enough to be used as input.</description></item>`).join('')}</channel></rss>`;
 
-test('refresh → dedupe → trending → post → image', async () => {
+test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI limits, security', async (t) => {
+  const closers = [];
+  t.after(() => closers.forEach((f) => { try { f(); } catch { /* already closed */ } }));
   const mock = http.createServer((req, res) => {
-    if (req.url === '/a') res.end(feed([
-      { t: 'Fixtureco launches Spring campaign film', l: 'http://127.0.0.1:' + mock.address().port + '/p/1?utm_source=a', ago: 2, img: 'https://img.test/1.jpg' },
-      { t: 'Plain story without a photo', l: 'http://127.0.0.1:' + mock.address().port + '/p/noimg', ago: 3 },
-      { t: 'Old story', l: 'http://127.0.0.1:' + mock.address().port + '/p/old', ago: 24 * 200 },
+    const b = 'http://127.0.0.1:' + mock.address().port;
+    const shared = { t: 'Fintech app adds UPI feature', l: 'https://shared.example/a?utm_source=x', ago: 5 };
+    if (req.url === '/m') res.end(feed([
+      { t: 'Fixtureco launches Spring campaign film', l: b + '/x/1?utm_source=a', ago: 2 },
+      { t: 'Case study: how Otherco grew', l: b + '/x/2', ago: 5 },
+      { t: 'Plain marketing story', l: b + '/x/3', ago: 3 },
+      { t: 'Stale marketing story', l: b + '/x/4', ago: 96 },
+      { t: 'Ancient marketing story', l: b + '/x/5', ago: 24 * 200 },
     ]));
-    else if (req.url === '/b') res.end(feed([
-      { t: 'Fixtureco unveils Spring campaign film', l: 'http://127.0.0.1:' + mock.address().port + '/p/dup', ago: 1 },
-      { t: 'Case study: how Otherco grew', l: 'http://127.0.0.1:' + mock.address().port + '/p/cs', ago: 5 },
+    else if (req.url === '/m2') res.end(feed([{ t: 'Fixtureco unveils Spring campaign film', l: b + '/y/1', ago: 1 }]));
+    else if (req.url === '/p') res.end(feed([
+      { t: 'Notion launches a new AI tool', l: b + '/x/6', ago: 2 },
+      { t: 'Slack adds a new feature for huddles', l: b + '/x/7', ago: 3 },
+      { t: 'How product managers build a roadmap people trust', l: b + '/x/8', ago: 4 },
+      shared,
     ]));
-    else if (req.url === '/img.png') { res.setHeader('content-type', 'image/png'); res.end(Buffer.from('89504e470d0a1a0a', 'hex')); }
-    else if (req.url === '/notimg') { res.setHeader('content-type', 'text/html'); res.end('<html/>'); }
-    else if (req.url === '/p/noimg') res.end('<html></html>');
-    else if (req.url.startsWith('/p/')) res.end('<meta property="og:image" content="/pg.jpg">');
+    else if (req.url === '/f') res.end(feed([
+      { t: 'Sensex and Nifty rally as banks gain', l: b + '/x/9', ago: 1 },
+      { t: 'RBI holds repo rate, flags inflation risk', l: b + '/x/10', ago: 6 },
+      { t: 'Startup raises $20M Series B', l: b + '/x/11', ago: 2 },
+      shared,
+    ]));
     else { res.statusCode = 500; res.end('x'); }
   });
   await new Promise((r) => mock.listen(0, '127.0.0.1', r));
+  closers.push(() => { mock.closeAllConnections?.(); mock.close(); });
   const base = 'http://127.0.0.1:' + mock.address().port;
 
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'mb-'));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pw-'));
   await fs.writeFile(path.join(dir, 'sources.json'), JSON.stringify({ sources: [
-    { id: 'a', name: 'Outlet A', url: base + '/a', region: 'global', defaultKind: 'news' },
-    { id: 'b', name: 'Outlet B', url: base + '/b', region: 'india', defaultKind: 'news' },
-    { id: 'bad', name: 'Broken', url: base + '/broken', region: 'global' },
+    { id: 'm1', name: 'Outlet A', url: base + '/m', domain: 'marketing', region: 'global', defaultKind: 'news' },
+    { id: 'm2', name: 'Outlet B', url: base + '/m2', domain: 'marketing', region: 'india', defaultKind: 'news' },
+    { id: 'p1', name: 'Product Wire', url: base + '/p', domain: 'product', region: 'global' },
+    { id: 'f1', name: 'Money Wire', url: base + '/f', domain: 'finance', region: 'global' },
+    { id: 'bad', name: 'Broken', url: base + '/broken', domain: 'finance', region: 'global' },
   ] }));
-  process.env.SOURCES_FILE = path.join(dir, 'sources.json');
-  process.env.DATA_DIR = dir;
+  Object.assign(process.env, { SOURCES_FILE: path.join(dir, 'sources.json'), DATA_DIR: dir, TRIAL_DAYS: '7', AI_DAILY_LIMIT: '2', APP_NAME: 'Postwire' });
+  delete process.env.ANTHROPIC_API_KEY; delete process.env.LLM_BASE_URL; delete process.env.REQUIRE_LOGIN; delete process.env.ALLOW_SIGNUP;
 
   const { refreshAll } = await import('../lib/refresh.js');
   const { createServer } = await import('../server.js');
-  const r = await refreshAll();
-  assert.equal(r.total, 3, 'old story pruned by age, duplicate merged');
-  assert.equal(r.merged, 1);
+  const auth = await import('../lib/auth.js');
+
+  // ---------- 1. fetching: three sections, headlines only ----------
+  const run = await refreshAll();
+  assert.equal(run.byDomain.marketing, 4, 'ancient story pruned; stale one kept for the 7/30 day views; merged duplicate counted once');
+  assert.equal(run.byDomain.product, 4);
+  assert.equal(run.byDomain.finance, 4);
+  assert.equal(run.merged, 1);
+  const stored = JSON.parse(await fs.readFile(path.join(dir, 'store.json'), 'utf8'));
+  const all = Object.values(stored.items);
+  assert.ok(all.every((i) => !('image' in i) && !('video' in i)), 'no publisher photos are stored');
+  const sharedItems = all.filter((i) => i.canonical === 'https://shared.example/a');
+  assert.equal(sharedItems.length, 2, 'same URL in two sections stays two separate stories');
+  assert.notEqual(sharedItems[0].id, sharedItems[1].id);
+  assert.equal(stored.sources.bad.ok, false);
 
   const srv = createServer(); await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+  closers.push(() => { srv.closeAllConnections?.(); srv.close(); });
   const api = `http://127.0.0.1:${srv.address().port}`;
-  const get = (p) => fetch(api + p).then((x) => x.json());
+  const client = () => {
+    let cookie = '';
+    const call = async (method, p, body, headers = {}) => {
+      const res = await fetch(api + p, { method, redirect: 'manual', headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}), ...headers }, body: body === undefined ? undefined : JSON.stringify(body) });
+      const sc = res.headers.get('set-cookie');
+      if (sc) cookie = sc.includes('Max-Age=0') ? '' : sc.split(';')[0];
+      const text = await res.text(); let data; try { data = JSON.parse(text); } catch { data = text; }
+      return { status: res.status, data, headers: res.headers, setCookie: sc };
+    };
+    return { call, get: (p, h) => call('GET', p, undefined, h), post: (p, b, h) => call('POST', p, b ?? {}, h), put: (p, b) => call('PUT', p, b), del: (p) => call('DELETE', p) };
+  };
 
-  const all = await get('/api/items');
-  assert.equal(all.total, 3);
-  const camp = all.items.find((i) => i.title.includes('Spring'));
-  assert.equal(camp.also.length, 1);
-  assert.equal(camp.kind, 'campaign');
-  assert.equal((await get('/api/items?kind=casestudy')).total, 1);
-  const cs = (await get('/api/items?kind=casestudy')).items[0];
-  assert.match(cs.image?.url || '', /\/pg\.jpg$/, 'story with no feed photo gets the article page og:image');
-  assert.equal(cs.image.credit, 'Outlet B');
-  assert.equal((await get('/api/items?q=otherco')).total, 1);
-  assert.equal((await get('/api/items?region=india')).total, 1);
+  // ---------- 2. logged out: pages and API ----------
+  const anon = client();
+  assert.equal((await anon.get('/api/items')).status, 401);
+  assert.equal((await anon.get('/api/saved')).status, 401);
+  const root = await anon.get('/');
+  assert.equal(root.status, 302); assert.equal(root.headers.get('location'), '/login.html');
+  const login = await anon.get('/login.html');
+  assert.equal(login.status, 200); assert.match(login.data, /Postwire/); assert.ok(!login.data.includes('{{'), 'placeholders are filled in');
+  assert.match(login.headers.get('content-security-policy'), /default-src 'self'/);
+  assert.equal(login.headers.get('x-frame-options'), 'DENY');
+  assert.match((await anon.get('/terms.html')).data, /DRAFT TEMPLATE/);
+  assert.match((await anon.get('/privacy.html')).data, /DRAFT TEMPLATE/);
+  const cfg = (await anon.get('/api/config')).data;
+  assert.equal(cfg.name, 'Postwire'); assert.equal(cfg.signupOpen, true); assert.equal(cfg.trialDays, 7);
+  assert.equal((await anon.get('/app.js')).status, 200);
+  assert.equal((await anon.get('/..%2f..%2fetc/passwd')).status, 404);
+  assert.equal((await anon.get('/server.js')).status, 404);
+  assert.equal((await anon.get('/index.html')).status, 302);
 
-  const status = await get('/api/status');
-  assert.equal(status.sources.find((s) => s.id === 'bad').ok, false);
-  assert.equal(status.aiEnabled, false);
+  // ---------- 3. sign-up (first account is the owner) and login ----------
+  assert.equal((await anon.post('/api/auth/signup', { email: 'bad', password: 'longenough1' })).status, 400);
+  assert.equal((await anon.post('/api/auth/signup', { email: 'o@x.com', password: 'short' })).status, 400);
+  const owner = client();
+  const su = await owner.post('/api/auth/signup', { name: 'Olive Owner', email: 'Owner@Example.com', password: 'owner-password-1' });
+  assert.equal(su.status, 200); assert.equal(su.data.user.role, 'admin'); assert.equal(su.data.user.plan, 'owner');
+  assert.match(su.setCookie, /HttpOnly/); assert.match(su.setCookie, /SameSite=Lax/); assert.doesNotMatch(su.setCookie, /Secure/);
+  assert.equal('passHash' in su.data.user, false);
+  const bob = client();
+  const sb = await bob.post('/api/auth/signup', { name: 'Bob', email: 'bob@example.com', password: 'bob-password-1' });
+  assert.equal(sb.data.user.role, 'user'); assert.equal(sb.data.user.plan, 'trial'); assert.equal(sb.data.user.daysLeft, 7);
+  assert.equal((await client().post('/api/auth/signup', { email: 'BOB@example.com', password: 'another-pass-1' })).status, 409, 'duplicate email');
+  const sessionsFile = await fs.readFile(path.join(dir, 'sessions.json'), 'utf8');
+  const usersFile = await fs.readFile(path.join(dir, 'users.json'), 'utf8');
+  assert.ok(!usersFile.includes('bob-password-1') && usersFile.includes('scrypt$'), 'passwords are stored scrambled');
+  const bobCookie = su && sb.setCookie.split(';')[0].split('=')[1];
+  assert.ok(bobCookie && !sessionsFile.includes(bobCookie), 'the session file holds only a hash of each token, never the token itself');
 
-  // Without an API key the post route returns an honest outline.
-  const post0 = await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{}' }).then((x) => x.json());
-  assert.equal(post0.scaffold, true);
-  assert.equal(post0.posts.length, 3);
-  assert.match(post0.posts[0].text, /Source: Outlet/);
+  const again = client();
+  assert.equal((await again.post('/api/auth/login', { email: 'bob@example.com', password: 'wrong-wrong' })).status, 401);
+  assert.equal((await again.post('/api/auth/login', { email: 'nobody@example.com', password: 'wrong-wrong' })).data.error, 'Wrong email or password.', 'same message for unknown email');
+  assert.equal((await again.post('/api/auth/login', { email: 'bob@example.com', password: 'bob-password-1' })).status, 200);
+  const limited = client(); let last;
+  for (let i = 0; i < 10; i++) last = await limited.post('/api/auth/login', { email: 'victim@example.com', password: 'guess-' + i });
+  assert.equal(last.status, 429, 'repeated guesses are throttled');
 
-  // With a key: mock the Anthropic endpoint, check prompt rules + caching.
-  let calls = 0, lastBody;
+  // ---------- 4. the app: sections, filters, freshness, headlines only ----------
+  const me = (await owner.get('/api/me')).data;
+  assert.deepEqual(me.domains.map((d) => d.id), ['marketing', 'product', 'finance']);
+  assert.ok(Array.isArray(me.sources) && me.sources.length === 5, 'owner sees source health');
+  assert.equal((await bob.get('/api/me')).data.sources.length, 0, 'normal users do not');
+  assert.equal((await owner.get('/api/items')).headers.get('cache-control'), 'no-store');
+
+  const items = async (c, q = '') => (await c.get('/api/items?' + q)).data;
+  const mk = await items(bob, 'domain=marketing');
+  assert.equal(mk.total, 3, 'default window is 3 days: the stale story is hidden');
+  assert.equal((await items(bob, 'domain=marketing&days=7')).total, 4);
+  assert.ok(mk.items.every((i) => i.domain === 'marketing' && !('summary' in i) && !('image' in i)), 'headlines only: no summary, no picture');
+  assert.equal(mk.items.find((i) => /Spring/.test(i.title)).also.length, 1, 'duplicate story merged into one card');
+  assert.deepEqual(Object.keys(mk.items[0].also[0]).sort(), ['source', 'url']);
+  assert.equal((await items(bob, 'domain=marketing&kind=casestudy')).total, 1);
+  assert.equal((await items(bob, 'domain=marketing&kind=campaign')).total, 1);
+  const pr = await items(bob, 'domain=product');
+  assert.equal(pr.total, 4);
+  assert.equal((await items(bob, 'domain=product&tag=launch')).total, 1);
+  assert.equal((await items(bob, 'domain=product&tag=feature')).items.length >= 1, true);
+  assert.equal((await items(bob, 'domain=product&tag=pm')).total, 1);
+  const fi = await items(bob, 'domain=finance');
+  assert.equal(fi.total, 4);
+  assert.equal((await items(bob, 'domain=finance&tag=markets')).total, 1);
+  assert.equal((await items(bob, 'domain=finance&tag=funding')).total, 1);
+  assert.equal((await items(bob, 'domain=finance&tag=economy')).total, 1);
+  assert.equal((await items(bob, 'domain=finance&q=sensex')).total, 1);
+  assert.equal((await items(bob, 'domain=nonsense')).total, mk.total, 'unknown section falls back to marketing');
+  assert.equal((await items(bob, 'domain=marketing&days=0.1')).total, 1, '2.4 hour window keeps only the newest');
+  const sh1 = await items(bob, 'domain=finance&shuffle=7'), sh2 = await items(bob, 'domain=finance&shuffle=7');
+  assert.deepEqual(sh1.items.map((i) => i.id), sh2.items.map((i) => i.id), 'same shuffle seed, same order');
+  const ex = await items(bob, `domain=finance&shuffle=7&exclude=${sh1.items[0].id}`);
+  assert.equal(ex.total, sh1.total - 1); assert.ok(!ex.items.some((i) => i.id === sh1.items[0].id));
+
+  // ---------- 5. owner-only actions ----------
+  assert.equal((await bob.post('/api/refresh')).status, 403);
+  assert.equal((await owner.post('/api/refresh')).status, 202);
+
+  // ---------- 6. writing posts: outline without AI; chatbot prompt; AI with limits ----------
+  const productItem = pr.items.find((i) => /Notion/.test(i.title)), financeItem = fi.items.find((i) => /Sensex/.test(i.title)), mkItem = mk.items.find((i) => /Plain/.test(i.title));
+  const outline = (await bob.post(`/api/items/${productItem.id}/post`)).data;
+  assert.equal(outline.scaffold, true); assert.equal(outline.posts.length, 3);
+  const chat = (await bob.post(`/api/items/${financeItem.id}/prompt`)).data.prompt;
+  assert.match(chat, /finance professional/); assert.match(chat, /NEVER give investment advice/); assert.match(chat, /HEADLINE: Sensex and Nifty rally/);
+  assert.match((await bob.post(`/api/items/${productItem.id}/prompt`)).data.prompt, /product manager/);
+
+  let calls = 0, lastSystem = '', failNext = false;
   const fakeAi = http.createServer(async (rq, rs) => {
-    calls++; let b = ''; for await (const c of rq) b += c; lastBody = JSON.parse(b);
+    calls++; let b = ''; for await (const c of rq) b += c; lastSystem = JSON.parse(b).system;
+    if (failNext) { failNext = false; rs.statusCode = 500; return rs.end('boom'); }
     rs.setHeader('content-type', 'application/json');
-    rs.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ posts: ['Story-led', 'Lesson-led', 'Question-led'].map((a) => ({ angle: a, post: `Hook ${a}\n\nSource: Outlet A`, card: { headline: 'Sharp takeaway', subline: 'Short line' } })) }) }] }));
+    rs.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ posts: ['Story-led', 'Lesson-led', 'Question-led'].map((a) => ({ angle: a, post: `Hook ${a}\n\nSource: X`, card: { headline: 'Sharp takeaway', subline: 'Short line' } })) }) }] }));
   });
   await new Promise((ok) => fakeAi.listen(0, '127.0.0.1', ok));
-  process.env.ANTHROPIC_API_KEY = 'test-key';
-  process.env.ANTHROPIC_API_URL = `http://127.0.0.1:${fakeAi.address().port}/v1/messages`;
-  await fs.writeFile(path.join(dir, 'my-posts.md'), 'Paste one of your own\n\n---\n\n' + 'This is my real past post. '.repeat(10));
-  process.env.VOICE_FILE = path.join(dir, 'my-posts.md');
-  const withKey = await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{}' }).then((x) => x.json());
-  assert.equal(withKey.scaffold, undefined);
-  assert.equal(withKey.posts.length, 3);
-  assert.equal(withKey.posts[1].angle, 'Lesson-led');
-  assert.equal(withKey.posts[0].card.headline, 'Sharp takeaway');
-  assert.match(lastBody.system, /THREE different/);
-  assert.match(lastBody.system, /Do not invent personal experiences/);
-  assert.match(lastBody.system, /EXAMPLE 1/);
-  assert.doesNotMatch(lastBody.system, /Paste one of your own/);
-  await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{}' });
-  assert.equal(calls, 1, 'second request served from cache');
-  await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{"force":true}' });
-  assert.equal(calls, 2);
-  fakeAi.close();
+  closers.push(() => { fakeAi.closeAllConnections?.(); fakeAi.close(); });
+  process.env.ANTHROPIC_API_KEY = 'test-key'; process.env.ANTHROPIC_API_URL = `http://127.0.0.1:${fakeAi.address().port}/v1/messages`;
+  assert.equal((await bob.get('/api/me')).data.aiEnabled, true);
 
-  // Trending: multi-outlet + image + campaign outranks others
-  const trending = await get('/api/items?sort=trending');
-  assert.equal(trending.items[0].id, camp.id);
+  assert.equal((await bob.post('/api/voice', { text: 'too short' })).status, 400);
+  const bobSample = 'This is Bob\'s own LinkedIn post about shipping small things quickly. '.repeat(3);
+  const voiceEntry = (await bob.post('/api/voice', { text: bobSample })).data;
+  assert.equal((await bob.get('/api/voice')).data.posts.length, 1);
+  assert.equal((await owner.get('/api/voice')).data.posts.length, 0, "one user never sees another's samples");
+  assert.equal((await bob.get('/api/me')).data.voiceCount, 1);
 
-  // Freshness: default window is 3 days; a tiny window leaves only the newest story
-  assert.equal((await get('/api/items')).total, 3);
-  assert.equal((await get('/api/items?days=0.1')).total, 1, '2.4h window: only the 2h-old story');
-  assert.equal((await get('/api/items?days=0.1&shuffle=3')).total, 1, 'shuffle respects freshness too');
-  assert.equal((await get('/api/status')).freshDays, 3);
+  const p1 = await bob.post(`/api/items/${productItem.id}/post`);
+  assert.equal(p1.status, 200); assert.equal(p1.data.posts.length, 3); assert.equal(p1.data.posts[0].card.headline, 'Sharp takeaway');
+  assert.match(lastSystem, /a product manager/); assert.match(lastSystem, /Do not invent personal experiences/); assert.match(lastSystem, /Bob's own LinkedIn post/);
+  assert.equal(calls, 1);
+  await bob.post(`/api/items/${productItem.id}/post`);
+  assert.equal(calls, 1, 'repeat request served from cache and not counted');
+  assert.equal((await bob.get('/api/me')).data.aiUsedToday, 1);
+  await bob.post(`/api/items/${financeItem.id}/post`);
+  assert.match(lastSystem, /a finance professional/); assert.match(lastSystem, /NEVER give investment advice/);
+  assert.equal((await bob.get('/api/me')).data.aiUsedToday, 2);
+  const over = await bob.post(`/api/items/${mkItem.id}/post`);
+  assert.equal(over.status, 429); assert.match(over.data.error, /today's 2 AI posts/); assert.equal(over.data.scaffold, true);
+  const callsBefore = calls;
+  await owner.post(`/api/items/${productItem.id}/post`);
+  assert.equal(calls, callsBefore + 1, 'cache is per user: the owner gets their own posts, in their own voice');
+  assert.doesNotMatch(lastSystem, /Bob's own LinkedIn post/);
+  failNext = true;
+  const failed = await owner.post(`/api/items/${financeItem.id}/post`);
+  assert.equal(failed.status, 502); assert.equal(failed.data.scaffold, true);
+  assert.equal((await owner.get('/api/me')).data.aiUsedToday, 1, 'one real call counted; the failed one was refunded');
+  assert.equal((await owner.post(`/api/items/${'0'.repeat(16)}/post`)).status, 404);
 
-  // Shuffle: same seed gives same order, exclude removes stories, different seed can reorder
-  const sh1 = await get('/api/items?shuffle=7');
-  const sh2 = await get('/api/items?shuffle=7');
-  assert.deepEqual(sh1.items.map((i) => i.id), sh2.items.map((i) => i.id));
-  const ex = await get(`/api/items?shuffle=7&exclude=${sh1.items[0].id}`);
-  assert.equal(ex.total, sh1.total - 1);
-  assert.ok(!ex.items.some((i) => i.id === sh1.items[0].id));
-  assert.equal((await get(`/api/items?exclude=${all.items.map((i) => i.id).join(',')}`)).total, 0);
+  // ---------- 7. saved posts: private per user ----------
+  const bobSave = (await bob.put('/api/saved', { itemId: productItem.id, angle: 'Story-led', text: 'Bob saved this' })).data;
+  assert.equal((await bob.put('/api/saved', { itemId: productItem.id, angle: 'Story-led', text: 'Bob edited' })).data.id, bobSave.id);
+  assert.equal((await bob.get('/api/saved')).data.entries.length, 1);
+  assert.equal((await owner.get('/api/saved')).data.entries.length, 0);
+  await owner.del(`/api/saved/${bobSave.id}`);
+  assert.equal((await bob.get('/api/saved')).data.entries.length, 1, "another user cannot delete someone's saved post");
+  assert.match((await bob.get('/api/saved/export.md')).data, /> Bob edited/);
+  assert.doesNotMatch((await owner.get('/api/saved/export.md')).data, /Bob edited/);
+  assert.equal((await bob.put('/api/saved', { itemId: 'deadbeef', angle: 'x', text: 'y' })).status, 404);
+  assert.equal((await bob.put('/api/saved', { itemId: productItem.id, angle: 'x', text: '  ' })).status, 400);
 
-  // Saved posts: save, update (same id), list, export, delete
-  const sv1 = await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: camp.id, angle: 'Story-led', text: 'My saved post' }) }).then((x) => x.json());
-  const sv2 = await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: camp.id, angle: 'Story-led', text: 'Edited' }) }).then((x) => x.json());
-  assert.equal(sv1.id, sv2.id);
-  assert.equal((await get('/api/saved')).entries.length, 1);
-  assert.equal((await get('/api/saved')).entries[0].text, 'Edited');
-  assert.match(await fetch(`${api}/api/saved/export.md`).then((x) => x.text()), /> Edited/);
-  assert.equal((await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: 'deadbeef', angle: 'x', text: 'y' }) })).status, 404);
-  assert.equal((await fetch(`${api}/api/saved`, { method: 'PUT', body: JSON.stringify({ itemId: camp.id, angle: 'x', text: '  ' }) })).status, 400);
-  await fetch(`${api}/api/saved/${sv1.id}`, { method: 'DELETE' });
-  assert.equal((await get('/api/saved')).entries.length, 0);
+  // ---------- 8. trial ends: paywall, then access returns when paid ----------
+  const bobId = (await auth.findUserByEmail('bob@example.com')).id;
+  await auth.updateUser(bobId, (u) => { u.trialEndsAt = new Date(Date.now() - 1000).toISOString(); });
+  assert.equal((await bob.get('/api/items?domain=product')).status, 402);
+  assert.equal((await bob.post(`/api/items/${productItem.id}/post`)).status, 402);
+  assert.equal((await bob.get('/api/saved')).status, 402);
+  const expired = await bob.get('/api/me');
+  assert.equal(expired.status, 200); assert.equal(expired.data.user.plan, 'expired'); assert.equal(expired.data.user.access, false);
+  await auth.updateUser(bobId, (u) => { u.paidUntil = new Date(Date.now() + 30 * 864e5).toISOString(); });
+  assert.equal((await bob.get('/api/items?domain=product')).status, 200);
+  const paid = (await bob.get('/api/me')).data.user; assert.equal(paid.plan, 'active'); assert.equal(paid.daysLeft, 30);
 
-  // ACCESS_TOKEN locks every API call, accepts header or cookie, and rejects wrong tokens
-  process.env.ACCESS_TOKEN = 'secret-token-123';
-  assert.equal((await fetch(`${api}/api/items`)).status, 401);
-  assert.equal((await fetch(`${api}/api/saved`)).status, 401);
-  assert.equal((await fetch(`${api}/api/items`, { headers: { 'x-access-token': 'wrong' } })).status, 401);
-  assert.equal((await fetch(`${api}/api/items`, { headers: { 'x-access-token': 'secret-token-123' } })).status, 200);
-  assert.equal((await fetch(`${api}/api/saved`, { headers: { cookie: 'mb_token=secret-token-123' } })).status, 200);
-  assert.equal((await fetch(`${api}/`)).status, 200, 'the page itself stays reachable so it can ask for the token');
-  delete process.env.ACCESS_TOKEN;
+  // ---------- 9. security basics ----------
+  const evil = await owner.post('/api/voice', { text: 'x'.repeat(100) }, { origin: 'https://evil.example' });
+  assert.equal(evil.status, 403, 'cross-site writes are refused');
+  const https = await client().post('/api/auth/login', { email: 'owner@example.com', password: 'owner-password-1' }, { 'x-forwarded-proto': 'https' });
+  assert.match(https.setCookie, /Secure/); assert.match(https.headers.get('strict-transport-security'), /max-age/);
 
-  // My style: add / list / validate / delete, and the pasted post reaches the AI prompt
-  const short = await fetch(`${api}/api/voice`, { method: 'POST', body: JSON.stringify({ text: 'too short' }) });
-  assert.equal(short.status, 400);
-  const mine = 'This is my own LinkedIn post about brands and why small details matter. '.repeat(3);
-  const added = await fetch(`${api}/api/voice`, { method: 'POST', body: JSON.stringify({ text: mine }) }).then((x) => x.json());
-  assert.equal((await get('/api/voice')).posts.length, 1);
-  assert.equal((await get('/api/status')).voiceCount, 1);
-  process.env.ANTHROPIC_API_KEY = 'test-key';
-  const fakeAi2 = http.createServer(async (rq, rs) => { let b = ''; for await (const c of rq) b += c; globalThis.__sys = JSON.parse(b).system; rs.setHeader('content-type', 'application/json'); rs.end(JSON.stringify({ content: [{ type: 'text', text: '{"posts":[{"angle":"A","post":"x","card":null}]}' }] })); });
-  await new Promise((ok) => fakeAi2.listen(0, '127.0.0.1', ok));
-  process.env.ANTHROPIC_API_URL = `http://127.0.0.1:${fakeAi2.address().port}/v1/messages`;
-  await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{"force":true}' });
-  assert.match(globalThis.__sys, /my own LinkedIn post about brands/);
-  fakeAi2.close();
-  await fetch(`${api}/api/voice/${added.id}`, { method: 'DELETE' });
-  assert.equal((await get('/api/voice')).posts.length, 0);
+  // ---------- 10. delete account, owner protected, logout ----------
+  assert.equal((await owner.post('/api/account/delete', { password: 'owner-password-1' })).status, 403, 'owner account cannot be deleted from the page');
+  assert.equal((await bob.post('/api/account/delete', { password: 'wrong' })).status, 401);
+  const del = await bob.post('/api/account/delete', { password: 'bob-password-1' });
+  assert.equal(del.status, 200);
+  assert.equal((await bob.get('/api/me')).status, 401, 'signed out after deleting');
+  assert.equal((await client().post('/api/auth/login', { email: 'bob@example.com', password: 'bob-password-1' })).status, 401);
+  assert.equal(JSON.parse(await fs.readFile(path.join(dir, 'saved.json'), 'utf8')).entries && Object.values(JSON.parse(await fs.readFile(path.join(dir, 'saved.json'), 'utf8')).entries).some((e) => e.userId === bobId), false, 'saved posts removed');
+  assert.equal(JSON.parse(await fs.readFile(path.join(dir, 'voice.json'), 'utf8')).posts.some((p) => p.id === voiceEntry.id), false, 'style samples removed');
+  assert.equal((await owner.post('/api/auth/logout')).status, 200);
+  assert.equal((await owner.get('/api/me')).status, 401);
 
-  // Free routes: chatbot prompt without any key, and an OpenAI-compatible provider
-  const savedKey = process.env.ANTHROPIC_API_KEY, savedUrl = process.env.ANTHROPIC_API_URL;
-  delete process.env.ANTHROPIC_API_KEY;
-  const pr = await fetch(`${api}/api/items/${camp.id}/prompt`, { method: 'POST', body: '{}' }).then((x) => x.json());
-  assert.match(pr.prompt, /THREE different LinkedIn posts/);
-  assert.match(pr.prompt, /HEADLINE: Fixtureco launches Spring campaign film/);
-  assert.match(pr.prompt, /Do not invent personal experiences/);
-  let compatReq;
-  const fakeCompat = http.createServer(async (rq, rs) => { let b = ''; for await (const c of rq) b += c; compatReq = { url: rq.url, auth: rq.headers.authorization, body: JSON.parse(b) }; rs.setHeader('content-type', 'application/json'); rs.end(JSON.stringify({ choices: [{ message: { content: 'Sure!\n```json\n{"posts":[{"angle":"Local","post":"Local model post","card":null}]}\n```' } }] })); });
-  await new Promise((ok) => fakeCompat.listen(0, '127.0.0.1', ok));
-  process.env.LLM_BASE_URL = `http://127.0.0.1:${fakeCompat.address().port}/v1`;
-  process.env.LLM_MODEL = 'llama3.1';
-  assert.equal((await get('/api/status')).aiEnabled, true);
-  const lc = await fetch(`${api}/api/items/${camp.id}/post`, { method: 'POST', body: '{"force":true}' }).then((x) => x.json());
-  assert.equal(lc.posts[0].text, 'Local model post');
-  assert.equal(compatReq.url, '/v1/chat/completions');
-  assert.equal(compatReq.auth, undefined, 'no key header when LLM_API_KEY is unset');
-  assert.equal(compatReq.body.model, 'llama3.1');
-  assert.equal(compatReq.body.messages[0].role, 'system');
-  fakeCompat.close(); delete process.env.LLM_BASE_URL; delete process.env.LLM_MODEL;
-  process.env.ANTHROPIC_API_KEY = savedKey; process.env.ANTHROPIC_API_URL = savedUrl;
+  // ---------- 11. closed sign-ups and single-user mode ----------
+  process.env.ALLOW_SIGNUP = '0';
+  assert.equal((await client().post('/api/auth/signup', { email: 'late@example.com', password: 'late-password-1' })).status, 403);
+  assert.equal((await anon.get('/api/config')).data.signupOpen, false);
+  delete process.env.ALLOW_SIGNUP;
+  process.env.REQUIRE_LOGIN = '0';
+  const local = client();
+  const lm = await local.get('/api/me');
+  assert.equal(lm.status, 200); assert.equal(lm.data.user.role, 'admin');
+  assert.equal((await local.get('/')).status, 200);
+  assert.equal((await local.get('/login.html')).status, 302);
+  assert.equal((await local.get('/api/items?domain=product')).data.total, 4);
+  delete process.env.REQUIRE_LOGIN;
 
-  // Stock photos: Openverse (no key) and Pexels (key) via mock servers; cached; proxied; no private-host leaks
-  let stockCalls = 0, lastStock;
-  const fakeStock = http.createServer((rq, rs) => {
-    stockCalls++; lastStock = { url: rq.url, auth: rq.headers.authorization };
-    if (rq.url.startsWith('/photo')) { rs.setHeader('content-type', 'image/png'); return rs.end(Buffer.from('89504e470d0a1a0a', 'hex')); }
-    rs.setHeader('content-type', 'application/json');
-    const host = `http://127.0.0.1:${fakeStock.address().port}`;
-    if (rq.url.startsWith('/pexels')) rs.end(JSON.stringify({ photos: [{ src: { large2x: host + '/photo/a.png', medium: host + '/photo/a.png' }, photographer: 'Pat Pexel', url: 'https://pexels.com/photo/1' }] }));
-    else rs.end(JSON.stringify({ results: [{ url: host + '/photo/b.png', thumbnail: host + '/photo/b.png', creator: 'Olive', title: 'City', license: 'by', license_version: '4.0', foreign_landing_url: 'https://x.org/1', attribution: '"City" by Olive is licensed under CC BY 4.0' }] }));
-  });
-  await new Promise((ok) => fakeStock.listen(0, '127.0.0.1', ok));
-  process.env.OPENVERSE_API_URL = `http://127.0.0.1:${fakeStock.address().port}/openverse`;
-  process.env.PEXELS_API_URL = `http://127.0.0.1:${fakeStock.address().port}/pexels`;
-  process.env.ALLOW_PRIVATE_IMAGES = '1';
-  const sOv = await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' }).then((x) => x.json());
-  assert.equal(sOv.source, 'Openverse');
-  assert.match(sOv.photos[0].credit, /CC BY 4.0/);
-  assert.match(lastStock.url, /category=photograph&license_type=commercial/);
-  assert.ok(!/fixtureco/i.test(decodeURIComponent(lastStock.url)), 'brand name is never searched');
-  // Card thumbnails: only for stories with no photo; stable choice; honours STOCK_THUMBS=0; credit in a header
-  const plain = (await get('/api/items?q=plain')).items[0];
-  assert.ok(plain && !plain.image, 'fixture story has no photo');
-  const th = await fetch(`${api}/api/items/${plain.id}/thumb`);
-  assert.equal(th.status, 200); assert.equal(th.headers.get('content-type'), 'image/png');
-  assert.match(decodeURIComponent(th.headers.get('x-photo-credit')), /CC BY 4.0/);
-  assert.equal((await fetch(`${api}/api/items/${camp.id}/thumb`)).status, 404, 'stories with their own photo never get one');
-  process.env.STOCK_THUMBS = '0';
-  assert.equal((await fetch(`${api}/api/items/${plain.id}/thumb`)).status, 404);
-  delete process.env.STOCK_THUMBS;
-  // Photos are downloaded once and then served from memory; custom search words are used verbatim (cleaned)
-  const callsBefore = stockCalls;
-  await fetch(`${api}/api/items/${plain.id}/thumb`); await fetch(`${api}/api/items/${plain.id}/thumb`);
-  assert.equal(stockCalls, callsBefore, 'repeat thumbnail requests are served from the image cache');
-  const custom = await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: JSON.stringify({ q: 'snacks & tea <b>' }) }).then((x) => x.json());
-  assert.deepEqual(custom.queries, ['snacks & tea b']);
-  assert.match(decodeURIComponent(lastStock.url), /q=snacks & tea b/);
-  assert.equal((await fetch(`${api}/api/items/${camp.id}/stock/0/image?q=${encodeURIComponent('snacks & tea b')}&thumb=1`)).status, 200);
-  const before = stockCalls;
-  await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' });
-  assert.equal(stockCalls, before, 'second lookup served from cache');
-  const pic = await fetch(`${api}/api/items/${camp.id}/stock/0/image`);
-  assert.equal(pic.status, 200); assert.equal(pic.headers.get('content-type'), 'image/png');
-  assert.equal((await fetch(`${api}/api/items/${camp.id}/stock/9/image`)).status, 404);
-  process.env.PEXELS_API_KEY = 'pexels-key';
-  const sPx = await fetch(`${api}/api/items/${camp.id}/stock`, { method: 'POST', body: '{}' }).then((x) => x.json());
-  assert.equal(sPx.source, 'Pexels'); assert.equal(sPx.photos[0].credit, 'Photo by Pat Pexel on Pexels');
-  assert.equal(lastStock.auth, 'pexels-key');
-  delete process.env.PEXELS_API_KEY; delete process.env.ALLOW_PRIVATE_IMAGES;
-  fakeStock.close();
-
-  // Image route: private hosts blocked by default, allowed (for this test) when opted in
-  const blocked = await fetch(`${api}/api/items/${camp.id}/image`);
-  assert.equal(blocked.status, 502, 'unreachable image host is reported, not crashed');
-  const { fetchImage } = await import('../lib/image.js');
-  await assert.rejects(fetchImage(base + '/img.png'), /not allowed/);
-  process.env.ALLOW_PRIVATE_IMAGES = '1';
-  const img = await fetchImage(base + '/img.png');
-  assert.equal(img.type, 'image/png');
-  await assert.rejects(fetchImage(base + '/notimg'), /Not an image/);
-
-  const csrf = await fetch(`${api}/api/refresh`, { method: 'POST', headers: { origin: 'https://evil.example' } });
-  assert.equal(csrf.status, 403);
-  assert.equal((await fetch(`${api}/../../etc/passwd`)).status, 404);
-
-  srv.close(); mock.close();
 });

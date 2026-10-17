@@ -3,270 +3,187 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Marketing Brief</title>
-<meta name="description" content="A simple site that shows trending ad campaigns and marketing news, and turns any story into a crisp LinkedIn post in your voice, with pictures to go with it.">
-<meta property="og:title" content="The Marketing Brief">
-<meta property="og:description" content="Trending campaigns and marketing news. Click one, get a LinkedIn post and pictures.">
+<title>Postwire</title>
+<meta name="description" content="Postwire turns today's headlines in marketing, product and finance into LinkedIn drafts in your own voice, with a graphic to go with each.">
+<meta property="og:title" content="Postwire">
+<meta property="og:description" content="Today's news, ready to post. Marketing, product and finance headlines, with three LinkedIn drafts in your voice for each.">
 <meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%233b4bff'/%3E%3Ctext x='16' y='24' font-size='22' text-anchor='middle' fill='white' font-family='Georgia' font-weight='bold'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D5BF6'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#eceeff;--paper:#ffffff;--ink:#0b0b1e;--mute:#53537a;--line:#0b0b1e;--edge:#0b0b1e;--accent:#3b4bff;--accent-ink:#ffffff;--pink:#ff5c9d;--sun:#ffd43b;--mint:#2ee6a6;--gen:#3b4bff;--genbg:#e3e6ff;--ok:#0f9d6b;--code:#0b0b1e;--code-ink:#f3f2ff;--display:'Bricolage Grotesque','Arial Black',system-ui,sans-serif;--serif:var(--display);--sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
-:root[data-theme=dark]{--bg:#0b0b1e;--paper:#16163a;--ink:#f3f2ff;--mute:#a7a7d6;--line:#f3f2ff;--edge:#f3f2ff;--accent:#8f9bff;--accent-ink:#0b0b1e;--genbg:#22225a;--code:#05050f;color-scheme:dark}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b0b1e;--paper:#16163a;--ink:#f3f2ff;--mute:#a7a7d6;--line:#f3f2ff;--edge:#f3f2ff;--accent:#8f9bff;--accent-ink:#0b0b1e;--genbg:#22225a;--code:#05050f;color-scheme:dark}}
-*{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+:root{--bg:#F3F5FA;--surface:#fff;--soft:#EBEFF7;--ink:#101828;--mute:#566176;--line:#DFE5F0;--side:#0E1630;--mkt:#E8475F;--prd:#6D5BF6;--fin:#0E9F8E;--dom:var(--prd);--on:#fff;--warnbg:#FFF4D6;--warn:#9A6700;--display:'Sora','Segoe UI',system-ui,sans-serif;--sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;--shadow:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.08)}
+:root[data-theme=dark]{--bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;--side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--on:#0A0F1E;--warnbg:#2B2410;--warn:#F2C14E;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0A0F1E;--surface:#121A30;--soft:#18223C;--ink:#E9EEFF;--mute:#9DA9C6;--line:#222E4D;--side:#070B16;--mkt:#FF7B8E;--prd:#A093FF;--fin:#2DD4BF;--on:#0A0F1E;--warnbg:#2B2410;--warn:#F2C14E;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}}
+[data-d=marketing]{--dom:var(--mkt)}[data-d=product]{--dom:var(--prd)}[data-d=finance]{--dom:var(--fin)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--sans)}
 a{color:inherit}
+:focus-visible{outline:3px solid var(--prd);outline-offset:3px}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
-.nav{display:flex;align-items:center;gap:18px;padding:16px 0;border-bottom:1px solid var(--line);font-size:14px}
-.nav .brand{font:900 20px var(--serif);text-decoration:none;letter-spacing:-.01em}.brand em{color:var(--accent)}
-.nav .sp{flex:1}.nav a.l{color:var(--mute);text-decoration:none}.nav a.l:hover{color:var(--ink)}
-.btn{display:inline-block;font:600 14px var(--sans);background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:99px;padding:11px 22px;text-decoration:none;cursor:pointer}
-.btn:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}.btn.ghost:hover{background:none;color:var(--ink);border-color:var(--ink)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.hero{padding:72px 0 48px;text-align:left}
-.eyebrow{font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
-h1{font:900 clamp(46px,9vw,112px)/.93 var(--serif);letter-spacing:-.035em;margin:14px 0 22px}
-h1 em{color:var(--accent);font-weight:700}
-.lede{max-width:640px;font-size:20px;color:var(--mute);margin:0 0 30px}
+.nav{display:flex;align-items:center;gap:18px;padding:16px 0}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 21px var(--display);letter-spacing:-.02em}
+.mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;font:800 18px var(--display);background:linear-gradient(135deg,#E8475F,#6D5BF6 55%,#0E9F8E)}
+.sp{flex:1}.nav a.l{color:var(--mute);text-decoration:none;font-weight:700;font-size:15px}.nav a.l:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:6px;font:800 15px var(--sans);background:var(--prd);color:var(--on);border:1px solid transparent;border-radius:12px;padding:12px 20px;text-decoration:none;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}.btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.hero{padding:64px 0 36px}
+.eyebrow{display:inline-block;font:800 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--prd);background:color-mix(in srgb,var(--prd) 12%,transparent);padding:5px 12px;border-radius:99px}
+h1{font:800 clamp(40px,7vw,78px)/1.02 var(--display);letter-spacing:-.04em;margin:18px 0 18px;max-width:14ch}
+h1 span{background:linear-gradient(100deg,var(--mkt),var(--prd) 55%,var(--fin));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{max-width:600px;color:var(--mute);font-size:20px;margin:0 0 28px}
 .cta{display:flex;gap:12px;flex-wrap:wrap}
-section{padding:56px 0;border-top:1px solid var(--line)}
-h2{font:900 clamp(30px,5vw,48px)/1.05 var(--serif);letter-spacing:-.02em;margin:10px 0 14px;max-width:18ch}
-.sub{color:var(--mute);max-width:60ch;margin:0 0 32px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:22px}
-.card h3{font:700 21px/1.15 var(--serif);margin:0 0 8px}.card p{margin:0;color:var(--mute);font-size:15px}
-.steps{grid-template-columns:repeat(4,1fr)}
-.num{font:900 40px var(--serif);color:var(--accent);line-height:1}
-.pill{display:inline-block;font:600 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
-.pill.src{border-color:var(--ok);color:var(--ok)}.pill.gen{border-color:var(--gen);color:var(--gen);background:var(--genbg)}
-/* illustrative mockup: placeholder text only, no real brands or campaigns */
-.mock{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.12)}
-.mock .bar{display:flex;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line)}.bar i{width:11px;height:11px;border-radius:50%;background:var(--line)}
-.mock .inner{padding:24px}
-.mock .tabs{display:flex;gap:18px;font:600 13px var(--sans);color:var(--mute);border-bottom:1px solid var(--line);margin-bottom:18px;overflow:hidden;white-space:nowrap}
-.mock .tabs b{color:var(--ink);border-bottom:3px solid var(--accent);padding-bottom:10px}
-.mgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
-.ph{aspect-ratio:16/9;border-radius:4px;background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(127,127,127,.12) 10px 11px),var(--line);display:flex;align-items:flex-end;padding:12px;font:900 18px var(--serif);color:var(--mute)}
-.mock h4{font:900 26px/1.05 var(--serif);margin:12px 0 6px;letter-spacing:-.02em}
-.mock .meta{font-size:12px;color:var(--mute)}
-.line{height:10px;border-radius:5px;background:var(--line);margin:8px 0}.line.s{width:60%}
-.post{background:var(--bg);border-radius:6px;padding:14px;font-size:13px;color:var(--mute)}
-.cap{font-size:13px;color:var(--mute);margin-top:12px;text-align:center}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.two .card ul{margin:10px 0 0;padding-left:18px;color:var(--mute);font-size:15px}
-pre{background:var(--code);color:var(--code-ink);border-radius:8px;padding:20px;overflow-x:auto;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0}
-.copy{margin-top:12px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}.chips span{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:6px 14px;font-size:14px}
-details{border-bottom:1px solid var(--line);padding:16px 0}summary{font:700 19px var(--serif);cursor:pointer}details p{color:var(--mute);margin:10px 0 0;max-width:70ch}
-footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
-@media (max-width:980px){.steps{grid-template-columns:repeat(2,1fr)}}
-.mock .bar{align-items:center}.bar-t{margin-left:8px;font-size:12px;color:var(--mute)}
-.dtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.dtabs button{border:0;background:none;color:var(--mute);font:600 14px var(--sans);padding:8px 14px;border-radius:99px;cursor:pointer}
-.dtabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
-.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-.dcard-btn{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:0;overflow:hidden;text-align:left;cursor:pointer;color:inherit;font:inherit;transition:transform .15s}
-.dcard-btn:hover,.dcard-btn[aria-expanded=true]{transform:translateY(-2px);border-color:var(--ink)}
-.dcard-btn .ph{border-radius:0;font-size:15px}
-.dcard-btn .t{padding:10px 12px 12px;font:700 17px/1.15 var(--serif)}.dcard-btn .m{display:block;font:400 12px var(--sans);color:var(--mute);margin-top:4px}
-.dpanel{margin-top:18px;border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--bg)}
-.dhead{display:flex;justify-content:space-between;gap:10px;font:700 18px var(--serif);margin-bottom:12px}
-.dclose{border:0;background:none;color:var(--ink);font-size:26px;line-height:1;cursor:pointer}
-.dcols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.dcols>*{min-width:0}
-.dopts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.dopts button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:99px;padding:5px 12px;font:500 13px var(--sans);cursor:pointer}
-.dopts button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.dpost{white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px;font:14px/1.6 var(--sans);margin:0 0 10px}
-.dcard{aspect-ratio:4/5;max-width:260px;background:#14110f;color:#f1ece3;border-radius:4px;padding:22px;display:flex;flex-direction:column;gap:10px;position:relative}
-.dcard b{font:900 22px/1.1 var(--serif)}.bar-a{width:36px;height:4px;background:#e5381f}.dcard small{position:absolute;left:22px;bottom:18px;font-size:10px;letter-spacing:.08em;color:#a39a8c}
-.dnote{font-size:13px;color:var(--mute);margin:8px 0 0}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-[hidden]{display:none!important}
-@media (max-width:760px){.dcols{grid-template-columns:1fr}}
-
-/* poster theme */
-.nav{border-bottom:3px solid var(--edge)}
-.nav .brand{font:800 22px var(--display);letter-spacing:-.03em}.brand em{font-style:normal;background:var(--sun);color:#0b0b1e;padding:0 .2em;border-radius:5px}
-h1{font:800 clamp(46px,9vw,108px)/.95 var(--display);letter-spacing:-.04em}
-h1 em{font-style:normal;color:#0b0b1e;background:var(--pink);padding:0 .12em;border-radius:12px;display:inline-block;transform:rotate(-1.5deg)}
-h2{font:800 clamp(30px,5vw,48px)/1.03 var(--display);letter-spacing:-.03em}
-.eyebrow{display:inline-block;background:var(--sun);color:#0b0b1e;border:2px solid var(--edge);border-radius:99px;padding:3px 12px;font:700 12px var(--sans);letter-spacing:.1em}
-section{border-top:3px solid var(--edge)}
-.btn{background:var(--sun);color:#0b0b1e;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge);font-weight:700;transition:transform .1s,box-shadow .1s}
-.btn:hover{background:var(--sun);color:#0b0b1e;border-color:var(--edge);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--edge)}
-.btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--edge)}.btn.ghost:hover{background:var(--paper);color:var(--ink);border-color:var(--edge)}
-.card{border:2px solid var(--edge);border-radius:14px;box-shadow:6px 6px 0 var(--edge)}
-.grid .card:nth-child(3n+1){background:var(--paper)}
-.num{font:800 44px var(--display);color:var(--accent)}
-.mock{border:3px solid var(--edge);border-radius:16px;box-shadow:10px 10px 0 var(--edge)}
-.mock .bar{border-bottom:3px solid var(--edge);background:var(--accent)}.bar i{background:#fff;border:2px solid #0b0b1e}.bar-t{color:#fff!important;font-weight:600}
-.dtabs button{border:2px solid var(--edge);background:var(--paper);color:var(--ink);font-weight:700}
-.dtabs button[aria-selected=true]{background:var(--pink);color:#0b0b1e;box-shadow:3px 3px 0 var(--edge)}
-.dcard-btn{border:2px solid var(--edge);border-radius:12px;box-shadow:4px 4px 0 var(--edge)}
-.dcard-btn:hover,.dcard-btn[aria-expanded=true]{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--edge);border-color:var(--edge)}
-.dcard-btn .ph{background:var(--sun);color:#0b0b1e;border-radius:0;border-bottom:2px solid var(--edge);font-family:var(--display);font-weight:800}
-.dgrid>:nth-child(4n+2) .ph{background:var(--pink)}.dgrid>:nth-child(4n+3) .ph{background:var(--mint)}.dgrid>:nth-child(4n+4) .ph{background:var(--accent);color:#fff}
-.dpanel{border:3px solid var(--edge);border-radius:14px;box-shadow:6px 6px 0 var(--edge)}
-.dopts button{border:2px solid var(--edge);font-weight:600}.dopts button[aria-selected=true]{background:var(--pink);border-color:var(--edge);color:#0b0b1e}
-.dpost{border:2px solid var(--edge);border-radius:10px}
-.dclose{border:2px solid var(--edge);border-radius:50%;width:34px;height:34px;background:var(--sun);color:#0b0b1e;font-size:20px}
-.dcard{background:#3b4bff;border:2px solid var(--edge);border-radius:8px}.dcard b{font-family:var(--display);font-weight:800;color:#fff}.bar-a{background:var(--sun)!important;height:8px!important}.dcard small{color:#0b0b1e!important;background:var(--sun);left:0!important;right:0;bottom:0!important;padding:10px 22px;font-weight:700}
-.chips span{border:2px solid var(--edge);background:var(--paper);font-weight:600}
-details{border-bottom:2px solid var(--edge)}summary{font:700 19px var(--display)}
-footer{border-top:3px solid var(--edge)}
-.pill.src,.pill.gen{border-color:var(--edge)}
-.dw{position:relative}.dw .dcard-btn{width:100%}
-.dskip{position:absolute;right:8px;top:8px;width:28px;height:28px;border-radius:50%;border:2px solid var(--edge);background:var(--paper);color:var(--ink);font:700 12px var(--sans);cursor:pointer;line-height:1}
-.dskip:hover{background:var(--pink);color:#0b0b1e}
-.dshuffle{margin-left:auto;border:2px solid var(--edge);background:var(--sun);color:#0b0b1e;font:700 14px var(--sans);padding:8px 16px;border-radius:99px;cursor:pointer;box-shadow:3px 3px 0 var(--edge)}
-.dtabs button.dshuffle[aria-selected]{}
-@media (max-width:760px){.steps{grid-template-columns:1fr}.mgrid,.two{grid-template-columns:1fr}.hero{padding-top:40px}.nav .l{display:none}}
+section{padding:56px 0}
+h2{font:800 clamp(28px,4vw,42px)/1.1 var(--display);letter-spacing:-.03em;margin:12px 0 12px;max-width:20ch}
+.sub{color:var(--mute);max-width:60ch;margin:0 0 30px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--dom);border-radius:16px;padding:22px;box-shadow:var(--shadow)}
+.card h3{font:800 21px var(--display);margin:0 0 8px;letter-spacing:-.02em;color:var(--dom)}.card p{margin:0;color:var(--mute);font-size:15px}
+.card ul{margin:12px 0 0;padding-left:18px;color:var(--mute);font-size:14px}
+.step{font:800 40px var(--display);color:var(--prd)}
+/* interactive sample */
+.demo{display:grid;grid-template-columns:200px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.dside{background:var(--side);color:#E9EDFB;padding:18px 12px;display:flex;flex-direction:column;gap:6px}
+.dside .brand{font-size:17px;margin:0 6px 12px;color:#fff}.dside .mark{width:30px;height:30px;border-radius:9px;font-size:15px}
+.dside button{display:flex;align-items:center;gap:10px;background:none;border:0;color:#93A0C6;font:700 14px var(--sans);padding:10px;border-radius:10px;cursor:pointer;text-align:left}
+.dside button:hover{background:rgba(255,255,255,.07);color:#fff}.dside button[aria-selected=true]{background:rgba(255,255,255,.12);color:#fff}
+.dside i{width:9px;height:9px;border-radius:50%}
+.dmain{padding:22px;min-width:0}
+.dmain h3{font:800 24px var(--display);margin:0 0 4px;letter-spacing:-.02em}.dmain .muted{color:var(--mute);font-size:14px;margin:0 0 16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 14px;font:700 13px var(--sans);cursor:pointer}
+.chip[aria-pressed=true],.chip[aria-selected=true]{background:var(--dom);border-color:var(--dom);color:var(--on)}
+.dcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.dc{position:relative;text-align:left;background:var(--surface);color:inherit;font:inherit;border:1px solid var(--line);border-top:4px solid var(--dom);border-radius:12px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px}
+.dc:hover,.dc[aria-expanded=true]{border-color:var(--dom)}
+.dc b{font:700 15px/1.3 var(--display)}.dc small{color:var(--mute)}.dc em{font-style:normal;font-weight:800;color:var(--dom);font-size:13px}
+.dtag{font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--dom);background:color-mix(in srgb,var(--dom) 12%,transparent);padding:3px 8px;border-radius:99px;align-self:flex-start}
+.panel{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg)}
+.panel header{display:flex;justify-content:space-between;gap:10px;font:800 17px var(--display);margin-bottom:12px}
+.x{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer}
+.pcols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.pcols>*{min-width:0}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;font:14px/1.6 var(--sans);margin:8px 0 10px}
+.gfx{aspect-ratio:4/5;max-width:230px;border-radius:10px;background:var(--side);color:#fff;padding:18px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.gfx b{font:700 19px/1.15 var(--display)}.gfx i{display:block;height:5px;width:44px;background:var(--dom);border-radius:3px;margin-bottom:12px}
+.gfx small{font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#0E1630;background:var(--dom);margin:0 -18px -18px;padding:10px 18px}
+.note{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;margin:0 0 10px}
+.cap{text-align:center;color:var(--mute);font-size:14px;margin-top:14px}
+.trust li{margin-bottom:8px}
+.price{background:var(--side);color:#E9EDFB;border-radius:22px;padding:34px;display:grid;gap:10px;box-shadow:var(--shadow)}
+.price h2{color:#fff;margin:0}.price p{margin:0;color:#B7C2E4}
+details{border-bottom:1px solid var(--line);padding:16px 0}summary{font:700 18px var(--display);cursor:pointer}details p{color:var(--mute);margin:10px 0 0;max-width:68ch}
+footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);font-size:14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
+@media (max-width:760px){.demo{grid-template-columns:1fr}.dside{flex-direction:row;overflow-x:auto;padding:10px}.dside .brand{margin:0 8px 0 0}.pcols{grid-template-columns:1fr}.hero{padding-top:36px}.nav a.l{display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <nav class="nav" aria-label="Primary">
-    <a class="brand" href="#">The Marketing <em>Brief</em></a>
+    <a class="brand" href="#top" id="top"><span class="mark">P</span>Postwire</a>
     <span class="sp"></span>
-    <a class="l" href="#features">Features</a>
-    <a class="l" href="#trust">Accuracy</a>
-    <a class="l" href="#start">Quick start</a>
-    <a class="btn ghost" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">GitHub ↗</a>
+    <a class="l" href="#sections">Sections</a><a class="l" href="#how">How it works</a><a class="l" href="#trust">Trust</a><a class="l" href="#faq">FAQ</a>
+    <button class="btn ghost" id="theme" type="button" style="padding:8px 14px">Dark mode</button>
+    <a class="btn" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Get started</a>
   </nav>
 
   <header class="hero">
-    <span class="eyebrow">Trending campaigns · LinkedIn posts</span>
-    <h1>Never start a LinkedIn post from a <em>blank page.</em></h1>
-    <p class="lede">The Marketing Brief shows what is trending in ads and marketing, in India and worldwide. Click any story and get a short, ready-to-copy LinkedIn post in your voice, plus pictures to post with it.</p>
-    <div class="cta">
-      <a class="btn" href="#start">Run it in a minute</a>
-      <a class="btn ghost" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">View the repository</a>
-    </div>
+    <span class="eyebrow">Marketing · Product · Finance</span>
+    <h1>Today's news, <span>ready to post.</span></h1>
+    <p class="lede">Postwire turns the day's headlines into three LinkedIn drafts in your own voice, plus a graphic to go with them. You read, edit and post.</p>
+    <div class="cta"><a class="btn" href="#demo">Try the sample</a><a class="btn ghost" href="#pricing">Free for 7 days</a></div>
   </header>
 
-  <section aria-labelledby="demo-h" style="border-top:0;padding-top:16px">
-    <div class="mock">
-      <div class="bar"><i></i><i></i><i></i><span class="bar-t">Interactive sample. Layout only, no real stories.</span></div>
-      <div class="inner">
-        <h2 id="demo-h" class="sr">Try the layout</h2>
-        <div class="dtabs" id="dtabs" role="tablist" aria-label="Sections">
-          <button role="tab" data-k="trending" aria-selected="true">Trending</button>
-          <button role="tab" data-k="campaign" aria-selected="false">Campaigns</button>
-          <button role="tab" data-k="news" aria-selected="false">News</button>
-          <button class="dshuffle" id="dshuffle" type="button">⟳ Show me different ones</button>
-        </div>
-        <div class="dgrid" id="dgrid"></div>
-        <div class="dpanel" id="dpanel" hidden>
-          <div class="dhead"><b id="dtitle"></b><button class="dclose" id="dclose" type="button" aria-label="Close">×</button></div>
-          <div class="dcols">
-            <div>
-              <div class="dopts" id="dopts" role="tablist" aria-label="Post options"></div>
-              <pre class="dpost" id="dpost"></pre>
-              <button class="btn ghost" id="dcopy" type="button">Copy this post</button>
-            </div>
-            <div>
-              <div class="dcard"><span class="bar-a"></span><b>Takeaway headline for the picture card</b><small>SOURCE: PUBLISHER</small></div>
-              <p class="dnote">Text card, photo card and the original image are downloadable.</p>
-            </div>
+  <section id="demo" style="padding-top:20px" aria-label="Interactive sample">
+    <div class="demo" data-d="marketing" id="app">
+      <div class="dside" role="tablist" aria-label="Sections">
+        <div class="brand"><span class="mark">P</span>Postwire</div>
+        <button role="tab" data-s="marketing" aria-selected="true"><i style="background:var(--mkt)"></i>Marketing</button>
+        <button role="tab" data-s="product" aria-selected="false"><i style="background:var(--prd)"></i>Product</button>
+        <button role="tab" data-s="finance" aria-selected="false"><i style="background:var(--fin)"></i>Finance</button>
+      </div>
+      <div class="dmain">
+        <h3 id="dh">Marketing</h3><p class="muted" id="db">New campaigns and marketing news</p>
+        <div class="chips" id="dchips"></div>
+        <div class="dcards" id="dcards"></div>
+        <div class="panel" id="dp" hidden>
+          <header><span id="dpt"></span><button class="x" id="dx" type="button" aria-label="Close">×</button></header>
+          <div class="note" id="dnote" hidden>News only, not investment advice. Check facts at the source before you post.</div>
+          <div class="pcols">
+            <div><div class="chips" id="dopts" role="tablist" aria-label="Post options"></div><pre id="dpost"></pre><button class="btn ghost" id="dcopy" type="button" style="padding:8px 14px;font-size:13px">Copy this post</button></div>
+            <div><div class="gfx"><div><i></i><b>Your headline, as a graphic</b></div><small>Source: Publisher</small></div></div>
           </div>
         </div>
       </div>
     </div>
-    <p class="cap">Try it: switch tabs, click a card, hit the yellow button for a fresh set, or ✕ a card to hide it. In the real app the cards are live stories and the posts are written from the article, in your voice.</p>
+    <p class="cap">An interactive sample: the headlines and drafts here are placeholders that show the layout. In the real app they are live stories and drafts written from them in your voice.</p>
   </section>
 
-  <section id="features" aria-labelledby="f-h">
-    <span class="eyebrow">What it does</span>
-    <h2 id="f-h">Three things, nothing else.</h2>
-    <p class="sub">Open it, pick a story, post.</p>
-    <div class="grid">
-      <div class="card"><h3>See what's trending</h3><p>Campaigns and marketing news from Indian and global publications, refreshed automatically. Stories covered by several outlets rise to the top. Every card shows its date and links to the original.</p></div>
-      <div class="card"><h3>Get a post, not a paragraph</h3><p>Click a story and get a short LinkedIn post: a hook, one idea per line, a clear lesson. It follows the rhythm of your own past posts. Edit it and copy.</p></div>
-      <div class="card"><h3>Get the pictures too</h3><p>Download a ready-made text card for your post, a photo card, or the publisher's original image with credit. All sized for LinkedIn.</p></div>
+  <section id="sections" aria-labelledby="s-h">
+    <span class="eyebrow">Three sections</span><h2 id="s-h">One page for each part of your feed.</h2>
+    <p class="sub">Each section has its own tabs, an India or global view, and a 3, 7 or 30 day window so what you post is current.</p>
+    <div class="grid3">
+      <div class="card" data-d="marketing"><h3>Marketing</h3><p>New campaigns and marketing news.</p><ul><li>Campaigns and case studies</li><li>Industry news</li></ul></div>
+      <div class="card" data-d="product"><h3>Product</h3><p>Launches, new features and ideas for product managers.</p><ul><li>New launches</li><li>Feature updates</li><li>Craft for PMs</li></ul></div>
+      <div class="card" data-d="finance"><h3>Finance</h3><p>Markets, funding, the economy and fintech.</p><ul><li>Markets and economy</li><li>Funding rounds</li><li>Never investment advice</li></ul></div>
+    </div>
+  </section>
+
+  <section id="how" aria-labelledby="h-h">
+    <span class="eyebrow">How it works</span><h2 id="h-h">Headline in, post out.</h2>
+    <div class="grid3" style="margin-top:24px">
+      <div class="card"><div class="step">1</div><h3 style="color:var(--ink)">Pick a headline</h3><p>Fresh stories from public news feeds, merged across outlets, each linked to its publisher.</p></div>
+      <div class="card"><div class="step">2</div><h3 style="color:var(--ink)">Get three drafts</h3><p>Story-led, lesson-led and question-led, written in your rhythm from posts you paste once.</p></div>
+      <div class="card"><div class="step">3</div><h3 style="color:var(--ink)">Add a graphic, post</h3><p>Download a ready-made graphic in a LinkedIn size, edit the text, copy it, and publish yourself.</p></div>
     </div>
   </section>
 
   <section id="trust" aria-labelledby="t-h">
-    <span class="eyebrow">Built to be trusted</span>
-    <h2 id="t-h">Posts that stick to the facts.</h2>
-    <p class="sub">If you post it under your name, it has to be true.</p>
-    <div class="two">
-      <div class="card"><h3>What the post can say</h3>
-        <ul><li>Only what the source reports</li><li>No invented numbers, quotes or results</li><li>No made-up personal stories</li><li>A source line at the end</li></ul></div>
-      <div class="card"><h3>What you add</h3>
-        <ul><li>Your own opinion and experience</li><li>Your past posts, so it sounds like you</li><li>A final read before you post</li><li>Credit for any publisher image you use</li></ul></div>
-    </div>
+    <span class="eyebrow">Built to be trusted</span><h2 id="t-h">You stay in charge of what you post.</h2>
+    <ul class="trust sub">
+      <li>Headlines only: no publisher photos or article text, and every card links to the original.</li>
+      <li>Drafts use only facts from the headline and the feed's short summary. They never invent numbers, quotes or stories about you.</li>
+      <li>Finance drafts never give investment advice, price targets or predictions.</li>
+      <li>Postwire never reads or touches your LinkedIn. You review each draft and publish it yourself.</li>
+      <li>Your saved posts and style samples are private to your account, and you can delete your account any time.</li>
+    </ul>
   </section>
 
-  <section aria-labelledby="h-h">
-    <span class="eyebrow">How it works</span>
-    <h2 id="h-h">How it works.</h2>
-    <div class="grid steps" style="margin-top:28px">
-      <div class="card"><div class="num">1</div><h3 style="margin-top:10px">Fetch</h3><p>It reads the publications' RSS feeds on a schedule.</p></div>
-      <div class="card"><div class="num">2</div><h3 style="margin-top:10px">Rank</h3><p>The same story from several outlets becomes one card, and ranks higher.</p></div>
-      <div class="card"><div class="num">3</div><h3 style="margin-top:10px">Write</h3><p>Click a story. The post is written from the article, in your voice.</p></div>
-      <div class="card"><div class="num">4</div><h3 style="margin-top:10px">Post</h3><p>Edit, copy, download a picture, and post on LinkedIn yourself.</p></div>
-    </div>
+  <section id="pricing" aria-labelledby="p-h">
+    <div class="price"><span class="eyebrow" style="justify-self:start">Pricing</span><h2 id="p-h">Free for 7 days. No card needed.</h2>
+      <p>Then a simple monthly plan. The price will be announced at launch.</p>
+      <div class="cta" style="margin-top:8px"><a class="btn" href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Get started</a></div></div>
   </section>
 
-  <section id="start" aria-labelledby="s-h">
-    <span class="eyebrow">Quick start</span>
-    <h2 id="s-h">Runs on Node. No dependencies.</h2>
-    <p class="sub">Requires Node 20 or newer. The first refresh starts automatically.</p>
-    <pre id="code"><code>git clone https://github.com/ishanihanda1709-debug/Linkedin-Automation.git
-cd Linkedin-Automation
-npm start
-
-# optional: have the app write posts itself (paid AI key)
-# ANTHROPIC_API_KEY=your-key npm start
-# No key needed: copy a prompt into a free chatbot and paste the answer back</code></pre>
-    <button class="btn ghost copy" id="copy" type="button">Copy commands</button>
-    <p class="sub" style="margin-top:28px">Then open <b>http://127.0.0.1:3000</b>. Paste a few of your own past posts into <code>voice/my-posts.md</code> so the writing sounds like you. Feeds are listed in <code>sources.json</code>.</p>
-    <div class="chips" aria-label="Default sources">
-      <span>Ads of the World</span><span>Creative Review</span><span>Adweek</span><span>Marketing Dive</span><span>Marketing Week</span><span>Campaign</span><span>Digiday</span><span>Search Engine Land</span><span>MarTech</span><span>Campaign India</span><span>afaqs</span><span>exchange4media</span><span>BestMediaInfo</span><span>ET BrandEquity</span>
-    </div>
+  <section id="faq" aria-labelledby="f-h">
+    <span class="eyebrow">FAQ</span><h2 id="f-h">Good to know.</h2>
+    <details><summary>Does it post to LinkedIn for me?</summary><p>No. You copy the draft, or open LinkedIn's post box with the text filled in, review it, and publish.</p></details>
+    <details><summary>Does it sound like me?</summary><p>Paste a few of your own posts under My style and every draft follows your rhythm and tone. It copies how you write, never what you wrote.</p></details>
+    <details><summary>Do I need to pay for AI?</summary><p>Not necessarily. You can copy a ready-made prompt into a free chatbot and paste the answer back, and the app splits it into three options. A paid or local AI key just automates that step.</p></details>
+    <details><summary>Where do the headlines come from?</summary><p>Public news feeds from publications in each section. Each card names its publisher and links to the original. The newest stories come first, and you choose a 3, 7 or 30 day window.</p></details>
+    <details><summary>Can I use it for free right now?</summary><p>You can run Postwire yourself from the repository. A hosted version with accounts and a free trial is on the way.</p></details>
   </section>
 
-  <section aria-labelledby="q-h">
-    <span class="eyebrow">Good to know</span>
-    <h2 id="q-h">Honest answers.</h2>
-    <details><summary>Is this a hosted site?</summary><p>No. It is a small Node app you run yourself. This page only describes it. To host the app publicly, use any Node host and set ACCESS_TOKEN.</p></details>
-    <details><summary>Does it read my LinkedIn feed?</summary><p>No. LinkedIn does not allow automated access to profiles or feeds. Instead, you paste a few of your own posts into a file and the app matches their style.</p></details>
-    <details><summary>Do I have to pay for an AI key?</summary><p>No. Press one button to copy a ready-made prompt, paste it into a free chatbot such as Claude.ai, ChatGPT or Gemini, then paste the answer back. The app splits it into three editable options and makes matching picture cards. A paid key or a free local model only automates that step.</p></details>
-    <details><summary>Can I use the publisher's images?</summary><p>You can download them, but they belong to the publisher. Credit them or check usage rights. The text card is your own graphic and free to use.</p></details>
-    <details><summary>Does it post to LinkedIn for me?</summary><p>No. You edit, copy and post yourself.</p></details>
-  </section>
-
-  <footer>
-    <span>The Marketing Brief · MIT licence</span>
-    <span><a href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Source on GitHub</a> · Headlines and images belong to their publishers.</span>
-  </footer>
+  <footer><span>Postwire</span><span><a href="https://github.com/ishanihanda1709-debug/Linkedin-Automation">Source on GitHub</a> · Headlines belong to their publishers.</span></footer>
 </div>
 <script>
-
-const STORIES=Array.from({length:12},(_,i)=>({id:i,k:i%3===2?'news':'campaign',t:(i%3===2?'Sample marketing news headline ':'Sample campaign headline ')+(i+1),m:(i%3===2?'Publisher':'Brand '+String.fromCharCode(65+i%6)+' · Publisher')}));
-const POSTS=[{a:'Story-led',x:'[A hook that makes people curious]\n\nWhat the brand actually did:\n[one line from the article]\n\nMost brands would have [the usual route].\n\nThis one [what was different].\n\nEveryone talks about [the launch].\nVery few notice [the lesson].\n\nSource: [Publisher]'},{a:'Lesson-led',x:'[The one lesson, in a sentence]\n\nWhat stood out:\n[detail 1]\n[detail 2]\n\nIf you work on [your area], steal this:\n[the takeaway]\n\nSource: [Publisher]'},{a:'Question-led',x:'[A sharp question about this move?]\n\nMy honest read:\n[what works]\n[what I am not sure about]\n\nWhat do you think?\n\nSource: [Publisher]'}];
-let tab='trending',open=-1,opt=0,page=0;const hidden=new Set();const PER=6;
-const $=id=>document.getElementById(id);
-function pool(){return STORIES.filter(s=>!hidden.has(s.id)&&(tab==='trending'||s.k===tab));}
-function grid(){const g=$('dgrid');g.replaceChildren();const list=pool();const start=(page*PER)%Math.max(list.length,1);const shown=list.concat(list).slice(start,start+Math.min(PER,list.length));shown.forEach(s=>{const w=document.createElement('div');w.className='dw';const b=document.createElement('button');b.type='button';b.className='dcard-btn';b.setAttribute('aria-expanded',String(open===s.id));const p=document.createElement('div');p.className='ph';p.textContent='Image';const t=document.createElement('div');t.className='t';t.textContent=s.t;const m=document.createElement('span');m.className='m';m.textContent=s.m;t.append(m);b.append(p,t);b.addEventListener('click',()=>{open=s.id;opt=0;grid();panel();$('dpanel').scrollIntoView({block:'nearest',behavior:'smooth'});});const x=document.createElement('button');x.type='button';x.className='dskip';x.textContent='✕';x.title='Not for me: hide this story';x.setAttribute('aria-label','Hide: '+s.t);x.addEventListener('click',()=>{hidden.add(s.id);if(open===s.id)open=-1;grid();panel();});w.append(b,x);g.append(w);});if(!shown.length){const e=document.createElement('p');e.className='dnote';e.textContent='Everything here is hidden. Switch tab to see more.';g.append(e);}}
-function panel(){const on=open>=0;$('dpanel').hidden=!on;if(!on)return;$('dtitle').textContent=STORIES[open].t;const o=$('dopts');o.replaceChildren();POSTS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(i===opt));b.textContent=(i+1)+'. '+p.a;b.addEventListener('click',()=>{opt=i;panel();});o.append(b);});$('dpost').textContent=POSTS[opt].x;}
-$('dtabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(!b.dataset.k)return;tab=b.dataset.k;open=-1;page=0;document.querySelectorAll('#dtabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));grid();panel();});
-$('dshuffle').addEventListener('click',()=>{page++;open=-1;grid();panel();});
-$('dclose').addEventListener('click',()=>{open=-1;grid();panel();});
-$('dcopy').addEventListener('click',async e=>{try{await navigator.clipboard.writeText(POSTS[opt].x);e.target.textContent='Copied';}catch{e.target.textContent='Select and copy manually';}setTimeout(()=>e.target.textContent='Copy this post',1800);});
-grid();
-document.getElementById('copy').addEventListener('click', async (e) => {
-  try { await navigator.clipboard.writeText(document.getElementById('code').innerText); e.target.textContent = 'Copied'; }
-  catch { e.target.textContent = 'Select and copy manually'; }
-  setTimeout(() => (e.target.textContent = 'Copy commands'), 2000);
-});
+const S={marketing:{h:'Marketing',b:'New campaigns and marketing news',chips:[['All',''],['Campaigns','Campaign'],['News','News'],['Case studies','Case study']],cards:[['Campaign','Sample headline about a new brand campaign','Sample Publisher · 2 h ago'],['Campaign','Sample headline about a festive ad film','Sample Publisher · 5 h ago'],['News','Sample headline about marketing budgets','Sample Publisher · Yesterday'],['Case study','Sample headline about a brand growing its community','Sample Publisher · Yesterday']]},product:{h:'Product',b:'Launches, new features and ideas for product managers',chips:[['All',''],['Launches','Launch'],['Features','Feature'],['For PMs','For PMs']],cards:[['Launch','Sample headline about a new app launch','Sample Publisher · 1 h ago'],['Feature','Sample headline about a new feature rolling out','Sample Publisher · 4 h ago'],['For PMs','Sample headline about building a product roadmap','Sample Publisher · Yesterday'],['Launch','Sample headline about a new gadget','Sample Publisher · Yesterday']]},finance:{h:'Finance',b:'Markets, funding, the economy and fintech',chips:[['All',''],['Markets','Markets'],['Funding','Funding'],['Economy','Economy'],['Fintech','Fintech']],cards:[['Markets','Sample headline about the market moving','Sample Publisher · 1 h ago'],['Economy','Sample headline about interest rates','Sample Publisher · 6 h ago'],['Funding','Sample headline about a startup funding round','Sample Publisher · Yesterday'],['Fintech','Sample headline about digital payments','Sample Publisher · Yesterday']]}};
+const POSTS=[['Story-led','[A hook that makes people curious]\n\nWhat happened, in one line:\n[the facts from the story]\n\nMost teams would have [the usual route].\n\nThis one [what was different].\n\nEveryone talks about [the headline].\nVery few notice [the lesson].\n\nSource: [Publisher]'],['Lesson-led','[The one lesson, in a sentence]\n\nWhat stood out:\n[detail 1]\n[detail 2]\n\nIf you work on [your area], steal this:\n[the takeaway]\n\nSource: [Publisher]'],['Question-led','[A sharp question about this story?]\n\nMy honest read:\n[what works]\n[what I am not sure about]\n\nWhat do you think?\n\nSource: [Publisher]']];
+const $=(i)=>document.getElementById(i);let sec='marketing',open=-1,opt=0,chip=0;
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function draw(){const d=S[sec];$('app').dataset.d=sec;$('dh').textContent=d.h;$('db').textContent=d.b;
+ const chips=$('dchips');chips.replaceChildren();d.chips.forEach((t,i)=>{const b=el('button','chip',t[0]);b.type='button';b.setAttribute('aria-pressed',String(i===chip));b.onclick=()=>{chip=i;draw()};chips.append(b)});
+ const cards=$('dcards');cards.replaceChildren();d.cards.forEach((c,i)=>{if(chip>0&&c[0]!==d.chips[chip][1])return;const b=el('button','dc');b.type='button';b.setAttribute('aria-expanded',String(open===i));b.append(el('span','dtag',c[0]),el('b','',c[1]),el('small','',c[2]),el('em','','Write a post →'));b.onclick=()=>{open=i;opt=0;draw();$('dp').scrollIntoView({block:'nearest',behavior:'smooth'})};cards.append(b)});
+ if(!cards.children.length)cards.append(el('p','muted','No sample stories for this tab.'));
+ const p=$('dp');p.hidden=open<0;if(open<0)return;$('dpt').textContent=d.cards[open][1];$('dnote').hidden=sec!=='finance';
+ const o=$('dopts');o.replaceChildren();POSTS.forEach((x,i)=>{const b=el('button','chip',(i+1)+'. '+x[0]);b.type='button';b.setAttribute('aria-selected',String(i===opt));b.onclick=()=>{opt=i;draw()};o.append(b)});$('dpost').textContent=POSTS[opt][1]}
+document.querySelectorAll('.dside button').forEach(b=>b.onclick=()=>{sec=b.dataset.s;open=-1;chip=0;document.querySelectorAll('.dside button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));draw()});
+$('dx').onclick=()=>{open=-1;draw()};
+$('dcopy').onclick=async e=>{try{await navigator.clipboard.writeText(POSTS[opt][1]);e.target.textContent='Copied'}catch{e.target.textContent='Select and copy'}setTimeout(()=>e.target.textContent='Copy this post',1800)};
+draw();
+const root=document.documentElement,tb=$('theme');const dark=()=>root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches);
+const lab=()=>{tb.textContent=dark()?'Light mode':'Dark mode'};tb.onclick=()=>{root.dataset.theme=dark()?'light':'dark';lab()};lab();
 </script>
 </body>
 </html>
