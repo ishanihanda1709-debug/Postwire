@@ -93,6 +93,10 @@ async function route(req, res, url) {
   const q = url.searchParams;
 
   // ---------- pages and static files ----------
+  if (p === '/healthz') {   // for uptime pingers (they often send HEAD); public, reveals nothing
+    res.writeHead(200, { 'content-type': 'text/plain', 'cache-control': 'no-store' });
+    return res.end(req.method === 'HEAD' ? undefined : 'ok');
+  }
   if (!p.startsWith('/api/')) {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
     const user = await userFromRequest(req);
@@ -130,7 +134,7 @@ async function route(req, res, url) {
     if (origin && new URL(origin).host !== host) return json(res, 403, { error: 'Cross-origin request blocked' });
   }
 
-  if (p === '/api/config' && req.method === 'GET') {
+  if (p === '/api/config' && (req.method === 'GET' || req.method === 'HEAD')) {
     return json(res, 200, { name: appName(), tagline: tagline(), requireLogin: requireLogin(), signupOpen: process.env.ALLOW_SIGNUP !== '0' || (await userCount()) === 0, trialDays: trialDays() });
   }
 

@@ -65,7 +65,7 @@ The app stores each story's headline, publisher, link, date and the feed's own s
 
 ## Free hosting (no paid disk)
 
-Free web hosts have no permanent disk, so accounts saved as files would vanish on every restart. To run on a free plan, create a free **Upstash Redis** database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Accounts, sessions, saved posts and style samples are then kept there (via its web API, no extra packages). The news store and AI cache stay on the host's temporary disk and are rebuilt from the feeds after a restart, so set `DATA_DIR=/tmp/postwire`. Trade-offs: a free host sleeps when idle (the first visit then takes about a minute while it wakes and fetches the news; a free uptime pinger hitting `/api/config` every 5 minutes keeps it awake), and free database plans have monthly limits. Fine for a beta; move to a paid host and disk when people pay.
+Free web hosts have no permanent disk, so accounts saved as files would vanish on every restart. To run on a free plan, create a free **Upstash Redis** database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Accounts, sessions, saved posts and style samples are then kept there (via its web API, no extra packages). The news store and AI cache stay on the host's temporary disk and are rebuilt from the feeds after a restart, so set `DATA_DIR=/tmp/postwire`. Trade-offs: a free host sleeps when idle (the first visit then takes about a minute while it wakes and fetches the news; a free uptime pinger hitting `/healthz` every 5 minutes keeps it awake), and free database plans have monthly limits. Fine for a beta; move to a paid host and disk when people pay.
 
 ## Going live checklist
 
