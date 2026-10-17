@@ -13,6 +13,7 @@ npm test
 
 ## What people see
 
+- **A home page and a welcome animation.** After logging in you land on **Home** (not straight in Marketing): a greeting, one tile per section with its newest headline and story count, and a three-step how-it-works strip. A short four-colour animation plays once per visit (click or press a key to skip; it is off for people who prefer reduced motion). Clicking the brand at the top left opens the public website page at `/welcome`, whose buttons become *Open the app* when you are logged in.
 - **A left sidebar** with the four news sections, **My style**, **Saved**, a light/dark switch and the account card (a top bar on phones).
 - **One page per section.** Each has its own tabs: Marketing (All, Campaigns, News, Case studies), Product (All, Launches, Features, For PMs), Finance (All, Markets, Funding, Economy, Fintech), Others (All, Science & tech, Sport, Entertainment, Health). **Others** is everything outside the first three: India and world news, science, sport and culture. Plus India / Global, a 3 / 7 / 30 day switch, search, **Show me different ones** and a ✕ to hide a story.
 - **Headlines only.** Each card is a headline, its publisher, its age and a link to the original. No publisher photos, no article text.

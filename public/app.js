@@ -3,7 +3,7 @@ import { drawCreative, SIZES, TEMPLATES } from './creatives.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const PAGE = 18;
-const ROUTES = ['marketing', 'product', 'finance', 'others', 'style', 'saved', 'account', 'upgrade'];
+const ROUTES = ['home', 'marketing', 'product', 'finance', 'others', 'style', 'saved', 'account', 'upgrade'];
 const state = { me: null, doms: {}, cur: null, saved: new Map(), timer: null, rt: 0 };
 
 // Text is always set via textContent, never innerHTML.
@@ -81,7 +81,7 @@ const isDark = () => document.documentElement.dataset.theme === 'dark' || (!docu
 const themeLabel = () => { themeBtn().textContent = isDark() ? 'Light mode' : 'Dark mode'; };
 
 // ---------- router ----------
-const currentRoute = () => { const r = location.hash.replace(/^#\//, ''); return ROUTES.includes(r) ? r : 'marketing'; };
+const currentRoute = () => { const r = location.hash.replace(/^#\//, ''); return ROUTES.includes(r) ? r : 'home'; };
 
 async function render() {
   closeModal();
@@ -90,12 +90,53 @@ async function render() {
   markNav(r);
   $('#main').scrollIntoView?.({ block: 'start' });
   try {
-    if (state.me.domains.some((d) => d.id === r)) renderDomain(r);
+    if (r === 'home') await renderHome(my);
+    else if (state.me.domains.some((d) => d.id === r)) renderDomain(r);
     else if (r === 'style') await renderStyle(my);
     else if (r === 'saved') await renderSaved(my);
     else if (r === 'account') await renderAccount(my);
     else renderUpgrade();
   } catch (e) { if (e.code !== 402) toast(e.message); }
+}
+
+// ---------- home: the first page after logging in ----------
+const greeting = () => { const hr = new Date().getHours(); return hr < 5 ? 'Hello' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening'; };
+
+async function renderHome(my) {
+  const u = state.me.user, first = (u.name || '').includes('@') ? '' : (u.name || '').trim().split(/\s+/)[0];
+  const tiles = state.me.domains.map((d, i) => {
+    const count = h('span', { class: 'tcount', text: ' ' }), top = h('p', { class: 'ttop', text: 'Loading the latest…' });
+    api(`/api/items?domain=${d.id}&limit=1&sort=trending&days=${state.me.freshDays}`).then((r) => {
+      count.textContent = r.total ? `${r.total} fresh ${r.total === 1 ? 'story' : 'stories'}` : 'No fresh stories yet';
+      top.textContent = r.items[0]?.title || 'Check back after the next fetch.';
+    }).catch(() => { count.textContent = ''; top.textContent = ''; });
+    return h('a', { class: 'tile', href: `#/${d.id}`, style: `--dom:var(${colorVar[d.id] || '--prd'});--i:${i}` },
+      h('span', { class: 'tbar' }), h('div', { class: 'thead' }, h('h3', { text: d.label }), count), h('p', { class: 'tblurb', text: d.blurb }), top, h('span', { class: 'tgo', text: `Open ${d.label} →` }));
+  });
+  const steps = [['1', 'Pick a headline', 'Open any story from the four sections.'], ['2', 'Get three posts', 'Story-led, lesson-led and question-led, in your style. Use the built-in AI or copy the prompt into any chatbot.'], ['3', 'Add a picture and post', 'Download a graphic or copy an image prompt, then paste it into LinkedIn.']];
+  $('#main').replaceChildren(h('div', { class: 'home' },
+    h('section', { class: 'hero' },
+      h('div', { class: 'orbs', 'aria-hidden': 'true' }, h('i', { class: 'orb o1' }), h('i', { class: 'orb o2' }), h('i', { class: 'orb o3' }), h('i', { class: 'orb o4' })),
+      h('p', { class: 'eyebrow', text: state.me.name }),
+      h('h1', { text: `${greeting()}${first ? ', ' + first : ''}.` }),
+      h('p', { class: 'lede', text: 'Here is what is moving today. Pick a section, open a headline and turn it into a LinkedIn post in your own voice.' }),
+      h('div', { class: 'row' }, h('a', { class: 'btn', href: '#/marketing', text: 'Start with Marketing' }), h('a', { class: 'btn ghost', href: '#/style', text: 'Set up My style' }))),
+    h('div', { class: 'tiles' }, tiles),
+    h('h2', { class: 'hsub', text: 'How it works' }),
+    h('ol', { class: 'hsteps' }, steps.map(([n, t, d], i) => h('li', { style: `--i:${i}` }, h('b', { text: n }), h('div', {}, h('h4', { text: t }), h('p', { text: d })))))));
+}
+
+// A short welcome animation, once per visit after logging in. Press any key or click to skip.
+function splash() {
+  try { if (sessionStorage.getItem('pw-splash')) return; sessionStorage.setItem('pw-splash', '1'); } catch { return; }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cols = ['--mkt', '--prd', '--fin', '--oth'];
+  const el = h('div', { class: 'splash', role: 'presentation' },
+    h('div', { class: 'sbars' }, cols.map((c, i) => h('i', { style: `--c:var(${c});--i:${i}` }))),
+    h('div', { class: 'sname' }, h('span', { class: 'mark', text: (state.me.name || 'P').slice(0, 1) }), h('b', { text: state.me.name })));
+  const done = () => { el.classList.add('out'); setTimeout(() => el.remove(), 500); };
+  el.addEventListener('click', done); document.addEventListener('keydown', done, { once: true });
+  document.body.append(el); setTimeout(done, 1900);
 }
 
 // ---------- news page for one section ----------
@@ -493,6 +534,7 @@ window.addEventListener('hashchange', render);
   if (state.me.user.plan === 'expired') location.hash = '#/upgrade';
   try { await loadSaved(); } catch { /* shown on the Saved page */ }
   await render();
+  splash();
   if (state.me.refreshing || !state.me.updatedAt) pollRefresh(() => state.reloadView?.(), () => state.refreshView?.());
   // pick up scheduled server refreshes without a page reload
   state.timer = setInterval(async () => {

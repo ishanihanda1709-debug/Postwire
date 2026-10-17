@@ -16,9 +16,15 @@ const servedByApp = document.querySelector('meta[name="served-by-app"]')?.conten
 const appLive = servedByApp || APP_URL !== '';
 const appBase = APP_URL.replace(/\/$/, '');
 let toastTimer;
+let signedIn = false;
 function wireApp() {
   document.querySelectorAll('[data-app]:not([data-wired])').forEach((a) => {
     a.dataset.wired = '1';
+    if (signedIn && a.dataset.app.startsWith('/login.html')) {   // already logged in: go straight to the app
+      a.href = '/#/home';
+      if (a.classList.contains('login')) a.textContent = 'Open the app'; else if (a.classList.contains('btn')) a.textContent = 'Open the app →';
+      return;
+    }
     if (appLive) { a.href = appBase + a.dataset.app; return; }
     a.href = '#';
     a.addEventListener('click', (e) => {
@@ -28,7 +34,12 @@ function wireApp() {
     });
   });
 }
-wireApp();
+// Already logged in (the app's brand link leads here)? Then the sign-up buttons become "open the app".
+const whoami = (async () => {
+  if (!servedByApp) return;
+  try { signedIn = (await fetch('/api/me')).ok; } catch { /* not signed in */ }
+})();
+whoami.then(() => document.querySelectorAll('[data-app]').forEach((a) => { delete a.dataset.wired; })).then(wireApp);
 
 // ---- live headlines (only when there is an app to ask; otherwise the section stays hidden) ----
 const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
@@ -37,6 +48,7 @@ const safeUrl = (u) => { try { return /^https?:$/.test(new URL(u).protocol) ? u 
 
 async function loadLive() {
   if (!appLive) return;
+  await whoami;
   let data;
   try { const r = await fetch(`${appBase}/api/public/headlines`); if (!r.ok) return; data = await r.json(); } catch { return; }
   const sections = (data.sections || []).filter((s) => s.items?.length);
@@ -64,3 +76,4 @@ async function loadLive() {
   draw();
 }
 loadLive();
+

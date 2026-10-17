@@ -103,6 +103,7 @@ async function route(req, res, url) {
       }
       return html(res, 'index.html');
     }
+    if (p === '/welcome') return html(res, 'index.html', DOCS);   // the public website page, for logged-in visitors too (the brand link in the app)
     if (p === '/landing.js') {
       res.writeHead(200, { 'content-type': MIME['.js'], 'cache-control': 'no-cache' });
       return res.end(await fs.readFile(path.join(DOCS, 'landing.js')));
