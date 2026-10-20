@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshAll, isRefreshing, loadSources } from './lib/refresh.js';
 import { notifySignup } from './lib/notify.js';
+import { dodoEnabled, publicPlans, createCheckout, createPortal, verifyWebhook, applyEvent } from './lib/dodo.js';
 import { loadStore, loadSaved, saveSaved, loadVoice, saveVoice, lock, dataDir, remoteEnabled } from './lib/store.js';
 import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
@@ -78,6 +79,18 @@ async function publicHeadlines() {
   })).filter((sct) => sct.items.length);
   headlinesCache = { at: Date.now(), stamp: store.updatedAt, value: { updatedAt: store.updatedAt, sections } };
   return headlinesCache.value;
+}
+
+// The address people use to reach the app, for payment return links. Set PUBLIC_URL (e.g. https://postwire.in) to be certain.
+function appUrl(req) {
+  if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, '');
+  const proto = process.env.TRUST_PROXY === '1' ? String(req.headers['x-forwarded-proto'] || 'https').split(',')[0] : 'http';
+  return `${proto}://${req.headers['x-forwarded-host'] || req.headers.host}`;
+}
+async function readRaw(req, max = 1_000_000) {
+  let size = 0; const chunks = [];
+  for await (const c of req) { size += c.length; if (size > max) throw Object.assign(new Error('Body too large'), { code: 413 }); chunks.push(c); }
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 async function html(res, file, dir = PUBLIC) {
@@ -186,6 +199,17 @@ async function route(req, res, url) {
     return json(res, 200, { ok: true }, { 'set-cookie': clearCookie() });
   }
 
+  // Dodo tells us about payments here. Public on purpose (Dodo is not signed in), so the signature is the only way in.
+  if (p === '/api/billing/webhook' && req.method === 'POST') {
+    if (!process.env.DODO_WEBHOOK_SECRET) return json(res, 503, { error: 'Payments are not set up' });
+    const raw = await readRaw(req);
+    if (!verifyWebhook(raw, req.headers)) return json(res, 401, { error: 'Bad signature' });
+    let event; try { event = JSON.parse(raw); } catch { return json(res, 400, { error: 'Invalid JSON' }); }
+    const out = await applyEvent(event);
+    console.log(`Dodo webhook ${event.type}: ${out.handled ? `applied (${out.status})` : `not applied (${out.reason || 'not a subscription event'})`}`);
+    return json(res, 200, { received: true });
+  }
+
   // Everything below needs a signed-in user.
   const user = await userFromRequest(req);
   if (!user) return json(res, 401, { error: 'login_required' });
@@ -199,7 +223,7 @@ async function route(req, res, url) {
       updatedAt: store.updatedAt, refreshing: isRefreshing(), nextRefresh: REFRESH_TIMES.length ? nextLabel(REFRESH_TIMES) : null,
       refreshMinutes: REFRESH_MINUTES, author: user.name, voiceCount: await voiceCount(user.id),
       aiLimit: aiDailyLimit(), aiUsedToday: aiUsedToday(user),
-      billing: { priceLabel: process.env.PRICE_LABEL || '', upgradeUrl: process.env.UPGRADE_URL || '', supportEmail: process.env.SUPPORT_EMAIL || '', trialDays: trialDays() },
+      billing: { plans: publicPlans(), canManage: dodoEnabled() && !!user.dodoCustomerId, status: user.billingStatus || null, priceLabel: process.env.PRICE_LABEL || '', upgradeUrl: process.env.UPGRADE_URL || '', supportEmail: process.env.SUPPORT_EMAIL || '', trialDays: trialDays() },
       lastRun: user.role === 'admin' ? store.lastRun || null : undefined,
       sources: sources.map((s) => ({ id: s.id, name: s.name, domain: s.domain, region: s.region, ...(store.sources[s.id] || { ok: null }) })),
       requireLogin: requireLogin(),
@@ -219,6 +243,22 @@ async function route(req, res, url) {
   }
 
   // Everything below needs an active trial or subscription.
+  // Paying must work for people whose trial has ended, so these sit before the paywall.
+  if (p === '/api/billing/checkout' && req.method === 'POST') {
+    if (!dodoEnabled()) return json(res, 503, { error: 'Payments are not switched on yet.' });
+    if (user.role === 'admin') return json(res, 400, { error: 'The owner account does not need a plan.' });
+    if (!rateLimit(`checkout:${user.id}`, 10, 3_600_000)) return json(res, 429, { error: 'Too many attempts. Try again later.' });
+    const body = await readBody(req);
+    try { return json(res, 200, { url: await createCheckout(user, String(body.plan || ''), appUrl(req)) }); }
+    catch (e) { if (e.code === 400) return json(res, 400, { error: e.message }); console.error('Checkout failed:', e.message); return json(res, 502, { error: 'Could not start the payment. Please try again in a moment.' }); }
+  }
+  if (p === '/api/billing/portal' && req.method === 'POST') {
+    if (!dodoEnabled()) return json(res, 503, { error: 'Payments are not switched on yet.' });
+    if (!rateLimit(`portal:${user.id}`, 10, 3_600_000)) return json(res, 429, { error: 'Too many attempts. Try again later.' });
+    try { return json(res, 200, { url: await createPortal(user, appUrl(req)) }); }
+    catch (e) { if (e.code === 400) return json(res, 400, { error: e.message }); console.error('Billing portal failed:', e.message); return json(res, 502, { error: 'Could not open billing. Please try again in a moment.' }); }
+  }
+
   if (!access.access) return json(res, 402, { error: 'subscription_required' });
 
   if (p === '/api/items' && req.method === 'GET') {

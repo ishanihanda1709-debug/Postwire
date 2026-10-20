@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "refresh": "node scripts/refresh.js",
-    "test": "node --test test/unit.test.js test/e2e.test.js",
+    "test": "node --test test/unit.test.js test/e2e.test.js test/billing.test.js",
     "users": "node scripts/users.js"
   },
-  "license": "MIT"
+  "license": "UNLICENSED"
 }

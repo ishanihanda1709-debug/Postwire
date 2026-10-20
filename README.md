@@ -49,11 +49,13 @@ npm run users -- create friend@example.com TempPass123 "Friend"
 npm run users -- admin|unadmin|delete <email>
 ```
 
-**Sign-up notifications.** Every new sign-up (name, email, sign-up and trial-end dates; never the password) is sent in the background to your Formspree form, so you get an email for each one and a list in Formspree. The first account (the owner) is skipped, and a slow or broken form never blocks a sign-up. The form address is built in; change it with `SIGNUP_FORM_URL`, or set `SIGNUP_FORM_URL=` (empty) to switch it off. The privacy notice already mentions it.
+**Sign-up notifications.** Every new sign-up (name, email, sign-up and trial-end dates; never the password) is sent in the background to your Formspree form, so you get an email for each one and a list in Formspree. The first account (the owner) is skipped, and a slow or broken form never blocks a sign-up. Set `SIGNUP_FORM_URL` to your form address to switch it on (it is a setting, not part of the code, so it never appears in a public copy of the repository). The privacy notice already mentions it.
 
 Set `ALLOW_SIGNUP=0` for an invite-only beta (create accounts with `users create`). Set `REQUIRE_LOGIN=0` to run privately on your own computer with no login.
 
-**Not built yet** (needed before you scale): automatic payment webhooks (Razorpay/Stripe) so access switches on and off by itself; password reset by email; a real database instead of JSON files; invoices/GST handling; monitoring and backups.
+**Payments with Dodo Payments.** Set `DODO_API_KEY`, `DODO_PRODUCT_MONTHLY` (and optionally `DODO_PRODUCT_YEARLY`), `DODO_WEBHOOK_SECRET`, `PUBLIC_URL`, `PRICE_LABEL` and `DODO_ENV` (`test`, then `live`). The Subscribe buttons then open a hosted Dodo checkout for the signed-in user; Dodo calls `POST /api/billing/webhook` (signature checked) and the app sets the paid-until date itself on `subscription.active` / `renewed`, keeps access until the paid period ends on `cancelled`, ends it on `expired`, and flags `on_hold` / `failed`. People manage or cancel their plan from Account, then Manage billing (Dodo's customer portal). Manual grants with `npm run users -- grant` still work.
+
+**Not built yet** (needed before you scale): password reset by email; a real database instead of JSON files; invoices/GST handling; monitoring and backups.
 
 ## The public landing page
 

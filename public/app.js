@@ -506,7 +506,14 @@ async function renderAccount(my = state.rt) {
   $('#main').replaceChildren(
     h('div', { class: 'pagehead' }, h('div', {}, h('h1', { text: 'Account' }), h('p', { text: `${u.name} · ${u.email}` }))),
     h('div', { class: 'panel' }, h('h2', { text: 'Your plan' }), h('p', {}, h('span', { class: `badge ${plan[1]}`, text: plan[0] }), ' ', plan[2]),
-      u.plan === 'owner' ? null : upgradeBlock(b)),
+      u.plan === 'owner' || (u.plan === 'active' && b.plans?.length) ? null : upgradeBlock(b),
+      b.canManage ? h('div', { class: 'row' },
+        h('button', { class: 'btn ghost', type: 'button', text: 'Manage billing', onclick: async (e) => {
+          e.target.disabled = true;
+          try { const { url } = await api('/api/billing/portal', { method: 'POST' }); location.href = url; } catch (err) { e.target.disabled = false; toast(err.message); }
+        } }),
+        b.status === 'cancelled' ? h('span', { class: 'muted', text: 'Your plan is cancelled and stays active until the date above.' }) : null,
+        b.status === 'payment_problem' ? h('span', { class: 'muted', text: 'The last payment did not go through. Update your card in Manage billing.' }) : null) : null),
     m.aiEnabled ? h('div', { class: 'panel' }, h('h2', { text: 'AI posts today' }), h('p', { text: `${m.aiUsedToday} of ${m.aiLimit} used. Repeating a story you already opened does not use one. The free chatbot option has no limit.` })) : null,
     h('div', { class: 'panel' }, h('h2', { text: 'Session' }), h('div', { class: 'row', style: 'margin-top:0' },
       m.requireLogin ? h('button', { class: 'btn ghost', type: 'button', text: 'Log out', onclick: async () => { await api('/api/auth/logout', { method: 'POST' }); location.href = '/login.html'; } }) : h('span', { class: 'muted', text: 'Login is switched off (single-user mode).' }),
@@ -515,7 +522,21 @@ async function renderAccount(my = state.rt) {
     h('p', { class: 'legal' }, h('a', { href: '/terms.html', target: '_blank', rel: 'noopener', text: 'Terms' }), h('a', { href: '/privacy.html', target: '_blank', rel: 'noopener', text: 'Privacy' })));
 }
 
+async function startCheckout(plan, btn) {
+  btn.disabled = true;
+  try { const { url } = await api('/api/billing/checkout', { method: 'POST', body: { plan } }); location.href = url; }
+  catch (e) { btn.disabled = false; toast(e.message || 'Could not start the payment.'); }
+}
 function upgradeBlock(b) {
+  if (b.plans?.length) {
+    return h('div', {},
+      h('div', { class: 'row', style: 'margin-top:0' }, b.plans.map((pl, i) => {
+        const btn = h('button', { class: i ? 'btn ghost' : 'btn', type: 'button', text: `Subscribe · ${pl.label}` });
+        btn.addEventListener('click', () => startCheckout(pl.id, btn));
+        return btn;
+      })),
+      h('p', { class: 'muted', style: 'margin-top:10px', text: 'You pay on a secure page run by Dodo Payments, and we never see your card. Cancel any time from your account.' }));
+  }
   return h('div', { class: 'row', style: 'margin-top:0' },
     b.priceLabel ? h('b', { text: b.priceLabel }) : null,
     b.upgradeUrl ? h('a', { class: 'btn', href: b.upgradeUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Subscribe' })
@@ -560,6 +581,16 @@ window.addEventListener('hashchange', render);
   if (state.me.user.plan === 'expired') location.hash = '#/upgrade';
   try { await loadSaved(); } catch { /* shown on the Saved page */ }
   await render();
+  if (new URLSearchParams(location.search).get('paid')) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    toast('Thank you! Confirming your payment…');
+    for (let i = 0; i < 8 && state.me.user.plan !== 'active'; i++) {   // the payment confirmation arrives a moment after the redirect
+      await new Promise((r) => setTimeout(r, 2500));
+      try { state.me = { ...state.me, ...(await api('/api/me')) }; } catch { break; }
+    }
+    buildNav(); await render();
+    if (state.me.user.plan === 'active') toast('You are subscribed. Enjoy!');
+  }
   splash();
   if (state.me.refreshing || !state.me.updatedAt) pollRefresh(() => state.reloadView?.(), () => state.refreshView?.());
   // pick up scheduled server refreshes without a page reload
