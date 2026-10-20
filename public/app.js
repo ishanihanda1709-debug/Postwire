@@ -574,6 +574,8 @@ $('#theme').addEventListener('click', () => {
   themeLabel(); if (state.cur) drawPics(state.cur);
 });
 window.addEventListener('hashchange', render);
+// Coming back with the browser's Back button (for example from the payment or billing page) restores the page as it was, with buttons still switched off.
+window.addEventListener('pageshow', (e) => { if (e.persisted && state.me) render(); });
 
 (async function init() {
   themeLabel();
