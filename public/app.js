@@ -2,6 +2,8 @@ import { parseChatPosts, headlineFrom } from './parse.js';
 import { drawCreative, SIZES, TEMPLATES } from './creatives.js';
 
 const $ = (s, r = document) => r.querySelector(s);
+// replaceChildren would print the word "null" for an empty slot, so leave those out.
+const setMain = (...kids) => $('#main').replaceChildren(...kids.flat().filter((k) => k != null && k !== false));
 const PAGE = 18;
 const ROUTES = ['home', 'marketing', 'product', 'finance', 'others', 'style', 'saved', 'account', 'upgrade'];
 const state = { me: null, doms: {}, cur: null, saved: new Map(), timer: null, rt: 0 };
@@ -114,7 +116,7 @@ async function renderHome(my) {
       h('span', { class: 'tbar' }), h('div', { class: 'thead' }, h('h3', { text: d.label }), count), h('p', { class: 'tblurb', text: d.blurb }), top, h('span', { class: 'tgo', text: `Open ${d.label} →` }));
   });
   const steps = [['1', 'Pick a headline', 'Open any story from the four sections.'], ['2', 'Get three posts', 'Story-led, lesson-led and question-led, in your style. Use the built-in AI or copy the prompt into any chatbot.'], ['3', 'Add a picture and post', 'Download a graphic or copy an image prompt, then paste it into LinkedIn.']];
-  $('#main').replaceChildren(h('div', { class: 'home' },
+  setMain(h('div', { class: 'home' },
     h('section', { class: 'hero' },
       h('div', { class: 'orbs', 'aria-hidden': 'true' }, h('i', { class: 'orb o1' }), h('i', { class: 'orb o2' }), h('i', { class: 'orb o3' }), h('i', { class: 'orb o4' })),
       h('p', { class: 'eyebrow', text: state.me.name }),
@@ -210,7 +212,7 @@ function renderDomain(id) {
   const ages = [...new Set([state.me.freshDays, 7, 30])].sort((a, b) => a - b).map((n) => [n, n === 1 ? '24 h' : `${n} days`]);
   let debounce;
 
-  $('#main').replaceChildren(
+  setMain(
     h('div', { class: 'pagehead' },
       h('div', {}, h('h1', { text: d.label }), h('p', { text: d.blurb })),
       h('div', { class: 'row', style: 'margin:0' }, status,
@@ -457,7 +459,7 @@ async function renderSaved(my = state.rt) {
   const entries = await loadSaved();
   if (my !== state.rt) return;
   const linkedin = (t) => 'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(t);
-  $('#main').replaceChildren(
+  setMain(
     h('div', { class: 'pagehead' }, h('div', {}, h('h1', { text: 'Saved posts' }), h('p', { text: `${entries.length} saved` })),
       entries.length ? h('a', { class: 'btn ghost', href: '/api/saved/export.md', download: 'saved-posts.md', text: 'Export all (.md)' }) : null),
     entries.length ? h('div', { class: 'savedgrid' }, entries.map((e) => h('article', { class: 'sv', style: `--dom:var(${colorVar[e.item.domain] || '--prd'})` },
@@ -478,7 +480,7 @@ async function renderStyle(my = state.rt) {
   if (my !== state.rt) return;
   state.me.voiceCount = posts.length;
   const ta = h('textarea', { id: 'style-in', 'aria-label': 'Paste one of your LinkedIn posts', placeholder: 'Paste one of your own LinkedIn posts here, exactly as you posted it…' });
-  $('#main').replaceChildren(
+  setMain(
     h('div', { class: 'pagehead' }, h('div', {}, h('h1', { text: 'My style' }), h('p', { text: 'Teach it your voice. It copies your rhythm and tone, never your content.' }))),
     h('div', { class: 'panel' },
       h('p', { text: 'Paste 3 to 6 of your own LinkedIn posts, one at a time. They are used for every section. Do not paste anything confidential.' }), ta,
@@ -503,7 +505,7 @@ async function renderAccount(my = state.rt) {
     h('button', { class: 'btn danger', type: 'button', text: 'Delete my account and all my data', onclick: async () => {
       try { await api('/api/account/delete', { method: 'POST', body: { password: $('#del-pw').value } }); location.href = '/login.html'; } catch (e) { toast(e.message); }
     } }));
-  $('#main').replaceChildren(
+  setMain(
     h('div', { class: 'pagehead' }, h('div', {}, h('h1', { text: 'Account' }), h('p', { text: `${u.name} · ${u.email}` }))),
     h('div', { class: 'panel' }, h('h2', { text: 'Your plan' }), h('p', {}, h('span', { class: `badge ${plan[1]}`, text: plan[0] }), ' ', plan[2]),
       u.plan === 'owner' || (u.plan === 'active' && b.plans?.length) ? null : upgradeBlock(b),
@@ -554,7 +556,7 @@ function adminPanel(m) {
 
 function renderUpgrade() {
   const b = state.me.billing, u = state.me.user;
-  $('#main').replaceChildren(
+  setMain(
     h('div', { class: 'pagehead' }, h('div', {}, h('h1', { text: u.plan === 'expired' ? 'Your free trial has ended' : 'Subscribe' }), h('p', { text: 'Keep the daily news and your ready-to-post drafts.' }))),
     h('div', { class: 'panel' }, h('h2', { text: 'What you get' }),
       h('p', { text: 'Fresh headlines in Marketing, Product and Finance, three LinkedIn post options for every story in your voice, graphics sized for LinkedIn, and your saved posts.' }),
