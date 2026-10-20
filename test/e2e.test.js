@@ -109,8 +109,8 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   assert.equal(login.status, 200); assert.match(login.data, /Postwire/); assert.ok(!login.data.includes('{{'), 'placeholders are filled in');
   assert.match(login.headers.get('content-security-policy'), /default-src 'self'/);
   assert.equal(login.headers.get('x-frame-options'), 'DENY');
-  assert.match((await anon.get('/terms.html')).data, /DRAFT TEMPLATE/);
-  assert.match((await anon.get('/privacy.html')).data, /DRAFT TEMPLATE/);
+  assert.match((await anon.get('/terms.html')).data, /Terms of use/);
+  assert.match((await anon.get('/privacy.html')).data, /Privacy notice/);
   const cfg = (await anon.get('/api/config')).data;
   assert.equal(cfg.name, 'Postwire'); assert.equal(cfg.signupOpen, true); assert.equal(cfg.trialDays, 7);
   assert.equal((await anon.get('/app.js')).status, 200);
