@@ -37,7 +37,7 @@ function wireApp() {
 // Already logged in (the app's brand link leads here)? Then the sign-up buttons become "open the app".
 const whoami = (async () => {
   if (!servedByApp) return;
-  try { signedIn = (await fetch('/api/me')).ok; } catch { /* not signed in */ }
+  try { signedIn = !!(await (await fetch('/api/auth/status')).json()).signedIn; } catch { /* not signed in */ }
 })();
 whoami.then(() => document.querySelectorAll('[data-app]').forEach((a) => { delete a.dataset.wired; })).then(wireApp);
 

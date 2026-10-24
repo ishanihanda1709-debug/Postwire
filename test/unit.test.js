@@ -207,3 +207,32 @@ test('accounts can live in a free Redis database instead of on disk', async () =
     await new Promise((r) => srv.close(r)); await fsp.rm(dir, { recursive: true, force: true });
   }
 });
+
+test('sample page: picks the best fresh Marketing story, caches it for the day, and falls back to outlines without AI', async () => {
+  const os = await import('node:os'); const fsp = await import('node:fs/promises'); const path = await import('node:path');
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'pw-sample-'));
+  const prev = { ...process.env };
+  try {
+    Object.assign(process.env, { DATA_DIR: dir });
+    delete process.env.ANTHROPIC_API_KEY; delete process.env.LLM_BASE_URL; delete process.env.UPSTASH_REDIS_REST_URL;
+    const { saveStore, loadSample } = await import('../lib/store.js');
+    const { getSample } = await import('../lib/sample.js');
+    assert.equal(await getSample(3), null);                                         // nothing fetched yet
+    const now = Date.now(), iso = (h) => new Date(now - h * 3_600_000).toISOString();
+    await saveStore({ updatedAt: iso(0), sources: {}, items: {
+      a: { id: 'a', title: 'Old story', url: 'https://x.test/a', source: 'X', domain: 'marketing', publishedAt: iso(24 * 9), kind: 'news' },
+      b: { id: 'b', title: 'Finance story', url: 'https://x.test/b', source: 'X', domain: 'finance', publishedAt: iso(2), kind: 'news' },
+      c: { id: 'c', title: 'Plain fresh story', url: 'https://x.test/c', source: 'X', domain: 'marketing', publishedAt: iso(5), kind: 'news' },
+      d: { id: 'd', title: 'Brand launches a campaign', url: 'https://x.test/d', source: 'Y', domain: 'marketing', publishedAt: iso(6), kind: 'campaign', also: [{ source: 'Z', url: 'https://z.test/d' }] },
+    } });
+    const s = await getSample(3);
+    assert.equal(s.headline.title, 'Brand launches a campaign');                      // covered by two outlets, and a campaign
+    assert.equal(s.by, 'outline'); assert.equal(s.posts.length, 3);
+    assert.match(s.posts[0].text, /Brand launches a campaign/);
+    assert.equal((await loadSample()).headline.title, s.headline.title);             // saved for the day
+    assert.equal(JSON.stringify(s).includes('summary'), false);                      // never the feed's summary
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in prev)) delete process.env[k];
+    Object.assign(process.env, prev); await fsp.rm(dir, { recursive: true, force: true });
+  }
+});

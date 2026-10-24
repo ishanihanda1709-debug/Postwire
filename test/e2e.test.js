@@ -134,6 +134,26 @@ test('Postwire end to end: sections, accounts, trial and paywall, privacy, AI li
   assert.deepEqual((await anon.get('/api/public/headlines')).data, { sections: [] });
   delete process.env.PUBLIC_HEADLINES;
 
+  // ---------- 2c. public sample page, robots.txt, sitemap.xml, optional analytics ----------
+  const samplePage = await anon.get('/sample');
+  assert.equal(samplePage.status, 200); assert.match(samplePage.data, /See a sample/);
+  const sampleApi = await anon.get('/api/public/sample');
+  assert.equal(sampleApi.status, 200);
+  assert.equal(sampleApi.data.posts.length, 3); assert.ok(sampleApi.data.headline.title && sampleApi.data.headline.url);
+  assert.doesNotMatch(JSON.stringify(sampleApi.data), /Feed summary/, 'no summaries in the sample either');
+  assert.match(root.data, /href="\/sample"/, 'the landing page links to the sample');
+  const robots = await anon.get('/robots.txt');
+  assert.equal(robots.status, 200); assert.match(robots.data, /Disallow: \/api\//); assert.match(robots.data, /Sitemap: http/);
+  const sitemap = await anon.get('/sitemap.xml');
+  assert.equal(sitemap.status, 200);
+  for (const u of ['/welcome', '/sample', '/privacy.html']) assert.ok(sitemap.data.includes(`${u}</loc>`), `sitemap lists ${u}`);
+  assert.doesNotMatch(samplePage.headers.get('content-security-policy'), /clarity/, 'no analytics unless switched on');
+  process.env.CLARITY_ID = 'abcd1234ef';
+  const withClarity = await anon.get('/sample');
+  assert.match(withClarity.data, /name="clarity-id" content="abcd1234ef"/);
+  assert.match(withClarity.headers.get('content-security-policy'), /script-src 'self' https:\/\/www\.clarity\.ms/);
+  delete process.env.CLARITY_ID;
+
   // ---------- 3. sign-up (first account is the owner) and login ----------
   assert.equal((await anon.post('/api/auth/signup', { email: 'bad', password: 'longenough1' })).status, 400);
   assert.equal((await anon.post('/api/auth/signup', { email: 'o@x.com', password: 'short' })).status, 400);

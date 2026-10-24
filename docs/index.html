@@ -64,6 +64,7 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
 @media (max-width:760px){.hero{padding-top:36px}.nav a.l,.nav .login{display:none}.nav{gap:10px}.nav .btn{padding:9px 14px;font-size:14px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
+<meta name="clarity-id" content="{{CLARITY_ID}}">
 </head>
 <body>
 <div class="wrap">
@@ -80,7 +81,7 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
     <span class="eyebrow">Marketing · Product · Finance · More</span>
     <h1>Today's news, <span>ready to post.</span></h1>
     <p class="lede">Postwire turns the day's headlines into three LinkedIn drafts in your own voice, plus a graphic to go with them. You read, edit and post.</p>
-    <div class="cta"><a class="btn" href="/login.html#signup" data-app="/login.html#signup">Start free trial</a><a class="btn ghost" href="#live" id="seelive" hidden>See today's headlines</a></div>
+    <div class="cta"><a class="btn" href="/login.html#signup" data-app="/login.html#signup">Start free trial</a><a class="btn ghost" href="/sample" data-app="/sample">See a sample</a><a class="btn ghost" href="#live" id="seelive" hidden>See today's headlines</a></div>
   </header>
 
   <section id="live" hidden aria-labelledby="l-h" style="padding-top:20px">
@@ -141,6 +142,7 @@ footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--mute);fo
   <footer><span>Postwire</span><span><a href="/terms.html" data-app="/terms.html">Terms</a> · <a href="/privacy.html" data-app="/privacy.html">Privacy</a> · Headlines belong to their publishers.</span></footer>
 <div id="toast" role="status" hidden style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:14px;font-weight:700;font-size:14px;max-width:min(92vw,520px);text-align:center;box-shadow:var(--shadow);z-index:50"></div>
 </div>
+<script src="/clarity.js" defer></script>
 <script src="landing.js"></script>
 </body>
 </html>

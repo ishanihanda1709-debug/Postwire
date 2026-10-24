@@ -11,6 +11,7 @@ import { sha } from './lib/util.js';
 import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/schedule.js';
 import { aiEnabled, writePost, voiceCount, buildChatPrompt, hasCachedPost } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
+import { getSample } from './lib/sample.js';
 import { DOMAIN_IDS, DOMAINS, publicDomains } from './lib/domains.js';
 import {
   requireLogin, trialDays, aiDailyLimit, createUser, findUserByEmail, createSession, destroySession, cookieFor, clearCookie,
@@ -31,7 +32,12 @@ const appName = () => process.env.APP_NAME || 'Postwire';
 const tagline = () => process.env.APP_TAGLINE || 'Today’s news, ready to post.';
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png' };
-const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+// Analytics (Microsoft Clarity) is allowed through the content policy only when CLARITY_ID is set.
+const clarityOn = () => /^[a-z0-9]{6,16}$/i.test(process.env.CLARITY_ID || '');
+const csp = () => {
+  const c = clarityOn();
+  return `default-src 'self'; script-src 'self'${c ? ' https://www.clarity.ms https://scripts.clarity.ms' : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:${c ? ' https://*.clarity.ms https://c.bing.com' : ''}; connect-src 'self'${c ? ' https://*.clarity.ms https://c.bing.com' : ''}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`;
+};
 
 const json = (res, code, body, headers = {}) => {
   res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers });
@@ -93,11 +99,23 @@ async function readRaw(req, max = 1_000_000) {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+// robots.txt and sitemap.xml: only the public pages are listed; the app and the API are kept out of search.
+function seoFile(req, res, p) {
+  const base = appUrl(req);
+  if (p === '/robots.txt') {
+    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' });
+    return res.end(`User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`);
+  }
+  const pages = ['/', '/welcome', '/sample', '/terms.html', '/privacy.html'];
+  res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' });
+  return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map((u) => `  <url><loc>${base}${u === '/' ? '/' : u}</loc></url>`).join('\n')}\n</urlset>\n`);
+}
+
 async function html(res, file, dir = PUBLIC) {
   let body = await fs.readFile(path.join(dir, file), 'utf8');
   const name = appName();
-  body = body.replaceAll('{{APP_NAME}}', name).replaceAll('{{APP_INITIAL}}', name.slice(0, 1).toUpperCase()).replaceAll('{{TAGLINE}}', tagline()).replaceAll('{{SERVED_BY_APP}}', '1');
-  res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', 'content-security-policy': CSP });
+  body = body.replaceAll('{{APP_NAME}}', name).replaceAll('{{APP_INITIAL}}', name.slice(0, 1).toUpperCase()).replaceAll('{{TAGLINE}}', tagline()).replaceAll('{{SERVED_BY_APP}}', '1').replaceAll('{{CLARITY_ID}}', clarityOn() ? process.env.CLARITY_ID : '');
+  res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', 'content-security-policy': csp() });
   res.end(body);
 }
 
@@ -121,6 +139,8 @@ async function route(req, res, url) {
       }
       return html(res, 'index.html');
     }
+    if (p === '/sample') return html(res, 'sample.html');                       // public example, no login
+    if (p === '/robots.txt' || p === '/sitemap.xml') return seoFile(req, res, p);
     if (p === '/welcome') return html(res, 'index.html', DOCS);   // the public website page, for logged-in visitors too (the brand link in the app)
     if (p === '/landing.js') {
       res.writeHead(200, { 'content-type': MIME['.js'], 'cache-control': 'no-cache' });
@@ -197,6 +217,16 @@ async function route(req, res, url) {
   if (p === '/api/auth/logout' && req.method === 'POST') {
     await destroySession(req);
     return json(res, 200, { ok: true }, { 'set-cookie': clearCookie() });
+  }
+
+  // Lets public pages ask "am I signed in?" without a red 401 in the browser console.
+  if (p === '/api/auth/status' && req.method === 'GET') return json(res, 200, { signedIn: !!(await userFromRequest(req)) });
+
+  // The public sample: one real headline with three drafts. Cached once a day, so it never costs per visitor.
+  if (p === '/api/public/sample' && req.method === 'GET') {
+    if (!rateLimit(`pub:${clientIp(req)}`, 60, 60_000)) return json(res, 429, { error: 'Slow down a little.' });
+    const sample = await getSample(FRESH_DAYS);
+    return json(res, 200, sample ? { ...sample, name: appName() } : { empty: true, name: appName() }, { 'cache-control': 'public, max-age=300' });
   }
 
   // Dodo tells us about payments here. Public on purpose (Dodo is not signed in), so the signature is the only way in.

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>See a sample · {{APP_NAME}}</title>
+<meta name="description" content="See how {{APP_NAME}} turns today's headline into three LinkedIn post drafts and a graphic. No sign-up needed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<meta name="clarity-id" content="{{CLARITY_ID}}">
+<script src="/theme.js"></script><link rel="stylesheet" href="/styles.css"></head>
+<body class="samplepage">
+<header class="sbar">
+  <a class="brand" href="/welcome" aria-label="{{APP_NAME}} home"><span class="mark">{{APP_INITIAL}}</span><span class="bname">{{APP_NAME}}</span></a>
+  <a class="btn" href="/login.html#signup">Start free trial</a>
+</header>
+<main class="doc sample">
+  <h1>See a sample</h1>
+  <p class="lead">One of today's real headlines, turned into three LinkedIn post options and a graphic. No sign-up needed.</p>
+  <p id="state" class="muted">Loading today's sample…</p>
+  <section id="out" hidden>
+    <article class="shead">
+      <p class="muted" id="meta"></p>
+      <h2 id="title"></h2>
+      <p class="muted"><a id="orig" target="_blank" rel="noopener noreferrer">Read the original ↗</a></p>
+    </article>
+    <p class="notice" id="how"></p>
+    <h3 class="lbl">Three post options</h3>
+    <div class="opts" id="tabs" role="tablist"></div>
+    <pre class="postbox" id="post"></pre>
+    <div class="row"><button class="btn" id="copy" type="button">Copy this post</button><span class="muted" id="count"></span></div>
+    <h3 class="lbl">A graphic to go with it</h3>
+    <div class="pic-grid" id="pics"></div>
+  </section>
+  <section class="panel samplecta">
+    <h2>Get this for your own voice</h2>
+    <p>Create a free account to get three drafts for any headline in Marketing, Product, Finance and Others, written to sound like you.</p>
+    <div class="row"><a class="btn" href="/login.html#signup">Start free trial</a><a class="btn ghost" href="/welcome">Back to the home page</a></div>
+  </section>
+  <p class="legal"><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></p>
+</main>
+<script src="/sample.js" type="module"></script>
+<script src="/clarity.js" defer></script>
+</body></html>

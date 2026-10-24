@@ -61,6 +61,12 @@ Set `ALLOW_SIGNUP=0` for an invite-only beta (create accounts with `users create
 
 Visitors who are not logged in see the landing page at the home address. It shows **today's real headlines** in each section (headline, publisher, age and a link to the original, six per section, refreshed with the news) with a *Write a post →* button that leads to sign-up. It is fed by the public endpoint `/api/public/headlines`, which never includes summaries. If you would rather not show any headlines to the public, set `PUBLIC_HEADLINES=0` and the section simply disappears.
 
+## Sample page, search files and analytics
+
+- **/sample** is a public page (no login) showing one real, fresh Marketing headline with three drafts and a downloadable graphic, linked from the landing page as *See a sample*. It is written once a day and cached (in Upstash when that is connected), so it costs one AI call a day at most. With no AI key it shows the usual outlines.
+- **/robots.txt** and **/sitemap.xml** list the public pages (`/`, `/welcome`, `/sample`, Terms, Privacy) and keep `/api/` out of search. Set `PUBLIC_URL` so the addresses use your domain.
+- **Analytics:** set `CLARITY_ID` to switch on Microsoft Clarity on the landing page, sample page and app. Posts and account details inside the app are masked, "Do Not Track" is respected, and the Privacy page explains it.
+
 ## Content rights
 
 The app stores each story's headline, publisher, link, date and the feed's own short summary, and shows **only the headline, publisher, age and link**. The summary is used only as input when writing a draft. It never copies publishers' photos or article pages (set `FETCH_ARTICLE_TEXT=1` only if you accept the trade-off). Check each publisher's feed terms before charging for the service; `sources.json` is the list to review, and *Account > Owner tools* shows each feed's health. The generated graphics are text-only designs you can use freely.

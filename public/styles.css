@@ -235,3 +235,14 @@ h4.lbl{font:800 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;c
 .sname{position:relative;background:rgba(7,11,22,.82);padding:16px 26px;border-radius:22px;display:flex;align-items:center;gap:14px;color:#fff;font:800 clamp(26px,5vw,42px) var(--display);opacity:0;animation:rise .6s .7s both;text-shadow:0 2px 20px rgba(0,0,0,.35)}
 .sname .mark{width:54px;height:54px;font-size:28px;border-radius:15px;box-shadow:0 0 0 3px rgba(255,255,255,.85)}
 @keyframes bar{0%{transform:translateY(100%)}55%{transform:translateY(0)}100%{transform:translateY(0)}}
+
+/* public sample page */
+.samplepage{background:var(--bg)}
+.sbar{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:760px;margin:0 auto;padding:16px 20px 0}
+.sbar .bname{color:var(--ink)}
+.sample .lead{font-size:18px;color:var(--mute);margin:0 0 20px}
+.sample .shead{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--mkt);border-radius:16px;padding:18px 20px;margin:8px 0 14px}
+.sample .shead h2{font:800 22px/1.25 var(--display);margin:4px 0 8px}
+.sample .postbox{white-space:pre-wrap;word-break:break-word;font:inherit;line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}
+.sample h3.lbl{font:800 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:26px 0 10px}
+.samplecta{margin-top:34px}
