@@ -1,5 +1,6 @@
 import './lib/env.js';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,11 +13,12 @@ import { parseTimes, localParts, isStale, nextLabel, TIMEZONE } from './lib/sche
 import { aiEnabled, writePost, voiceCount, buildChatPrompt, hasCachedPost } from './lib/ai.js';
 import { scaffoldPosts } from './lib/drafts.js';
 import { getSample } from './lib/sample.js';
+import { googleEnabled, startLogin, finishLogin, OAUTH_COOKIE } from './lib/google.js';
 import { DOMAIN_IDS, DOMAINS, publicDomains } from './lib/domains.js';
 import {
   requireLogin, trialDays, aiDailyLimit, createUser, findUserByEmail, createSession, destroySession, cookieFor, clearCookie,
   userFromRequest, publicUser, accessInfo, verifyPassword, burnPasswordTime, validEmail, normalizeEmail, userCount,
-  consumeAi, refundAi, aiUsedToday, deleteUser, rateLimit,
+  consumeAi, refundAi, aiUsedToday, deleteUser, rateLimit, updateUser,
 } from './lib/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -168,7 +170,7 @@ async function route(req, res, url) {
   }
 
   if (p === '/api/config' && (req.method === 'GET' || req.method === 'HEAD')) {
-    return json(res, 200, { name: appName(), tagline: tagline(), requireLogin: requireLogin(), signupOpen: process.env.ALLOW_SIGNUP !== '0' || (await userCount()) === 0, trialDays: trialDays() });
+    return json(res, 200, { name: appName(), tagline: tagline(), requireLogin: requireLogin(), signupOpen: process.env.ALLOW_SIGNUP !== '0' || (await userCount()) === 0, trialDays: trialDays(), google: googleEnabled() });
   }
 
   // Public, for the landing page: today's top headlines per section. Headline, publisher, link and age only:
@@ -219,6 +221,41 @@ async function route(req, res, url) {
     return json(res, 200, { ok: true }, { 'set-cookie': clearCookie() });
   }
 
+  // "Continue with Google". Public by nature: it is how a signed-out visitor signs in.
+  if (p === '/api/auth/google/start' && req.method === 'GET') {
+    if (!googleEnabled()) { res.writeHead(302, { location: '/login.html?error=google_off' }); return res.end(); }
+    if (!rateLimit(`gstart:${clientIp(req)}`, 30, 600_000)) { res.writeHead(302, { location: '/login.html?error=slow' }); return res.end(); }
+    const { url: dest, cookie } = startLogin(`${appUrl(req)}/api/auth/google/callback`);
+    res.writeHead(302, { location: dest, 'set-cookie': `${OAUTH_COOKIE}=${cookie}; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=600${process.env.COOKIE_SECURE === '1' || req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : ''}` });
+    return res.end();
+  }
+  if (p === '/api/auth/google/callback' && req.method === 'GET') {
+    const back = (e, extra = {}) => { res.writeHead(302, { location: `/login.html?error=${e}`, 'set-cookie': `${OAUTH_COOKIE}=; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=0`, ...extra }); return res.end(); };
+    if (!googleEnabled()) return back('google_off');
+    if (!rateLimit(`gcb:${clientIp(req)}`, 30, 600_000)) return back('slow');
+    if (q.get('error')) return back('google_cancelled');
+    let who;
+    try {
+      const cookie = String(req.headers.cookie || '').split(/;\s*/).find((c) => c.startsWith(`${OAUTH_COOKIE}=`))?.slice(OAUTH_COOKIE.length + 1);
+      who = await finishLogin({ code: q.get('code'), state: q.get('state'), cookie, redirectUri: `${appUrl(req)}/api/auth/google/callback` });
+    } catch (e) { console.warn(`Google sign-in refused: ${e.message}`); return back(e.message === 'unverified' ? 'google_unverified' : 'google_failed'); }
+    let user = await findUserByEmail(who.email), isNew = false;
+    if (user?.googleSub && user.googleSub !== who.sub) return back('google_failed');
+    if (!user) {
+      if (process.env.ALLOW_SIGNUP === '0' && (await userCount()) > 0) return back('closed');
+      try {
+        const made = await createUser({ name: who.name, email: who.email, password: crypto.randomBytes(24).toString('hex') });
+        user = made.user; isNew = true; if (made.first) await adoptLegacyData(user.id);
+        notifySignup(user, { isOwner: made.first });
+      } catch (e) { if (e.code !== 409) throw e; user = await findUserByEmail(who.email); }
+    }
+    // Google has verified this email address, so an existing password account with the same email is simply linked.
+    user = (await updateUser(user.id, (u) => { u.googleSub = who.sub; if (isNew) u.googleOnly = true; })) || user;
+    const token = await createSession(user.id);
+    res.writeHead(302, { location: '/', 'set-cookie': [cookieFor(token, req), `${OAUTH_COOKIE}=; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=0`] });
+    return res.end();
+  }
+
   // Lets public pages ask "am I signed in?" without a red 401 in the browser console.
   if (p === '/api/auth/status' && req.method === 'GET') return json(res, 200, { signedIn: !!(await userFromRequest(req)) });
 
@@ -263,7 +300,8 @@ async function route(req, res, url) {
   if (p === '/api/account/delete' && req.method === 'POST') {
     const body = await readBody(req);
     if (user.role === 'admin') return json(res, 403, { error: 'The owner account cannot be deleted here.' });
-    if (!(await verifyPassword(String(body.password || ''), user.passHash))) return json(res, 401, { error: 'Wrong password.' });
+    const confirmed = user.googleOnly ? String(body.password || '').trim().toLowerCase() === user.email : await verifyPassword(String(body.password || ''), user.passHash);
+    if (!confirmed) return json(res, 401, { error: user.googleOnly ? 'Type your email address exactly to confirm.' : 'Wrong password.' });
     await lock(async () => {
       const sv = await loadSaved(); for (const [k, e] of Object.entries(sv.entries)) if (e.userId === user.id) delete sv.entries[k]; await saveSaved(sv);
       const v = await loadVoice(); v.posts = v.posts.filter((x) => x.userId !== user.id); await saveVoice(v);

@@ -501,7 +501,7 @@ async function renderAccount(my = state.rt) {
     : u.plan === 'active' ? ['Subscribed', 'ok', `Access until ${fmtDate(u.paidUntil)}.`]
     : u.plan === 'trial' ? ['Free trial', 'warn', `${u.daysLeft} day${u.daysLeft === 1 ? '' : 's'} left (ends ${fmtDate(u.trialEndsAt)}).`]
     : ['Trial ended', 'bad', 'Subscribe to keep using it.'];
-  const del = h('div', { hidden: true }, h('div', { class: 'field', style: 'margin-top:12px' }, h('label', { for: 'del-pw', text: 'Type your password to confirm' }), h('input', { id: 'del-pw', type: 'password', autocomplete: 'current-password' })),
+  const del = h('div', { hidden: true }, h('div', { class: 'field', style: 'margin-top:12px' }, h('label', { for: 'del-pw', text: u.googleOnly ? 'Type your email address to confirm' : 'Type your password to confirm' }), h('input', { id: 'del-pw', type: u.googleOnly ? 'text' : 'password', autocomplete: u.googleOnly ? 'off' : 'current-password' })),
     h('button', { class: 'btn danger', type: 'button', text: 'Delete my account and all my data', onclick: async () => {
       try { await api('/api/account/delete', { method: 'POST', body: { password: $('#del-pw').value } }); location.href = '/login.html'; } catch (e) { toast(e.message); }
     } }));

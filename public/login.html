@@ -36,6 +36,10 @@
         <button class="chip on" type="button" role="tab" data-m="login">Log in</button>
         <button class="chip" type="button" role="tab" data-m="signup" id="tab-signup">Create account</button>
       </div>
+      <div id="google" hidden>
+        <a class="btn ghost" id="g-btn" href="/api/auth/google/start" style="width:100%;justify-content:center;padding:12px">Continue with Google</a>
+        <p class="or"><span>or use your email</span></p>
+      </div>
       <form id="form" novalidate>
         <div class="field" id="f-name" hidden><label for="name">Your name</label><input id="name" name="name" autocomplete="name" maxlength="60"></div>
         <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>

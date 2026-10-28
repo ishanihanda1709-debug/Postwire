@@ -246,3 +246,6 @@ h4.lbl{font:800 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;c
 .sample .postbox{white-space:pre-wrap;word-break:break-word;font:inherit;line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}
 .sample h3.lbl{font:800 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:26px 0 10px}
 .samplecta{margin-top:34px}
+
+/* sign in with Google */
+.auth-card .or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:13px;margin:16px 0 4px}.auth-card .or::before,.auth-card .or::after{content:"";flex:1;height:1px;background:var(--line)}

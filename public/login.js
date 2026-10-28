@@ -1,4 +1,5 @@
 const $ = (s) => document.querySelector(s);
+let firstDone = false;
 let mode = 'login', cfg = { signupOpen: true, trialDays: 7 };
 
 function setMode(m) {
@@ -11,13 +12,27 @@ function setMode(m) {
   $('#sub').textContent = signup ? `Start your ${cfg.trialDays}-day free trial. No card needed.` : "Log in to see today's news.";
   $('#go').textContent = signup ? 'Start free trial' : 'Log in';
   $('#err').textContent = '';
+  if (!firstDone && why && problems[why]) $('#err').textContent = problems[why];
+  firstDone = true;
 }
 
 fetch('/api/config').then((r) => r.json()).then((c) => {
   cfg = c;
+  if (c.google) $('#google').hidden = false;
   if (!c.signupOpen) { $('#tab-signup').hidden = true; $('#note').textContent = 'Sign-ups are closed right now. Ask the owner for an account.'; }
   if (location.hash === '#signup' && c.signupOpen) setMode('signup'); else setMode('login');
 }).catch(() => setMode('login'));
+
+const problems = {
+  google_cancelled: 'Google sign-in was cancelled. You can try again or use your email.',
+  google_failed: 'Google sign-in did not work. Please try again, or use your email.',
+  google_unverified: 'Google says that email address is not verified, so we cannot use it.',
+  google_off: 'Google sign-in is not switched on yet.',
+  closed: 'Sign-ups are closed right now. Ask the owner for an account.',
+  slow: 'Too many attempts. Wait a few minutes and try again.',
+};
+const why = new URLSearchParams(location.search).get('error');
+if (why && problems[why]) $('#err').textContent = problems[why];
 
 $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); });
 
